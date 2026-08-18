@@ -1,20 +1,21 @@
-# DigitalOcean VPS Deployment
+# DigitalOcean VPS ပေါ်တင်နည်း
 
-Target: Ubuntu 24.04 LTS, `billing.stechmm.com`, Node.js, PM2, Nginx, MySQL, and HTTPS.
+ဒီလမ်းညွှန်မှာ Ubuntu 24.04 LTS, `billing.stechmm.com`, Node.js, PM2, Nginx, MySQL နဲ့ HTTPS ကိုသုံးပြီး S-Tech Billing System တင်နည်းကို အဆင့်လိုက်ဖော်ပြထားပါတယ်။
 
-## 1. Create the Droplet and DNS record
+## ၁။ DigitalOcean Droplet နဲ့ Domain ပြင်ဆင်ခြင်း
 
-1. Create an Ubuntu 24.04 LTS Droplet with SSH-key authentication.
-2. In the DNS manager for `stechmm.com`, create an `A` record:
+1. DigitalOcean မှာ Ubuntu 24.04 LTS Droplet တစ်ခုဖန်တီးပါ။
+2. Password ထက် SSH Key သုံးတာပိုလုံခြုံပါတယ်။
+3. `stechmm.com` ရဲ့ DNS Manager မှာ အောက်ပါ `A` record ထည့်ပါ။
    - Host: `billing`
-   - Value: the Droplet public IPv4 address
-3. Connect to the server:
+   - Value: DigitalOcean Droplet ရဲ့ Public IPv4
+4. Server ကိုချိတ်ပါ။
 
 ```bash
 ssh root@YOUR_DROPLET_IP
 ```
 
-## 2. Prepare the server
+## ၂။ Server အခြေခံပြင်ဆင်ခြင်း
 
 ```bash
 apt update && apt upgrade -y
@@ -25,9 +26,9 @@ ufw allow 'Nginx Full'
 ufw enable
 ```
 
-Copy the root SSH key to the new user before disabling root/password SSH access. Reconnect as `stech` for the remaining steps.
+Root user ရဲ့ SSH key ကို `stech` user ဆီကူးပြီးမှ root/password SSH login ကိုပိတ်ပါ။ ကျန်အဆင့်တွေကို `stech` user နဲ့ဆက်လုပ်ပါ။
 
-## 3. Install Node.js, Nginx, MySQL, and PM2
+## ၃။ Node.js, Nginx, MySQL နဲ့ PM2 ထည့်ခြင်း
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -37,39 +38,45 @@ node --version
 npm --version
 ```
 
-## 4. Create the MySQL database
+PM2 က application ပျက်သွားရင် အလိုအလျောက်ပြန်ဖွင့်ပေးပြီး VPS restart ဖြစ်ရင်လည်း app ကိုပြန်စပေးပါမယ်။
 
-Generate a strong unique password, then run:
+## ၄။ MySQL Database ဖန်တီးခြင်း
+
+ခိုင်မာပြီး တခြားနေရာမှာမသုံးထားတဲ့ password အသစ်တစ်ခုရွေးပါ။ ပြီးရင် MySQL ထဲဝင်ပါ။
 
 ```bash
 sudo mysql
 ```
 
+MySQL prompt ထဲမှာ အောက်ပါ command တွေ run ပါ။
+
 ```sql
 CREATE DATABASE stech_billing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'stech_app'@'localhost' IDENTIFIED BY 'REPLACE_WITH_A_STRONG_PASSWORD';
+CREATE USER 'stech_app'@'localhost' IDENTIFIED BY 'ခိုင်မာသော_PASSWORD_အသစ်ထည့်ပါ';
 GRANT ALL PRIVILEGES ON stech_billing.* TO 'stech_app'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
 
-MySQL port `3306` should not be opened in UFW because the application connects locally.
+Application နဲ့ MySQL က VPS တစ်ခုတည်းမှာရှိလို့ Firewall မှာ MySQL port `3306` ကို အပြင်ဘက်ဖွင့်ရန်မလိုပါဘူး။
 
-## 5. Clone and configure the application
+## ၅။ GitHub ကနေ Application ယူခြင်း
 
-Replace `YOUR_GITHUB_REPOSITORY` after the repository is published.
+Repository က Private ဖြစ်လို့ VPS မှာ GitHub authentication သို့ Deploy Key တစ်ခုလိုပါမယ်။ Authentication ပြီးရင် run ပါ။
 
 ```bash
 sudo mkdir -p /var/www/stech-billing /var/lib/stech-billing/uploads
 sudo chown -R stech:stech /var/www/stech-billing /var/lib/stech-billing
-git clone YOUR_GITHUB_REPOSITORY /var/www/stech-billing
+git clone https://github.com/stechmm/stech-cash-billing.git /var/www/stech-billing
 cd /var/www/stech-billing
 npm ci --omit=dev
 cp .env.example .env
 nano .env
 ```
 
-Use these values in `.env`:
+## ၆။ Production Environment သတ်မှတ်ခြင်း
+
+`.env` ဖိုင်ကို အောက်ပါပုံစံဖြည့်ပါ။ Password နေရာတွေမှာ တကယ့် password တွေထည့်ပါ။
 
 ```dotenv
 NODE_ENV=production
@@ -80,21 +87,23 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=stech_billing
 DB_USER=stech_app
-DB_PASSWORD=REPLACE_WITH_THE_MYSQL_PASSWORD
+DB_PASSWORD=MYSQL_PASSWORD_ထည့်ပါ
 DB_TABLE=app_state
 UPLOAD_DIR=/var/lib/stech-billing/uploads
 ADMIN_FULL_NAME=Administrator
-ADMIN_USERNAME=YOUR_ADMIN_EMAIL
-ADMIN_PASSWORD=REPLACE_WITH_A_STRONG_INITIAL_ADMIN_PASSWORD
+ADMIN_USERNAME=ADMIN_EMAIL_ထည့်ပါ
+ADMIN_PASSWORD=ခိုင်မာသော_ADMIN_PASSWORD_ထည့်ပါ
 ```
 
-Keep `.env` out of Git and restrict it:
+`.env` ထဲမှာ password တွေပါလို့ တခြား user တွေမဖတ်နိုင်အောင် permission ကန့်သတ်ပါ။ ဒီဖိုင်ကို GitHub ပေါ်မတင်ပါနဲ့။
 
 ```bash
 chmod 600 .env
 ```
 
-## 6. Start with PM2
+`ADMIN_USERNAME` နဲ့ `ADMIN_PASSWORD` ကို database အသစ်စဖန်တီးတဲ့ ပထမဆုံးအကြိမ်မှာသာ admin account ဖန်တီးဖို့သုံးပါတယ်။ Database ထဲ user ရှိပြီးသားဆိုရင် restart လုပ်တာနဲ့ account ပြောင်းမသွားပါဘူး။
+
+## ၇။ PM2 နဲ့ Application စခြင်း
 
 ```bash
 cd /var/www/stech-billing
@@ -103,18 +112,24 @@ pm2 save
 pm2 startup
 ```
 
-Run the final command printed by `pm2 startup`, then verify:
+`pm2 startup` က ထုတ်ပေးတဲ့ နောက်ဆုံး command ကို copy လုပ်ပြီး run ပါ။ ပြီးရင် app အလုပ်လုပ်မလုပ် စစ်ပါ။
 
 ```bash
 curl http://127.0.0.1:3030/api/health
 pm2 status
 ```
 
-## 7. Configure Nginx and WebSocket
+အဖြေထဲမှာ `"ok": true` နဲ့ storage mode `mysql` ဖြစ်နေရပါမယ်။
+
+## ၈။ Nginx နဲ့ WebSocket ပြင်ဆင်ခြင်း
+
+Nginx configuration ဖိုင်ဖန်တီးပါ။
 
 ```bash
 sudo nano /etc/nginx/sites-available/billing.stechmm.com
 ```
+
+အောက်ပါ configuration ထည့်ပါ။ `client_max_body_size 15M` က receipt နဲ့ voice message တင်ဖို့လိုပါတယ်။ WebSocket headers တွေက realtime chat အတွက်လိုပါတယ်။
 
 ```nginx
 server {
@@ -138,7 +153,7 @@ server {
 }
 ```
 
-Enable and test it:
+Configuration ကို enable လုပ်ပြီး အမှားရှိမရှိစစ်ပါ။
 
 ```bash
 sudo ln -s /etc/nginx/sites-available/billing.stechmm.com /etc/nginx/sites-enabled/billing.stechmm.com
@@ -146,9 +161,9 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## 8. Enable HTTPS
+## ၉။ HTTPS/SSL ဖွင့်ခြင်း
 
-Wait until the DNS record resolves to the Droplet, then run:
+`billing.stechmm.com` DNS က Droplet IP ကိုမှန်မှန်ညွှန်ပြီးမှ အောက်ပါ command တွေ run ပါ။
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
@@ -156,19 +171,29 @@ sudo certbot --nginx -d billing.stechmm.com
 sudo certbot renew --dry-run
 ```
 
-HTTPS is required for secure login cookies and microphone access in the customer app.
+HTTPS က login cookie လုံခြုံရေးနဲ့ customer Android ဖုန်းမှာ microphone အသုံးပြုခွင့်ရဖို့ မဖြစ်မနေလိုပါတယ်။
 
-## 9. Verify production
+## ၁၀။ Production စမ်းသပ်ခြင်း
 
-Open and test:
+အောက်ပါလင့်တွေကို ဖွင့်ကြည့်ပါ။
 
-- `https://billing.stechmm.com/`
-- `https://billing.stechmm.com/customer/`
-- `https://billing.stechmm.com/api/health`
+- Admin app: `https://billing.stechmm.com/`
+- Customer app: `https://billing.stechmm.com/customer/`
+- Server health: `https://billing.stechmm.com/api/health`
 
-Verify staff/customer login, realtime chat, receipt upload, voice recording, image/audio playback, and server restart recovery.
+အောက်ပါအချက်တွေကို တစ်ခုချင်းစမ်းပါ။
 
-## 10. Deploy later updates
+1. Admin နဲ့ customer login
+2. Customer နဲ့ admin realtime chat
+3. ငွေလွှဲပြေစာ image/PDF တင်ခြင်း
+4. Voice message record လုပ်ပြီးပို့ခြင်း
+5. Receipt image နဲ့ audio ပြန်ဖွင့်ခြင်း
+6. Device info, usage နဲ့ announcements ပြခြင်း
+7. VPS restart လုပ်ပြီး records မပျောက်ခြင်း
+
+## ၁၁။ နောက်ပိုင်း Update တင်ခြင်း
+
+Local က code အသစ်ကို GitHub push လုပ်ပြီးတိုင်း VPS မှာ အောက်ပါ command တွေ run ပါ။
 
 ```bash
 cd /var/www/stech-billing
@@ -178,13 +203,24 @@ pm2 restart stech-billing --update-env
 pm2 save
 ```
 
-## 11. Back up both data locations
+Database schema သို့ `.env` ပြောင်းထားရင် restart မလုပ်ခင် အသစ်လိုအပ်တာတွေကို အရင်စစ်ပါ။
 
-The database and attachments are separate. Back up both:
+## ၁၂။ Database နဲ့ Receipt/Voice ဖိုင်များ Backup လုပ်ခြင်း
+
+Application data ကို MySQL ထဲမှာသိမ်းပြီး receipt/voice files ကို upload directory ထဲမှာသိမ်းပါတယ်။ ဒါကြောင့် နှစ်ခုလုံးကို backup လုပ်ရပါမယ်။
 
 ```bash
 mysqldump -u stech_app -p stech_billing > stech_billing.sql
 tar -czf stech_uploads.tar.gz /var/lib/stech-billing/uploads
 ```
 
-Store copies away from the Droplet. A MySQL backup without the upload directory will not include receipts or voice recordings.
+Backup ဖိုင်တွေကို Droplet တစ်ခုတည်းမှာပဲမထားပါနဲ့။ အခြား cloud storage သို့ local computer မှာပါ copy တစ်ခုထားပါ။ MySQL backup တစ်ခုတည်းမှာ receipt နဲ့ voice files မပါပါဘူး။
+
+## အရေးကြီးမှတ်ချက်
+
+- `.env` နဲ့ password တွေကို GitHub မတင်ပါနဲ့။
+- MySQL port `3306` ကို Public မဖွင့်ပါနဲ့။
+- `UPLOAD_DIR` ကို application user ကရေးခွင့်ရှိရပါမယ်။
+- Realtime chat အလုပ်လုပ်ဖို့ Nginx WebSocket headers မပျက်ရပါဘူး။
+- Voice recording အလုပ်လုပ်ဖို့ HTTPS သုံးရပါမယ်။
+- Database နဲ့ upload folder နှစ်ခုလုံးကို ပုံမှန် backup လုပ်ပါ။
