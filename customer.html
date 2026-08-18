@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#125c5a">
+  <meta name="description" content="S-Tech customer data usage, announcements, and support">
+  <link rel="manifest" href="/customer-manifest.json">
+  <link rel="icon" href="/customer-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/customer.css">
+  <title>S-Tech Customer</title>
+</head>
+<body>
+  <section id="customerLogin" class="customer-login">
+    <form id="customerLoginForm" class="customer-login-card">
+      <div class="customer-brand-mark">S</div>
+      <span class="customer-kicker">S-Tech Customer</span>
+      <h1>Welcome back</h1>
+      <p>Check your data usage and contact billing support.</p>
+      <label>Username<input id="customerUsername" type="text" autocomplete="username" required></label>
+      <label>Password<input id="customerPassword" type="password" autocomplete="current-password" required></label>
+      <button type="submit">Sign In</button>
+      <div id="customerLoginError" class="customer-error" role="alert"></div>
+    </form>
+  </section>
+
+  <div id="customerApp" class="customer-app hidden">
+    <header class="customer-header">
+      <div class="customer-brand">
+        <div class="customer-brand-mark small">S</div>
+        <div><span>S-Tech Customer</span><strong id="customerHeaderName">Customer</strong></div>
+      </div>
+      <button id="customerLogoutBtn" class="customer-header-action" type="button">Sign Out</button>
+    </header>
+
+    <main class="customer-main">
+      <section id="customerHomePage" class="customer-page active">
+        <div class="customer-welcome">
+          <span id="customerMonthLabel">This month</span>
+          <h2 id="customerWelcomeName">Hello</h2>
+          <p id="customerDeviceSummary">Your service summary</p>
+        </div>
+        <section class="customer-stat-grid">
+          <article class="customer-stat usage"><span>Data Used</span><strong id="customerUsageTotal">0 TB</strong><small id="customerUsageLimit">of 5 TB</small></article>
+          <article class="customer-stat remaining"><span>Remaining</span><strong id="customerUsageRemaining">5 TB</strong><small id="customerUsageState">Safe usage</small></article>
+        </section>
+        <section class="customer-section">
+          <div class="customer-section-head"><span>Device Information</span><strong id="customerDeviceId">-</strong></div>
+          <dl class="device-info-grid">
+            <div><dt>Region</dt><dd id="customerDeviceRegion">-</dd></div>
+            <div><dt>Serial Number</dt><dd id="customerDeviceSerial">-</dd></div>
+            <div><dt>Kit Number</dt><dd id="customerDeviceKit">-</dd></div>
+            <div><dt>Plan</dt><dd id="customerDevicePlan">-</dd></div>
+            <div class="wide"><dt>Service Address</dt><dd id="customerDeviceAddress">-</dd></div>
+          </dl>
+        </section>
+        <section class="customer-section">
+          <div class="customer-section-head"><span>Latest Notice</span></div>
+          <div id="customerLatestAnnouncement" class="customer-empty">No announcements yet.</div>
+        </section>
+      </section>
+
+      <section id="customerUsagePage" class="customer-page">
+        <section class="customer-section usage-overview">
+          <div class="customer-section-head"><span>Monthly Data Usage</span><strong id="customerUsageMonth">Month</strong></div>
+          <div class="usage-progress"><span id="customerUsageProgress"></span></div>
+          <div class="usage-progress-labels"><strong id="customerUsageProgressText">0 / 5 TB</strong><span id="customerLastSync">No entries</span></div>
+        </section>
+        <section class="customer-section">
+          <div class="customer-section-head"><span>Daily History</span></div>
+          <div id="customerDailyUsageList" class="customer-list"></div>
+        </section>
+      </section>
+
+      <section id="customerNoticesPage" class="customer-page">
+        <section class="customer-section">
+          <div class="customer-section-head"><span>Announcements</span></div>
+          <div id="customerAnnouncementList" class="customer-list"></div>
+        </section>
+      </section>
+
+      <section id="customerSupportPage" class="customer-page support-page">
+        <div class="customer-chat-head"><span>Billing &amp; Support</span><small>Chat directly with S-Tech</small></div>
+        <div id="customerMessageList" class="customer-messages"></div>
+        <form id="customerMessageForm" class="customer-message-form">
+          <div id="customerAttachmentPreview" class="chat-attachment-preview hidden"></div>
+          <div class="chat-composer">
+            <input id="customerReceiptInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+            <button id="customerReceiptBtn" class="composer-tool" type="button">Receipt</button>
+            <button id="customerVoiceBtn" class="composer-tool" type="button">Voice</button>
+            <input id="customerMessageInput" type="text" maxlength="2000" placeholder="Write a message..." autocomplete="off">
+            <button class="composer-send" type="submit">Send</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <nav class="customer-bottom-nav" aria-label="Customer navigation">
+      <button type="button" data-customer-page="customerHomePage" class="active">Home</button>
+      <button type="button" data-customer-page="customerUsagePage">Usage</button>
+      <button type="button" data-customer-page="customerNoticesPage">Notices</button>
+      <button type="button" data-customer-page="customerSupportPage">Support <span id="customerNavUnread" class="nav-badge hidden">0</span></button>
+    </nav>
+  </div>
+  <script src="/customer.js"></script>
+</body>
+</html>

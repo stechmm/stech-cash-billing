@@ -1,0 +1,13 @@
+{
+  "name": "S-Tech Customer",
+  "short_name": "S-Tech",
+  "description": "Data usage, announcements, billing, and customer support",
+  "start_url": "/customer/",
+  "scope": "/customer/",
+  "display": "standalone",
+  "background_color": "#eef5f4",
+  "theme_color": "#125c5a",
+  "icons": [
+    { "src": "/customer-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

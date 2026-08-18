@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>S-Tech Cash In/Out</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <section id="loginScreen" class="login-screen">
+      <div class="login-card">
+        <span class="summary-kicker">Secure Access</span>
+        <h2>Sign in to S-Tech Billing</h2>
+        <p>Shared local database for cash ledger, bill tracking, and device records.</p>
+        <form id="loginForm" class="login-form">
+          <label>
+            Username
+            <input id="loginUsername" type="text" placeholder="Enter username" required>
+          </label>
+          <label>
+            Password
+            <input id="loginPassword" type="password" placeholder="Password" required>
+          </label>
+          <button type="submit" class="primary login-btn">Sign In</button>
+          <p id="loginMessage" class="login-message"></p>
+        </form>
+      </div>
+    </section>
+
+    <main id="appShell" class="app-shell hidden">
+      <header class="app-header">
+        <div class="brand-lockup">
+          <span class="brand-mark">S</span>
+          <div>
+            <p class="eyebrow">Cash Operations</p>
+            <h1>S-Tech Billing</h1>
+          </div>
+        </div>
+        <div class="header-actions">
+          <nav class="app-menu" aria-label="Main menu">
+            <button class="menu-item active" type="button" data-page="dashboardPage">Dashboard</button>
+            <button class="menu-item" type="button" data-page="cashPage">Cash Ledger</button>
+            <button class="menu-item" type="button" data-page="billPage">Bill Status</button>
+            <button class="menu-item" type="button" data-page="devicePage">Device DB</button>
+            <button class="menu-item" type="button" data-page="usagePage">Data Usage</button>
+            <button class="menu-item" type="button" data-page="supportPage">Customer Support</button>
+          </nav>
+          <div class="user-chip">
+            <strong id="currentUserName">User</strong>
+            <span id="currentUserRole">role</span>
+          </div>
+          <details class="utility-menu">
+            <summary class="utility-toggle" aria-label="Open tools menu">
+              <span></span>
+              <span></span>
+              <span></span>
+            </summary>
+            <div class="utility-panel">
+              <button id="adminPanelBtn" class="utility-item hidden" type="button">Admin Panel</button>
+              <button id="printBtn" class="utility-item" type="button">Print</button>
+              <button id="exportJsonBtn" class="utility-item" type="button">Backup</button>
+              <button id="openColorSettingsBtn" class="utility-item" type="button">Color Settings</button>
+              <label class="utility-item file-item">
+                Restore
+                <input id="importJsonInput" type="file" accept="application/json">
+              </label>
+              <button id="logoutBtn" class="utility-item" type="button">Logout</button>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <section id="dashboardPage" class="page-view active">
+        <section class="dashboard-hero">
+          <div class="hero-copy">
+            <span class="summary-kicker">Alert Overview</span>
+            <h2>Machine Billing Dashboard</h2>
+            <p>Suspension warnings, urgent follow-ups, and inactive machines are all grouped here so you can scan them first.</p>
+          </div>
+          <div class="hero-badges">
+            <div class="hero-pill soft-green">
+              <span>Bill Sent</span>
+              <strong id="dashSentCount">0</strong>
+            </div>
+            <div class="hero-pill soft-blue">
+              <span>Money Received</span>
+              <strong id="dashPaidCount">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="alert-grid">
+          <div class="bill-card bill-warn">
+            <span>7 days left</span>
+            <strong id="alertSevenCount">0</strong>
+            <small>Suspension warning</small>
+          </div>
+          <div class="bill-card bill-danger">
+            <span>1 day left</span>
+            <strong id="alertOneCount">0</strong>
+            <small>Urgent warning</small>
+          </div>
+          <div class="bill-card bill-red">
+            <span>Suspended</span>
+            <strong id="alertSuspendedCount">0</strong>
+            <small>Cut off reached</small>
+          </div>
+          <div class="bill-card bill-gray">
+            <span>Inactive</span>
+            <strong id="dashInactiveCount">0</strong>
+            <small>Machine off / no more bill</small>
+          </div>
+        </section>
+
+        <section class="dashboard-panels">
+          <section class="attention-panel">
+            <div class="section-heading">
+              <div>
+                <span>Need Attention</span>
+                <strong>Upcoming and suspended machines</strong>
+              </div>
+            </div>
+            <div id="alertList" class="alert-list"></div>
+          </section>
+
+          <section class="attention-panel calm-panel">
+            <div class="section-heading">
+              <div>
+                <span>Status Guide</span>
+                <strong>Color meaning</strong>
+              </div>
+            </div>
+            <div class="guide-list">
+              <div class="guide-item"><span class="legend-dot warn"></span><strong>7 days left</strong><p>Bill is close to suspension.</p></div>
+              <div class="guide-item"><span class="legend-dot danger"></span><strong>1 day left</strong><p>Needs action today.</p></div>
+              <div class="guide-item"><span class="legend-dot red"></span><strong>Suspended</strong><p>Cut off date has reached or passed.</p></div>
+              <div class="guide-item"><span class="legend-dot gray"></span><strong>Inactive</strong><p>Machine off or no more billing.</p></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="usage-alert-panel">
+          <div class="ledger-topline">
+            <div>
+              <span class="summary-kicker">Usage Alerts</span>
+              <strong>Machines near 5 TB</strong>
+            </div>
+            <div class="usage-inline-stats">
+              <span>Near Limit <strong id="usageNearCount">0</strong></span>
+              <span>Exceeded <strong id="usageCriticalCount">0</strong></span>
+            </div>
+          </div>
+          <div id="usageAlertList" class="usage-alert-list"></div>
+        </section>
+      </section>
+
+      <section id="cashPage" class="page-view">
+        <section class="summary-grid" aria-label="Monthly summary">
+          <div class="summary-panel card-month">
+            <span class="summary-kicker">Active Month</span>
+            <div class="summary-title">
+              <strong id="summaryMonth">July 2026</strong>
+            </div>
+            <label class="opening-control">
+              Opening Cash
+              <input id="openingCashInput" type="number" step="1" min="0">
+            </label>
+          </div>
+          <div class="metric balance card-balance">
+            <span>Closing Cash</span>
+            <strong id="closingCash">0</strong>
+          </div>
+          <div class="metric income card-income">
+            <span>Total In</span>
+            <strong id="totalIn">0</strong>
+          </div>
+          <div class="metric expense card-expense">
+            <span>Total Out</span>
+            <strong id="totalOut">0</strong>
+          </div>
+        </section>
+
+        <section class="workspace-grid">
+          <section class="ledger-wrap" aria-label="Cash in out sheet">
+            <div class="ledger-topline">
+              <div>
+                <span class="summary-kicker">Transaction Ledger</span>
+                <strong>Cash In / Cash Out</strong>
+              </div>
+              <button id="openEntryDialogBtn" class="entry-toggle" type="button">Add Record</button>
+            </div>
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th class="number-col">#</th>
+                  <th>Date</th>
+                  <th>Descriptions</th>
+                  <th>In</th>
+                  <th>Out</th>
+                  <th>Status</th>
+                  <th class="action-col admin-action-col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="ledgerBody"></tbody>
+            </table>
+          </section>
+
+          <section class="sheet-tools" aria-label="Sheet tools">
+            <div class="section-heading">
+              <span>Ledger Tools</span>
+              <strong>Profit calculator</strong>
+            </div>
+            <section class="mini-calculator" aria-label="Profit calculator">
+              <div class="calc-row">
+                <label for="rateInput">$$ rate</label>
+                <input id="rateInput" type="number" min="0" step="1" value="3340">
+              </div>
+              <div class="calc-row">
+                <label for="costInput">Cost</label>
+                <input id="costInput" type="number" min="0" step="1" value="65">
+              </div>
+              <div class="calc-row">
+                <label for="priceInput">Price</label>
+                <input id="priceInput" type="number" min="0" step="1" value="480000">
+              </div>
+              <div class="calc-row result">
+                <span>Total</span>
+                <output id="calcTotal">217,100</output>
+              </div>
+              <div class="calc-row profit">
+                <span>Profit</span>
+                <output id="calcProfit">262,900</output>
+              </div>
+            </section>
+          </section>
+        </section>
+      </section>
+
+      <section id="billPage" class="page-view">
+        <section class="bill-dashboard">
+          <div class="bill-card bill-green">
+            <span>Bill sent</span>
+            <strong id="billSentCount">0</strong>
+            <small>Money not received</small>
+          </div>
+          <div class="bill-card bill-blue">
+            <span>Money received</span>
+            <strong id="billPaidCount">0</strong>
+            <small>Completed</small>
+          </div>
+          <div class="bill-card bill-warn">
+            <span>7 days left</span>
+            <strong id="billPendingCount">0</strong>
+            <small>Suspension warning</small>
+          </div>
+          <div class="bill-card bill-danger">
+            <span>1 day left</span>
+            <strong id="billInactiveCount">0</strong>
+            <small>Urgent follow-up</small>
+          </div>
+          <div class="bill-card bill-red">
+            <span>Suspended</span>
+            <strong id="billSuspendedCount">0</strong>
+            <small>Cut off reached</small>
+          </div>
+        </section>
+
+        <section class="bill-layout">
+          <section class="bill-panel">
+            <div class="ledger-topline">
+              <div>
+                <span class="summary-kicker">Bill Status</span>
+                <strong>Machine Bill Tracker</strong>
+              </div>
+              <button id="openBillDialogBtn" class="entry-toggle" type="button">Add Machine</button>
+            </div>
+            <div class="bill-legend">
+              <span class="legend-dot green"></span> Bill sent / unpaid
+              <span class="legend-dot blue"></span> Money received
+              <span class="legend-dot gray"></span> Inactive
+              <span class="legend-dot warn"></span> 7 days left
+              <span class="legend-dot danger"></span> 1 day left
+              <span class="legend-dot red"></span> Suspended
+            </div>
+            <table class="bill-table">
+              <thead>
+                <tr>
+                  <th>Machine</th>
+                  <th>Submitted</th>
+                  <th>Billing Due Date</th>
+                  <th>Suspended Date</th>
+                  <th>Bill Type</th>
+                  <th>Status</th>
+                  <th>Alert</th>
+                  <th>Customer</th>
+                  <th class="admin-action-col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="billBody"></tbody>
+            </table>
+          </section>
+        </section>
+      </section>
+
+      <section id="devicePage" class="page-view">
+        <section class="device-dashboard">
+          <div class="bill-card bill-blue">
+            <span>Total Devices</span>
+            <strong id="deviceCount">0</strong>
+            <small>All recorded devices</small>
+          </div>
+          <div class="bill-card bill-green">
+            <span>Normal Plan</span>
+            <strong id="deviceNormalCount">0</strong>
+            <small>Standard billing</small>
+          </div>
+          <div class="bill-card bill-amber">
+            <span>Discount Plan</span>
+            <strong id="deviceDiscountCount">0</strong>
+            <small>Reduced billing</small>
+          </div>
+          <div class="bill-card bill-gray">
+            <span>Regions</span>
+            <strong id="deviceRegionCount">0</strong>
+            <small>Unique service areas</small>
+          </div>
+        </section>
+
+        <section class="device-panel">
+          <div class="ledger-topline">
+            <div>
+              <span class="summary-kicker">Device Database</span>
+              <strong>Registered Device Records</strong>
+            </div>
+            <div class="header-tools">
+              <button id="exportDevicesBtn" class="secondary-btn" type="button">Export Devices</button>
+              <button id="openDeviceDialogBtn" class="entry-toggle" type="button">Add Device</button>
+            </div>
+          </div>
+          <table class="device-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Device ID</th>
+                <th>Serial Number</th>
+                <th>Kit Number</th>
+                <th>Service Address</th>
+                <th>Region</th>
+                <th>Plan</th>
+                <th class="admin-action-col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="deviceBody"></tbody>
+          </table>
+        </section>
+      </section>
+
+      <section id="usagePage" class="page-view">
+        <section class="bill-dashboard usage-dashboard">
+          <div class="bill-card bill-blue">
+            <span>Total Tracked</span>
+            <strong id="usageTrackedCount">0</strong>
+            <small>Usage records this month</small>
+          </div>
+          <div class="bill-card bill-green">
+            <span>Safe Usage</span>
+            <strong id="usageSafeCount">0</strong>
+            <small>Below warning threshold</small>
+          </div>
+          <div class="bill-card bill-warn">
+            <span>Near 5 TB</span>
+            <strong id="usageWarnCount">0</strong>
+            <small>4.5 TB to 4.99 TB</small>
+          </div>
+          <div class="bill-card bill-red">
+            <span>Exceeded</span>
+            <strong id="usageExceededCount">0</strong>
+            <small>5 TB or more</small>
+          </div>
+        </section>
+
+        <section class="device-panel">
+          <div class="ledger-topline">
+            <div>
+              <span class="summary-kicker">Monthly Usage</span>
+              <strong>Daily Data Usage Tracker</strong>
+            </div>
+            <button id="openUsageDialogBtn" class="entry-toggle" type="button">Add Daily Usage</button>
+          </div>
+          <table class="device-table usage-table">
+            <thead>
+              <tr>
+                <th>Machine</th>
+                <th>Customer</th>
+                <th>Bill Type</th>
+                <th>Today</th>
+                <th>Last Entry</th>
+                <th>Month Total</th>
+                <th>Remaining</th>
+                <th>Alert</th>
+                <th class="admin-action-col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="usageBody"></tbody>
+          </table>
+        </section>
+      </section>
+
+      <section id="supportPage" class="page-view">
+        <section class="support-workspace">
+          <aside class="support-conversations">
+            <div class="support-panel-head">
+              <div><span class="summary-kicker">Inbox</span><strong>Customer Conversations</strong></div>
+              <span id="supportUnreadTotal" class="support-count">0</span>
+            </div>
+            <div id="supportConversationList" class="support-conversation-list"></div>
+          </aside>
+          <section class="support-thread">
+            <div class="support-panel-head">
+              <div><span id="supportThreadUserId" class="summary-kicker">Select customer</span><strong id="supportThreadName">Billing &amp; Support</strong></div>
+            </div>
+            <div id="supportMessageList" class="support-message-list"></div>
+            <form id="supportMessageForm" class="support-message-form">
+              <div id="supportAttachmentPreview" class="chat-attachment-preview hidden"></div>
+              <div class="chat-composer">
+                <input id="supportReceiptInput" class="hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf">
+                <button id="supportReceiptBtn" class="composer-tool" type="button">Receipt</button>
+                <button id="supportVoiceBtn" class="composer-tool" type="button">Voice</button>
+                <input id="supportMessageInput" type="text" maxlength="2000" placeholder="Reply to customer..." autocomplete="off">
+                <button class="composer-send" type="submit">Send</button>
+              </div>
+            </form>
+          </section>
+        </section>
+
+        <section class="device-panel announcement-admin-panel">
+          <div class="ledger-topline">
+            <div><span class="summary-kicker">Customer App</span><strong>Announcements</strong></div>
+            <button id="openAnnouncementDialogBtn" class="entry-toggle" type="button">New Announcement</button>
+          </div>
+          <div id="adminAnnouncementList" class="admin-announcement-list"></div>
+        </section>
+      </section>
+
+      <section id="adminPage" class="page-view">
+        <section class="device-dashboard">
+          <div class="bill-card bill-blue">
+            <span>Total Users</span>
+            <strong id="userCount">0</strong>
+            <small>All system accounts</small>
+          </div>
+          <div class="bill-card bill-green">
+            <span>Admins</span>
+            <strong id="adminCount">0</strong>
+            <small>Full access</small>
+          </div>
+          <div class="bill-card bill-amber">
+            <span>Standard Users</span>
+            <strong id="standardUserCount">0</strong>
+            <small>Restricted tabs</small>
+          </div>
+          <div class="bill-card bill-gray">
+            <span>Visible Tabs</span>
+            <strong id="tabOptionCount">7</strong>
+            <small>Permission checklist</small>
+          </div>
+        </section>
+
+        <section class="device-panel">
+          <div class="ledger-topline">
+            <div>
+              <span class="summary-kicker">Admin Panel</span>
+              <strong>User Accounts and Permissions</strong>
+            </div>
+            <button id="openUserDialogBtn" class="entry-toggle" type="button">Create User</button>
+          </div>
+          <table class="device-table user-table">
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Allowed Tabs</th>
+                <th class="admin-action-col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="userBody"></tbody>
+          </table>
+        </section>
+
+        <section class="device-panel">
+          <div class="ledger-topline">
+            <div>
+              <span class="summary-kicker">Customer App</span>
+              <strong>Customer Login Accounts</strong>
+            </div>
+            <button id="openCustomerAccountDialogBtn" class="entry-toggle" type="button">Create Customer</button>
+          </div>
+          <table class="device-table customer-account-table">
+            <thead><tr><th>Name</th><th>Username</th><th>User ID</th><th>Status</th><th>Customer App</th><th class="admin-action-col">Action</th></tr></thead>
+            <tbody id="customerAccountBody"></tbody>
+          </table>
+        </section>
+      </section>
+    </main>
+
+    <div id="entryDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="entryDialogTitle">
+      <div class="modal-panel entry-modal">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Cash Movement</span>
+            <strong id="entryDialogTitle">Add Record</strong>
+          </div>
+          <button id="closeEntryDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="entryForm" class="dialog-form entry-form">
+          <input type="hidden" id="entryId">
+          <label>
+            Date
+            <input id="dateInput" type="date" required>
+          </label>
+          <div class="entry-calculator-command">
+            <button id="openEntryCalculatorBtn" type="button">Calculate Profit</button>
+          </div>
+          <label class="wide">
+            Descriptions
+            <input id="descriptionInput" type="text" placeholder="Billing details, transfer note, cash memo" required>
+          </label>
+          <input id="creditInput" type="checkbox" class="hidden" tabindex="-1" aria-hidden="true">
+          <div id="manualAmountFields" class="entry-manual-fields wide">
+            <label>
+              In
+              <input id="inInput" type="number" min="0" step="1" placeholder="0">
+            </label>
+            <label>
+              Out
+              <input id="outInput" type="number" min="0" step="1" placeholder="0">
+            </label>
+          </div>
+          <section id="entryCalculatorPanel" class="entry-calculator-panel wide hidden">
+            <div class="entry-calculator-head">
+              <strong>Profit Calculation</strong>
+              <button id="closeEntryCalculatorBtn" type="button" aria-label="Close profit calculator">x</button>
+            </div>
+            <div class="entry-calculator-fields">
+              <label>
+                $ Rate
+                <input id="entryRateInput" type="number" min="0" step="1" placeholder="3340" disabled>
+              </label>
+              <label>
+                Cost
+                <input id="entryCostInput" type="number" min="0" step="0.01" placeholder="65" disabled>
+              </label>
+              <label>
+                Price
+                <input id="entryPriceInput" type="number" min="0" step="1" placeholder="480000" disabled>
+              </label>
+            </div>
+            <div class="entry-calculator-summary">
+              <div class="entry-calc-result">
+                <span>Total Cost</span>
+                <output id="entryTotalOutput">0</output>
+              </div>
+              <div class="entry-calc-result profit-result">
+                <span>Profit</span>
+                <output id="entryProfitOutput">0</output>
+              </div>
+            </div>
+          </section>
+          <div class="form-actions">
+            <button type="submit" id="saveBtn" class="primary">Add Record</button>
+            <button type="button" id="resetBtn">Clear</button>
+            <button type="button" id="cancelEntryBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="billDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="billDialogTitle">
+      <div class="modal-panel wide-modal">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Machine Bill</span>
+            <strong id="billDialogTitle">Add Machine</strong>
+          </div>
+          <button id="closeBillDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="billForm" class="dialog-form bill-form">
+          <input type="hidden" id="billId">
+          <label>
+            Machine
+            <input id="machineInput" type="text" placeholder="F39" required>
+          </label>
+          <label>
+            Customer
+            <input id="customerInput" type="text" placeholder="Aung Min">
+          </label>
+          <label>
+            Submitted Date
+            <input id="submittedInput" type="date">
+          </label>
+          <label>
+            Billing Due Date
+            <input id="billDateInput" type="date">
+          </label>
+          <label>
+            Suspended Date
+            <input id="cutOffInput" type="date" readonly>
+          </label>
+          <label>
+            Bill Type
+            <select id="billTypeInput">
+              <option value="jp/normal">JP / Normal</option>
+              <option value="jp/discount">JP / Discount</option>
+              <option value="php/normal">PHP / Normal</option>
+              <option value="php/discount">PHP / Discount</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select id="billStatusInput">
+              <option value="sent_unpaid">Active billing</option>
+              <option value="inactive">Machine off / no more bill</option>
+            </select>
+          </label>
+          <div class="form-actions">
+            <button type="submit" id="saveBillBtn" class="primary">Save Machine</button>
+            <button type="button" id="resetBillBtn">Clear</button>
+            <button type="button" id="cancelBillBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="deviceDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="deviceDialogTitle">
+      <div class="modal-panel wide-modal">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Device Database</span>
+            <strong id="deviceDialogTitle">Add Device</strong>
+          </div>
+          <button id="closeDeviceDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="deviceForm" class="dialog-form device-form">
+          <input type="hidden" id="deviceRecordId">
+          <label>
+            Name
+            <input id="deviceNameInput" type="text" placeholder="Aung Min" required>
+          </label>
+          <label>
+            Email
+            <input id="deviceEmailInput" type="email" placeholder="example@email.com">
+          </label>
+          <label>
+            Device ID
+            <input id="deviceIdInput" type="text" placeholder="DEV-001" required>
+          </label>
+          <label>
+            Serial Number
+            <input id="serialNumberInput" type="text" placeholder="SN-123456">
+          </label>
+          <label>
+            Kit Number
+            <input id="kitNumberInput" type="text" placeholder="KIT-001">
+          </label>
+          <label>
+            Region
+            <input id="regionInput" type="text" placeholder="Yangon">
+          </label>
+          <label>
+            Normal / Discount Status
+            <select id="planStatusInput">
+              <option value="normal">Normal</option>
+              <option value="discount">Discount</option>
+            </select>
+          </label>
+          <label class="wide">
+            Service Address
+            <input id="serviceAddressInput" type="text" placeholder="No. 12, Main Road, Township">
+          </label>
+          <div class="form-actions">
+            <button type="submit" id="saveDeviceBtn" class="primary">Save Device</button>
+            <button type="button" id="resetDeviceBtn">Clear</button>
+            <button type="button" id="cancelDeviceBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="usageDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="usageDialogTitle">
+      <div class="modal-panel wide-modal">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Daily Usage</span>
+            <strong id="usageDialogTitle">Add Daily Usage</strong>
+          </div>
+          <button id="closeUsageDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="usageForm" class="dialog-form usage-form">
+          <input type="hidden" id="usageId">
+          <label>
+            User ID
+            <input id="usageMachineInput" type="text" placeholder="F05" required>
+          </label>
+          <label>
+            Name
+            <input id="usageCustomerInput" type="text" placeholder="Name">
+          </label>
+          <label>
+            Bill Type
+            <input id="usageBillTypeInput" type="text" placeholder="jp/normal">
+          </label>
+          <label>
+            Limit (TB)
+            <input id="usageLimitInput" type="number" min="1" step="0.1" value="5">
+          </label>
+          <label>
+            Usage Date
+            <input id="usageDateInput" type="date" required>
+          </label>
+          <label>
+            Daily Usage (TB)
+            <input id="usageDailyInput" type="number" min="0" step="0.001" value="0" required>
+          </label>
+          <label class="wide">
+            Notes
+            <input id="usageNotesInput" type="text" placeholder="Optional note">
+          </label>
+          <div class="form-actions">
+            <button type="submit" id="saveUsageBtn" class="primary">Save Usage</button>
+            <button type="button" id="resetUsageBtn">Clear</button>
+            <button type="button" id="cancelUsageBtn">Cancel</button>
+          </div>
+          <section class="usage-history wide" aria-label="Daily usage history">
+            <div class="usage-history-head">
+              <strong>Daily History</strong>
+              <span id="usageHistoryTotal">0.00 TB this month</span>
+            </div>
+            <div id="usageDailyHistory" class="usage-history-list"></div>
+          </section>
+        </form>
+      </div>
+    </div>
+
+    <div id="userDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="userDialogTitle">
+      <div class="modal-panel wide-modal">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Admin Panel</span>
+            <strong id="userDialogTitle">Create User</strong>
+          </div>
+          <button id="closeUserDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="userForm" class="dialog-form user-form">
+          <input type="hidden" id="userRecordId">
+          <label>
+            Full Name
+            <input id="userFullNameInput" type="text" placeholder="Mg Mg" required>
+          </label>
+          <label>
+            Username
+            <input id="userUsernameInput" type="text" placeholder="mgmg" required>
+          </label>
+          <label>
+            Password
+            <input id="userPasswordInput" type="password" placeholder="Leave blank to keep current password">
+          </label>
+          <label>
+            Role
+            <select id="userRoleInput">
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+          <div class="wide permission-box">
+            <span class="permission-title">Visible Tabs</span>
+            <div class="permission-grid">
+              <label class="check-item"><input type="checkbox" value="dashboardPage"> Dashboard</label>
+              <label class="check-item"><input type="checkbox" value="cashPage"> Cash Ledger</label>
+              <label class="check-item"><input type="checkbox" value="billPage"> Bill Status</label>
+              <label class="check-item"><input type="checkbox" value="devicePage"> Device DB</label>
+              <label class="check-item"><input type="checkbox" value="usagePage"> Data Usage</label>
+              <label class="check-item"><input type="checkbox" value="supportPage"> Customer Support</label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="saveUserBtn" class="primary">Save User</button>
+            <button type="button" id="resetUserBtn">Clear</button>
+            <button type="button" id="cancelUserBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="customerAccountDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="customerAccountDialogTitle">
+      <div class="modal-panel wide-modal">
+        <div class="modal-head">
+          <div><span class="summary-kicker">Customer App</span><strong id="customerAccountDialogTitle">Create Customer Account</strong></div>
+          <button id="closeCustomerAccountDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="customerAccountForm" class="dialog-form customer-account-form">
+          <input type="hidden" id="customerAccountId">
+          <label>Name<input id="customerAccountName" type="text" placeholder="Customer name" required></label>
+          <label>Username<input id="customerAccountUsername" type="text" placeholder="customer01" required></label>
+          <label>User ID<input id="customerAccountDeviceId" type="text" placeholder="F05" required></label>
+          <label>Password<input id="customerAccountPassword" type="password" placeholder="Required for new account"></label>
+          <label>Status<select id="customerAccountStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+          <div class="customer-app-link"><span>Customer App</span><strong>/customer/</strong></div>
+          <div class="form-actions">
+            <button id="saveCustomerAccountBtn" type="submit" class="primary">Save Customer</button>
+            <button id="resetCustomerAccountBtn" type="button">Clear</button>
+            <button id="cancelCustomerAccountBtn" type="button">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="announcementDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="announcementDialogTitle">
+      <div class="modal-panel wide-modal">
+        <div class="modal-head">
+          <div><span class="summary-kicker">Customer App</span><strong id="announcementDialogTitle">New Announcement</strong></div>
+          <button id="closeAnnouncementDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="announcementForm" class="dialog-form announcement-form">
+          <input type="hidden" id="announcementId">
+          <label>Title<input id="announcementTitle" type="text" maxlength="120" placeholder="Announcement title" required></label>
+          <label>Type<select id="announcementType"><option value="general">General</option><option value="billing">Billing</option><option value="maintenance">Maintenance</option></select></label>
+          <label class="wide">Message<textarea id="announcementMessage" maxlength="4000" placeholder="Write announcement..." required></textarea></label>
+          <label class="check-item wide"><input id="announcementActive" type="checkbox" checked> Visible to customers</label>
+          <div class="form-actions">
+            <button id="saveAnnouncementBtn" type="submit" class="primary">Publish</button>
+            <button id="resetAnnouncementBtn" type="button">Clear</button>
+            <button id="cancelAnnouncementBtn" type="button">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="colorDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="colorDialogTitle">
+      <div class="modal-panel">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Local Settings</span>
+            <strong id="colorDialogTitle">Billing Colors</strong>
+          </div>
+          <button id="closeColorDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+        <form id="colorForm" class="dialog-form color-form">
+          <label>
+            Bill sent / unpaid
+            <input id="colorUnpaidInput" type="color" value="#00d83d">
+          </label>
+          <label>
+            Money received
+            <input id="colorPaidInput" type="color" value="#4b86e8">
+          </label>
+          <label>
+            7 days left
+            <input id="colorWarnInput" type="color" value="#facc15">
+          </label>
+          <label>
+            1 day left
+            <input id="colorDangerInput" type="color" value="#fb7185">
+          </label>
+          <label>
+            Suspended
+            <input id="colorSuspendedInput" type="color" value="#dc2626">
+          </label>
+          <label>
+            Inactive
+            <input id="colorInactiveInput" type="color" value="#6b7280">
+          </label>
+          <div class="form-actions">
+            <button type="submit" id="saveColorBtn" class="primary">Save Colors</button>
+            <button type="button" id="resetColorBtn">Default</button>
+            <button type="button" id="cancelColorBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <template id="rowTemplate">
+      <tr>
+        <td class="row-number"></td>
+        <td class="date-cell"></td>
+        <td class="description-cell"></td>
+        <td class="money in-cell"></td>
+        <td class="money out-cell"></td>
+        <td class="money status-cell"></td>
+        <td class="row-actions">
+          <button type="button" class="edit-row" title="Edit row">Edit</button>
+          <button type="button" class="delete-row danger" title="Delete row">Delete</button>
+        </td>
+      </tr>
+    </template>
+
+    <template id="billRowTemplate">
+      <tr>
+        <td class="machine-cell"></td>
+        <td class="submitted-cell"></td>
+        <td class="bill-date-cell"></td>
+        <td class="cut-off-cell"></td>
+        <td class="bill-type-cell"></td>
+        <td class="bill-status-cell"></td>
+        <td class="bill-alert-cell"></td>
+        <td class="customer-cell"></td>
+        <td class="row-actions">
+          <details class="action-menu">
+            <summary title="Actions">Actions</summary>
+            <div class="action-panel">
+              <button type="button" class="edit-bill" title="Edit bill">Edit</button>
+              <button type="button" class="delete-bill danger" title="Delete bill">Delete</button>
+            </div>
+          </details>
+        </td>
+      </tr>
+    </template>
+
+    <template id="deviceRowTemplate">
+      <tr>
+        <td class="device-no-cell"></td>
+        <td class="device-name-cell"></td>
+        <td class="device-email-cell"></td>
+        <td class="device-id-cell"></td>
+        <td class="device-serial-cell"></td>
+        <td class="device-kit-cell"></td>
+        <td class="device-address-cell"></td>
+        <td class="device-region-cell"></td>
+        <td class="device-plan-cell"></td>
+        <td class="row-actions">
+          <button type="button" class="edit-device" title="Edit device">Edit</button>
+          <button type="button" class="delete-device danger" title="Delete device">Delete</button>
+        </td>
+      </tr>
+    </template>
+
+    <template id="usageRowTemplate">
+      <tr>
+        <td class="usage-machine-cell"></td>
+        <td class="usage-customer-cell"></td>
+        <td class="usage-billtype-cell"></td>
+        <td class="usage-today-cell"></td>
+        <td class="usage-last-cell"></td>
+        <td class="usage-total-cell"></td>
+        <td class="usage-remaining-cell"></td>
+        <td class="usage-alert-cell"></td>
+        <td class="row-actions">
+          <button type="button" class="edit-usage" title="Manage daily usage">Manage</button>
+          <button type="button" class="delete-usage danger" title="Delete usage">Delete</button>
+        </td>
+      </tr>
+    </template>
+
+    <template id="userRowTemplate">
+      <tr>
+        <td class="user-fullname-cell"></td>
+        <td class="user-username-cell"></td>
+        <td class="user-role-cell"></td>
+        <td class="user-tabs-cell"></td>
+        <td class="row-actions">
+          <button type="button" class="edit-user" title="Edit user">Edit</button>
+          <button type="button" class="delete-user danger" title="Delete user">Delete</button>
+        </td>
+      </tr>
+    </template>
+
+    <template id="customerAccountRowTemplate">
+      <tr>
+        <td class="customer-account-name"></td><td class="customer-account-username"></td><td class="customer-account-device"></td>
+        <td class="customer-account-status"></td><td><a class="customer-account-link" href="/customer/" target="_blank" rel="noopener">Open</a></td>
+        <td class="row-actions"><button type="button" class="edit-customer-account">Edit</button><button type="button" class="delete-customer-account danger">Delete</button></td>
+      </tr>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
