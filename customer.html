@@ -7,6 +7,9 @@
   <meta name="description" content="S-Tech customer data usage, announcements, and support">
   <link rel="manifest" href="/customer-manifest.json">
   <link rel="icon" href="/customer-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/customer.css">
   <title>S-Tech Customer</title>
 </head>
@@ -61,11 +64,53 @@
       </section>
 
       <section id="customerUsagePage" class="customer-page">
-        <section class="customer-section usage-overview">
-          <div class="customer-section-head"><span>Monthly Data Usage</span><strong id="customerUsageMonth">Month</strong></div>
-          <div class="usage-progress"><span id="customerUsageProgress"></span></div>
-          <div class="usage-progress-labels"><strong id="customerUsageProgressText">0 / 5 TB</strong><span id="customerLastSync">No entries</span></div>
+        <!-- Customer Starlink Visualizer -->
+        <section class="starlink-card starlink-customer-card" id="customerStarlinkVisualizer">
+          <div class="starlink-header">
+            <div class="starlink-main-stat">
+              <span class="starlink-label">Total data usage</span>
+              <div class="starlink-stat-row">
+                <strong id="customerVizTotal" class="starlink-total-number">0 GB</strong>
+                <span id="customerVizBadge" class="starlink-machine-badge">Device</span>
+              </div>
+            </div>
+
+            <div class="starlink-controls">
+              <div class="starlink-period-tabs" id="customerVizPeriodTabs">
+                <button type="button" class="customer-viz-tab active" data-period="daily">Daily</button>
+                <button type="button" class="customer-viz-tab" data-period="monthly">Monthly</button>
+                <button type="button" class="customer-viz-tab" data-period="yearly">Yearly</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="starlink-cycle-nav" id="customerCycleNav"></div>
+
+          <div class="starlink-chart-wrapper">
+            <div class="starlink-chart-legend">
+              <div class="legend-item">
+                <span class="legend-dash"></span>
+                <strong id="customerVizPlanLabel">Roam Data</strong>
+              </div>
+              <div class="legend-stat">
+                <strong id="customerVizSubTotal">0 GB</strong>
+                <span id="customerVizLimitLabel" class="legend-limit">Unlimited</span>
+              </div>
+            </div>
+
+            <div class="starlink-chart-container" id="customerChartContainer">
+              <svg id="customerChartSvg" class="starlink-chart-svg" preserveAspectRatio="none" viewBox="0 0 800 240"></svg>
+              <div id="customerChartTooltip" class="starlink-tooltip hidden"></div>
+            </div>
+
+            <div class="starlink-chart-footer">
+              <p class="starlink-disclaimer">
+                Data usage is tracked in local time. Refer to your statement for accurate billing information.
+              </p>
+            </div>
+          </div>
         </section>
+
         <section class="customer-section">
           <div class="customer-section-head"><span>Daily History</span></div>
           <div id="customerDailyUsageList" class="customer-list"></div>

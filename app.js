@@ -174,15 +174,49 @@ const el = {
   usageForm: document.querySelector("#usageForm"),
   usageId: document.querySelector("#usageId"),
   usageMachineInput: document.querySelector("#usageMachineInput"),
+  usageMachineDataList: document.querySelector("#usageMachineDataList"),
+  usageMachineHint: document.querySelector("#usageMachineHint"),
   usageCustomerInput: document.querySelector("#usageCustomerInput"),
   usageBillTypeInput: document.querySelector("#usageBillTypeInput"),
   usageLimitInput: document.querySelector("#usageLimitInput"),
   usageDateInput: document.querySelector("#usageDateInput"),
   usageDailyInput: document.querySelector("#usageDailyInput"),
+  usageUnitToggleGroup: document.querySelector("#usageUnitToggleGroup"),
   usageNotesInput: document.querySelector("#usageNotesInput"),
   usageDailyHistory: document.querySelector("#usageDailyHistory"),
   usageHistoryTotal: document.querySelector("#usageHistoryTotal"),
   saveUsageBtn: document.querySelector("#saveUsageBtn"),
+
+  fleetUsageTotalValue: document.querySelector("#fleetUsageTotalValue"),
+  usageActiveMachinesCount: document.querySelector("#usageActiveMachinesCount"),
+  usageRecordedTodayCount: document.querySelector("#usageRecordedTodayCount"),
+  usageRecordedTodaySub: document.querySelector("#usageRecordedTodaySub"),
+  usagePendingTodayCount: document.querySelector("#usagePendingTodayCount"),
+  usagePendingTodaySub: document.querySelector("#usagePendingTodaySub"),
+  usageSearchInput: document.querySelector("#usageSearchInput"),
+
+  machineChartModal: document.querySelector("#machineChartModal"),
+  closeMachineChartModalBtn: document.querySelector("#closeMachineChartModalBtn"),
+  machineChartMachineBadge: document.querySelector("#machineChartMachineBadge"),
+  machineChartModalTitle: document.querySelector("#machineChartModalTitle"),
+  machineChartSubtitle: document.querySelector("#machineChartSubtitle"),
+  modalVizTotalValue: document.querySelector("#modalVizTotalValue"),
+  modalVizPeriodBadge: document.querySelector("#modalVizPeriodBadge"),
+  modalVizPeriodTabs: document.querySelector("#modalVizPeriodTabs"),
+  modalVizCycleNav: document.querySelector("#modalVizCycleNav"),
+  modalVizPlanLabel: document.querySelector("#modalVizPlanLabel"),
+  modalVizSubTotal: document.querySelector("#modalVizSubTotal"),
+  modalVizLimitLabel: document.querySelector("#modalVizLimitLabel"),
+  modalStarlinkChartContainer: document.querySelector("#modalStarlinkChartContainer"),
+  modalStarlinkChartSvg: document.querySelector("#modalStarlinkChartSvg"),
+  modalStarlinkTooltip: document.querySelector("#modalStarlinkTooltip"),
+  modalInlineUsageForm: document.querySelector("#modalInlineUsageForm"),
+  modalInlineDate: document.querySelector("#modalInlineDate"),
+  modalInlineAmount: document.querySelector("#modalInlineAmount"),
+  modalInlineUnitToggle: document.querySelector("#modalInlineUnitToggle"),
+  modalBreakdownCount: document.querySelector("#modalBreakdownCount"),
+  modalBreakdownTotal: document.querySelector("#modalBreakdownTotal"),
+  modalBreakdownBody: document.querySelector("#modalBreakdownBody"),
 
   supportUnreadTotal: document.querySelector("#supportUnreadTotal"),
   supportConversationList: document.querySelector("#supportConversationList"),
@@ -433,7 +467,328 @@ function usageAlertLabel(state) {
 }
 
 function currentMonthUsageRecords() {
-  return state.usageRecords.filter((item) => String(item.monthKey || "") === state.activeMonth);
+  return state.usageRecords.filter((item) => String(item.monthKey || "") === (vizState.activeMonth || state.activeMonth));
+}
+
+const vizState = {
+  period: "daily",
+  machine: "__ALL__",
+  activeMonth: "",
+  activeYear: new Date().getFullYear(),
+  inputUnit: "GB"
+};
+
+function getAllMachineIds() {
+  const ids = new Set();
+  (state.deviceRecords || []).forEach((d) => { if (d.deviceId) ids.add(String(d.deviceId).trim().toUpperCase()); });
+  (state.usageRecords || []).forEach((u) => { if (u.machine) ids.add(String(u.machine).trim().toUpperCase()); });
+  (state.billRecords || []).forEach((b) => { if (b.machine) ids.add(String(b.machine).trim().toUpperCase()); });
+  return Array.from(ids).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+function formatGbOrTb(valueTB) {
+  const gb = Number(valueTB || 0) * 1000;
+  if (gb >= 1000) {
+    return { number: valueTB.toFixed(2), unit: "TB", text: `${valueTB.toFixed(2)} TB`, gb };
+  }
+  return { number: gb >= 100 ? gb.toFixed(0) : gb.toFixed(1), unit: "GB", text: `${gb >= 100 ? gb.toFixed(0) : gb.toFixed(1)} GB`, gb };
+}
+
+function renderStarlinkChart(containerSvg, tooltipEl, dataPoints, options = {}) {
+  if (!containerSvg) return;
+  const width = 800;
+  const height = 220;
+  const padLeft = 60;
+  const padRight = 20;
+  const padTop = 30;
+  const padBottom = 35;
+  const chartW = width - padLeft - padRight;
+  const chartH = height - padTop - padBottom;
+
+  const maxGB = Math.max(...dataPoints.map((d) => d.valueGB), 10);
+  let yAxisMax = 50;
+  if (maxGB > 50) yAxisMax = Math.ceil(maxGB / 50) * 50;
+  else if (maxGB <= 10) yAxisMax = 10;
+  else if (maxGB <= 25) yAxisMax = 25;
+
+  const numPoints = Math.max(dataPoints.length, 1);
+  const barWidth = Math.max(Math.min((chartW / numPoints) * 0.55, 24), 6);
+  const step = chartW / numPoints;
+
+  let svgHtml = `
+    <defs>
+      <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#38bdf8" />
+        <stop offset="100%" stop-color="#0284c7" />
+      </linearGradient>
+      <linearGradient id="barGradActive" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#67e8f9" />
+        <stop offset="100%" stop-color="#38bdf8" />
+      </linearGradient>
+    </defs>
+  `;
+
+  const gridSteps = [yAxisMax, Math.round(yAxisMax / 2), 0];
+  gridSteps.forEach((val) => {
+    const y = padTop + chartH - (val / yAxisMax) * chartH;
+    svgHtml += `
+      <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="${val === 0 ? "0" : "3,3"}" />
+      <text x="${padLeft - 10}" y="${y + 4}" fill="#64748b" font-size="11" font-weight="600" text-anchor="end">${val} GB</text>
+    `;
+  });
+
+  dataPoints.forEach((d, idx) => {
+    const x = padLeft + idx * step + (step - barWidth) / 2;
+    const barH = Math.max((d.valueGB / yAxisMax) * chartH, d.valueGB > 0 ? 3 : 0);
+    const y = padTop + chartH - barH;
+    const isSpecial = d.isCurrent;
+
+    svgHtml += `
+      <rect class="chart-bar-track" data-idx="${idx}" x="${x - (step - barWidth) / 2}" y="${padTop}" width="${step}" height="${chartH}" fill="transparent" style="cursor: pointer;" />
+      <rect class="chart-bar ${isSpecial ? "current" : ""}" data-idx="${idx}" x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="3" ry="3" fill="${isSpecial ? "url(#barGradActive)" : "url(#barGrad)"}" />
+    `;
+  });
+
+  const labelInterval = options.format === "daily" ? Math.max(Math.ceil(numPoints / 6), 1) : 1;
+  dataPoints.forEach((d, idx) => {
+    if (idx === 0 || idx === numPoints - 1 || idx % labelInterval === 0) {
+      const x = padLeft + idx * step + step / 2;
+      svgHtml += `
+        <text x="${x}" y="${height - 10}" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">${d.label}</text>
+      `;
+    }
+  });
+
+  containerSvg.innerHTML = svgHtml;
+
+  const tracks = containerSvg.querySelectorAll(".chart-bar-track, .chart-bar");
+  tracks.forEach((element) => {
+    element.addEventListener("mouseenter", () => {
+      const idx = parseInt(element.dataset.idx, 10);
+      const point = dataPoints[idx];
+      if (!point || !tooltipEl) return;
+      tooltipEl.innerHTML = `
+        <strong style="color:#ffffff; font-size:13px;">${point.fullLabel || point.label}</strong><br>
+        <span style="color:#38bdf8; font-weight:700;">${point.valueGB.toFixed(2)} GB</span> 
+        <span style="color:#94a3b8;">(${point.valueTB.toFixed(3)} TB)</span>
+      `;
+      tooltipEl.classList.remove("hidden");
+      const rect = containerSvg.getBoundingClientRect();
+      const ptX = ((padLeft + idx * step + step / 2) / width) * rect.width;
+      const barH = Math.max((point.valueGB / yAxisMax) * chartH, 4);
+      const ptY = ((padTop + chartH - barH) / height) * rect.height;
+      tooltipEl.style.left = `${ptX}px`;
+      tooltipEl.style.top = `${ptY}px`;
+    });
+    element.addEventListener("mouseleave", () => {
+      if (tooltipEl) tooltipEl.classList.add("hidden");
+    });
+  });
+}
+
+const modalChartState = {
+  machineId: "",
+  period: "daily",
+  activeMonth: "",
+  activeYear: new Date().getFullYear(),
+  unit: "GB"
+};
+
+function openMachineChartModal(machineId, monthKey = "") {
+  if (!machineId) return;
+  modalChartState.machineId = machineId;
+  modalChartState.activeMonth = monthKey || state.activeMonth || currentMonthKey();
+  modalChartState.period = "daily";
+  
+  if (el.modalInlineDate) {
+    el.modalInlineDate.value = localDateKey();
+  }
+  if (el.modalInlineAmount) {
+    el.modalInlineAmount.value = "";
+  }
+  
+  renderModalMachineVisualizer();
+  if (el.machineChartModal) {
+    el.machineChartModal.classList.remove("hidden");
+    el.machineChartModal.classList.add("open");
+  }
+}
+
+function closeMachineChartModal() {
+  if (!el.machineChartModal) return;
+  el.machineChartModal.classList.remove("open");
+  el.machineChartModal.classList.add("hidden");
+}
+
+function renderModalMachineVisualizer() {
+  if (!el.modalStarlinkChartSvg || !modalChartState.machineId) return;
+  const currentMonth = modalChartState.activeMonth || state.activeMonth || currentMonthKey();
+  modalChartState.activeMonth = currentMonth;
+  const [yearStr, monthStr] = currentMonth.split("-");
+  const yearNum = Number(yearStr) || new Date().getFullYear();
+  const monthNum = Number(monthStr) || new Date().getMonth() + 1;
+
+  const machineId = modalChartState.machineId;
+  const linkedDevice = state.deviceRecords.find((d) => String(d.deviceId || "").toUpperCase() === machineId.toUpperCase());
+  const linkedBill = state.billRecords.find((b) => String(b.machine || "").toUpperCase() === machineId.toUpperCase());
+  const targetRecord = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === machineId.toUpperCase() && r.monthKey === currentMonth);
+  const planName = linkedDevice?.planStatus || linkedBill?.billType || targetRecord?.billType || "Roam Data";
+  const customerName = linkedDevice?.name || linkedBill?.customer || targetRecord?.customer || "Customer";
+  const limitTB = Number(targetRecord?.usageLimitTB || 5);
+
+  if (el.machineChartMachineBadge) el.machineChartMachineBadge.textContent = machineId;
+  if (el.machineChartModalTitle) el.machineChartModalTitle.textContent = `${machineId} • ${customerName}`;
+  if (el.machineChartSubtitle) el.machineChartSubtitle.textContent = `Plan: ${String(planName).toUpperCase()} | Limit: ${limitTB.toFixed(1)} TB | ${monthLabel(currentMonth)}`;
+  if (el.modalVizPlanLabel) el.modalVizPlanLabel.textContent = String(planName).toUpperCase();
+  if (el.modalVizLimitLabel) el.modalVizLimitLabel.textContent = `${limitTB.toFixed(1)} TB Limit`;
+  if (el.modalVizPeriodBadge) el.modalVizPeriodBadge.textContent = monthLabel(currentMonth);
+
+  // Render Cycle Nav in Modal
+  if (el.modalVizCycleNav) {
+    el.modalVizCycleNav.innerHTML = "";
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    for (let m = 1; m <= 12; m++) {
+      const mKey = `${yearNum}-${String(m).padStart(2, "0")}`;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `cycle-nav-btn ${mKey === currentMonth ? "active" : ""}`;
+      btn.textContent = monthNames[m - 1];
+      btn.onclick = () => {
+        modalChartState.activeMonth = mKey;
+        renderModalMachineVisualizer();
+      };
+      el.modalVizCycleNav.append(btn);
+    }
+  }
+
+  // Calculate Data Points
+  let dataPoints = [];
+  let totalPeriodTB = 0;
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  if (modalChartState.period === "daily") {
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+    const todayStr = localDateKey();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateKey = `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayTB = Number(targetRecord?.dailyUsage?.[dateKey] || 0);
+      totalPeriodTB += dayTB;
+      const dateObj = new Date(`${dateKey}T00:00:00`);
+      const dayShort = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(dateObj);
+      dataPoints.push({
+        label: `${day} ${monthNames[monthNum - 1]}`,
+        fullLabel: `${dayShort} ${yearNum}`,
+        valueTB: dayTB,
+        valueGB: dayTB * 1000,
+        isCurrent: dateKey === todayStr
+      });
+    }
+  } else if (modalChartState.period === "monthly") {
+    monthNames.forEach((name, mIdx) => {
+      const mKey = `${yearNum}-${String(mIdx + 1).padStart(2, "0")}`;
+      const rec = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === machineId.toUpperCase() && r.monthKey === mKey);
+      let mTB = rec ? usageTotal(rec) : 0;
+      totalPeriodTB += mTB;
+      dataPoints.push({
+        label: name,
+        fullLabel: `${name} ${yearNum}`,
+        valueTB: mTB,
+        valueGB: mTB * 1000,
+        isCurrent: mKey === currentMonth
+      });
+    });
+  } else if (modalChartState.period === "yearly") {
+    const years = new Set([yearNum - 1, yearNum, yearNum + 1]);
+    state.usageRecords.filter((r) => String(r.machine || "").toUpperCase() === machineId.toUpperCase()).forEach((r) => {
+      if (r.monthKey) {
+        const y = Number(r.monthKey.split("-")[0]);
+        if (y) years.add(y);
+      }
+    });
+    const sortedYears = Array.from(years).sort();
+    sortedYears.forEach((y) => {
+      let yTB = 0;
+      state.usageRecords
+        .filter((r) => String(r.machine || "").toUpperCase() === machineId.toUpperCase() && String(r.monthKey || "").startsWith(`${y}-`))
+        .forEach((r) => {
+          yTB += usageTotal(r);
+        });
+      totalPeriodTB += yTB;
+      dataPoints.push({
+        label: String(y),
+        fullLabel: `Year ${y}`,
+        valueTB: yTB,
+        valueGB: yTB * 1000,
+        isCurrent: y === yearNum
+      });
+    });
+  }
+
+  const formattedTotal = formatGbOrTb(totalPeriodTB);
+  if (el.modalVizTotalValue) el.modalVizTotalValue.textContent = formattedTotal.text;
+  if (el.modalVizSubTotal) el.modalVizSubTotal.textContent = formattedTotal.text;
+
+  renderStarlinkChart(el.modalStarlinkChartSvg, el.modalStarlinkTooltip, dataPoints, {
+    format: modalChartState.period,
+    limitTB
+  });
+
+  renderModalDailyBreakdown(targetRecord, currentMonth);
+}
+
+function renderModalDailyBreakdown(record, monthKey) {
+  if (!el.modalBreakdownBody) return;
+  el.modalBreakdownBody.innerHTML = "";
+  
+  const dailyEntries = Object.entries(record?.dailyUsage || {})
+    .map(([date, val]) => ({ date, valueTB: Number(val || 0), valueGB: Number(val || 0) * 1000 }))
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  const totalGB = dailyEntries.reduce((sum, item) => sum + item.valueGB, 0);
+  const totalTB = dailyEntries.reduce((sum, item) => sum + item.valueTB, 0);
+
+  if (el.modalBreakdownCount) el.modalBreakdownCount.textContent = dailyEntries.length;
+  if (el.modalBreakdownTotal) el.modalBreakdownTotal.textContent = `${totalGB.toFixed(2)} GB (${totalTB.toFixed(3)} TB)`;
+
+  if (!dailyEntries.length) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="5" style="text-align: center; color: #94a3b8; padding: 18px;">No daily usage records added for ${monthLabel(monthKey)} yet.</td>`;
+    el.modalBreakdownBody.append(tr);
+    return;
+  }
+
+  dailyEntries.forEach((item) => {
+    const tr = document.createElement("tr");
+    const dateObj = new Date(`${item.date}T00:00:00`);
+    const dayName = new Intl.DateTimeFormat("en", { weekday: "short" }).format(dateObj);
+    
+    tr.innerHTML = `
+      <td><strong>${item.date}</strong></td>
+      <td><span style="color: #64748b; font-weight:600;">${dayName}</span></td>
+      <td class="money" style="color: #0284c7;"><strong>${item.valueGB.toFixed(2)} GB</strong></td>
+      <td class="money" style="color: #64748b;">${item.valueTB.toFixed(3)} TB</td>
+      <td style="text-align: center;">
+        <button type="button" class="danger delete-day-btn" style="min-height: 24px; padding: 2px 8px; font-size: 10px;" title="Delete this day entry">✕</button>
+      </td>
+    `;
+
+    const delBtn = tr.querySelector(".delete-day-btn");
+    if (delBtn && record) {
+      delBtn.onclick = async () => {
+        if (!confirm(`Delete usage for ${item.date}?`)) return;
+        delete record.dailyUsage[item.date];
+        await api(`/api/usage/${encodeURIComponent(record.id)}`, {
+          method: "PUT",
+          body: JSON.stringify(record)
+        });
+        await refreshState();
+        renderModalMachineVisualizer();
+      };
+    }
+
+    el.modalBreakdownBody.append(tr);
+  });
 }
 
 function updateState(snapshot) {
@@ -742,50 +1097,126 @@ function renderDevicePage() {
 }
 
 function renderUsagePage() {
-  const records = currentMonthUsageRecords();
-  const counts = { safe: 0, warning: 0, critical: 0 };
-  const flagged = [];
-  el.usageBody.innerHTML = "";
+  const currentMonth = state.activeMonth || currentMonthKey();
+  const allMachineIds = getAllMachineIds();
+  const searchFilter = (el.usageSearchInput?.value || "").trim().toLowerCase();
 
-  records.forEach((record) => {
-    const entries = dailyUsageEntries(record);
-    const latest = entries.at(-1);
-    const todayUsage = Number(record.dailyUsage?.[localDateKey()] || 0);
-    const total = usageTotal(record);
-    const limit = Number(record.usageLimitTB || 5);
-    const remaining = Math.max(limit - total, 0);
-    const alertState = usageAlertState(record);
-    counts[alertState] = (counts[alertState] || 0) + 1;
-    if (alertState !== "safe") flagged.push({ ...record, total, limit, remaining, alertState });
+  let fleetTotalTB = 0;
+  let recordedTodayCount = 0;
+  let pendingTodayCount = 0;
+  const todayStr = localDateKey();
 
-    const row = el.usageRowTemplate.content.firstElementChild.cloneNode(true);
-    row.dataset.id = record.id;
-    row.classList.add(`usage-row-${alertState}`);
-    row.querySelector(".usage-machine-cell").textContent = record.machine || "";
-    row.querySelector(".usage-customer-cell").textContent = record.customer || "";
-    row.querySelector(".usage-billtype-cell").textContent = record.billType || "";
-    row.querySelector(".usage-today-cell").textContent = `${todayUsage.toFixed(3)} TB`;
-    row.querySelector(".usage-last-cell").textContent = latest ? `${formatUsageDate(latest.date)} | ${latest.value.toFixed(3)} TB` : "No entry";
-    row.querySelector(".usage-total-cell").textContent = `${total.toFixed(2)} TB`;
-    row.querySelector(".usage-remaining-cell").textContent = `${remaining.toFixed(2)} TB`;
-    row.querySelector(".usage-alert-cell").textContent = usageAlertLabel(alertState);
-    const actions = row.querySelector(".row-actions");
-    if (isAdmin()) {
-      row.querySelector(".edit-usage").onclick = () => editUsageRecord(record.id);
-      row.querySelector(".delete-usage").onclick = () => deleteUsageRecord(record.id);
+  if (el.usageBody) el.usageBody.innerHTML = "";
+
+  allMachineIds.forEach((machineId) => {
+    const linkedDevice = state.deviceRecords.find((d) => String(d.deviceId || "").toUpperCase() === machineId.toUpperCase());
+    const linkedBill = state.billRecords.find((b) => String(b.machine || "").toUpperCase() === machineId.toUpperCase());
+    const usageRec = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === machineId.toUpperCase() && r.monthKey === currentMonth);
+    
+    const customer = linkedDevice?.name || linkedBill?.customer || usageRec?.customer || "Unlinked";
+    const plan = linkedDevice?.planStatus || linkedBill?.billType || usageRec?.billType || "normal";
+    const totalTB = usageRec ? usageTotal(usageRec) : 0;
+    const limitTB = Number(usageRec?.usageLimitTB || 5);
+    const remainingTB = Math.max(limitTB - totalTB, 0);
+    const todayUsageTB = Number(usageRec?.dailyUsage?.[todayStr] || 0);
+
+    fleetTotalTB += totalTB;
+    if (todayUsageTB > 0) {
+      recordedTodayCount++;
     } else {
-      actions.classList.add("hidden");
+      pendingTodayCount++;
     }
-    el.usageBody.append(row);
+
+    if (searchFilter) {
+      const match = machineId.toLowerCase().includes(searchFilter) ||
+                    customer.toLowerCase().includes(searchFilter) ||
+                    plan.toLowerCase().includes(searchFilter);
+      if (!match) return;
+    }
+
+    const tr = document.createElement("tr");
+    tr.dataset.id = usageRec?.id || "";
+    tr.style.cursor = "pointer";
+
+    // Machine Button
+    const tdMachine = document.createElement("td");
+    const machineBtn = document.createElement("button");
+    machineBtn.type = "button";
+    machineBtn.className = "machine-pill-btn";
+    machineBtn.innerHTML = `🛰️ <strong>${machineId}</strong>`;
+    machineBtn.title = "Click to inspect full chart & daily history";
+    machineBtn.onclick = (e) => {
+      e.stopPropagation();
+      openMachineChartModal(machineId, currentMonth);
+    };
+    tdMachine.append(machineBtn);
+
+    // Customer
+    const tdCustomer = document.createElement("td");
+    tdCustomer.innerHTML = `<strong>${customer}</strong>`;
+    if (linkedDevice?.region) {
+      tdCustomer.innerHTML += ` <small style="color:#64748b;">(${linkedDevice.region})</small>`;
+    }
+
+    // Plan
+    const tdPlan = document.createElement("td");
+    tdPlan.innerHTML = `<span style="text-transform:uppercase; font-size:11px; font-weight:700; color:#0f766e;">${plan}</span>`;
+
+    // Today Status Pill
+    const tdToday = document.createElement("td");
+    if (todayUsageTB > 0) {
+      tdToday.innerHTML = `<span class="today-status-badge recorded">✓ ${(todayUsageTB * 1000).toFixed(1)} GB</span>`;
+    } else {
+      tdToday.innerHTML = `<span class="today-status-badge pending">⏳ Pending</span>`;
+    }
+
+    // Month Total (Accumulated)
+    const tdTotal = document.createElement("td");
+    tdTotal.className = "money";
+    const totalGB = totalTB * 1000;
+    tdTotal.innerHTML = `<strong style="color:#0284c7;">${totalGB >= 1000 ? `${totalTB.toFixed(2)} TB` : `${totalGB.toFixed(1)} GB`}</strong> <span style="color:#94a3b8; font-size:10px;">(${totalTB.toFixed(3)} TB)</span>`;
+
+    // Limit
+    const tdLimit = document.createElement("td");
+    tdLimit.textContent = `${limitTB.toFixed(1)} TB`;
+
+    // Remaining
+    const tdRemaining = document.createElement("td");
+    tdRemaining.textContent = `${remainingTB.toFixed(2)} TB`;
+
+    // Actions
+    const tdActions = document.createElement("td");
+    tdActions.style.textAlign = "center";
+    tdActions.innerHTML = `
+      <button type="button" class="view-chart-btn" style="min-height:28px; padding:0 10px; border-radius:7px; background:#0f172a; color:#38bdf8; font-size:11px; font-weight:800; border:1px solid rgba(56,189,248,0.3);">📊 View Chart</button>
+      <button type="button" class="quick-add-btn" style="min-height:28px; padding:0 10px; border-radius:7px; background:#2563eb; color:#fff; font-size:11px; font-weight:800; border:none; margin-left:4px;">➕ Add</button>
+    `;
+
+    tdActions.querySelector(".view-chart-btn").onclick = (e) => {
+      e.stopPropagation();
+      openMachineChartModal(machineId, currentMonth);
+    };
+
+    tdActions.querySelector(".quick-add-btn").onclick = (e) => {
+      e.stopPropagation();
+      openUsageDialog(usageRec?.id, machineId);
+    };
+
+    // Row Click opens modal box too
+    tr.onclick = () => openMachineChartModal(machineId, currentMonth);
+
+    tr.append(tdMachine, tdCustomer, tdPlan, tdToday, tdTotal, tdLimit, tdRemaining, tdActions);
+    if (el.usageBody) el.usageBody.append(tr);
   });
 
-  el.usageTrackedCount.textContent = records.length;
-  el.usageSafeCount.textContent = counts.safe;
-  el.usageWarnCount.textContent = counts.warning;
-  el.usageExceededCount.textContent = counts.critical;
-  el.usageNearCount.textContent = counts.warning;
-  el.usageCriticalCount.textContent = counts.critical;
-  renderUsageAlerts(flagged);
+  // Update Top Fleet Summary Cards
+  const formattedFleet = formatGbOrTb(fleetTotalTB);
+  if (el.fleetUsageTotalValue) el.fleetUsageTotalValue.textContent = formattedFleet.text;
+  if (el.usageActiveMachinesCount) el.usageActiveMachinesCount.textContent = allMachineIds.length;
+  if (el.usageRecordedTodayCount) el.usageRecordedTodayCount.textContent = recordedTodayCount;
+  if (el.usageRecordedTodaySub) el.usageRecordedTodaySub.textContent = `${recordedTodayCount} of ${allMachineIds.length} recorded`;
+  if (el.usagePendingTodayCount) el.usagePendingTodayCount.textContent = pendingTodayCount;
+  if (el.usagePendingTodaySub) el.usagePendingTodaySub.textContent = `${pendingTodayCount} machines pending today`;
 }
 
 function renderUsageAlerts(items) {
@@ -1414,17 +1845,51 @@ async function deleteDeviceRecord(id) {
   await refreshState();
 }
 
+function resetUsageForm() {
+  el.usageForm.reset();
+  el.usageId.value = "";
+  el.usageDialogTitle.textContent = "Add Daily Usage";
+  el.saveUsageBtn.textContent = "Save Daily Usage";
+  el.usageLimitInput.value = "5";
+  el.usageDateInput.value = localDateKey();
+  el.usageDailyInput.value = "";
+  if (el.usageMachineHint) {
+    el.usageMachineHint.textContent = "";
+    el.usageMachineHint.classList.add("hidden");
+  }
+  setUsageModalUnit(vizState.inputUnit || "GB");
+  renderUsageHistory(null);
+}
+
+function setUsageModalUnit(unit) {
+  vizState.inputUnit = unit;
+  if (!el.usageUnitToggleGroup) return;
+  el.usageUnitToggleGroup.querySelectorAll(".unit-pill").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.unit === unit);
+  });
+}
+
 async function saveUsageRecord(event) {
   event.preventDefault();
+  const machine = el.usageMachineInput.value.trim().toUpperCase();
+  if (!machine) {
+    alert("Please enter or select a Device ID");
+    return;
+  }
+  const rawAmount = Number(el.usageDailyInput.value || 0);
+  const dailyUsageTB = vizState.inputUnit === "GB" ? (rawAmount / 1000) : rawAmount;
+  const usageDate = el.usageDateInput.value || localDateKey();
+  const monthKey = usageDate.slice(0, 7);
+
   const payload = {
     id: el.usageId.value || undefined,
-    monthKey: state.activeMonth,
-    machine: el.usageMachineInput.value.trim(),
+    monthKey,
+    machine,
     customer: el.usageCustomerInput.value.trim(),
     billType: el.usageBillTypeInput.value.trim(),
     usageLimitTB: Number(el.usageLimitInput.value || 5),
-    usageDate: el.usageDateInput.value,
-    dailyUsageTB: Number(el.usageDailyInput.value || 0),
+    usageDate,
+    dailyUsageTB,
     notes: el.usageNotesInput.value.trim()
   };
   await api("/api/usage/record", { method: "POST", body: JSON.stringify({ record: payload }) });
@@ -1435,7 +1900,7 @@ async function saveUsageRecord(event) {
 
 function editUsageRecord(id) {
   if (!isAdmin()) return;
-  const record = currentMonthUsageRecords().find((item) => item.id === id) || state.usageRecords.find((item) => item.id === id);
+  const record = state.usageRecords.find((item) => item.id === id);
   if (!record) return;
   el.usageId.value = record.id;
   el.usageMachineInput.value = record.machine || "";
@@ -1443,13 +1908,17 @@ function editUsageRecord(id) {
   el.usageBillTypeInput.value = record.billType || "";
   el.usageLimitInput.value = record.usageLimitTB || 5;
   const latest = dailyUsageEntries(record).at(-1);
-  el.usageDateInput.min = `${record.monthKey}-01`;
-  el.usageDateInput.max = usageMonthLastDate();
   el.usageDateInput.value = latest?.date || usageDefaultDate();
-  el.usageDailyInput.value = latest?.value || 0;
+  
+  const unit = vizState.inputUnit || "GB";
+  setUsageModalUnit(unit);
+  const valTB = latest?.value || 0;
+  el.usageDailyInput.value = unit === "GB" ? Number((valTB * 1000).toFixed(3)) : valTB;
+  
   el.usageNotesInput.value = record.notes || "";
   el.usageDialogTitle.textContent = `Manage ${record.machine} Daily Usage`;
   el.saveUsageBtn.textContent = "Save Daily Usage";
+  syncUsageMachineContext();
   renderUsageHistory(record);
   setDialogOpen(el.usageDialog, true);
 }
@@ -1458,12 +1927,13 @@ function renderUsageHistory(record) {
   el.usageDailyHistory.innerHTML = "";
   const entries = record ? dailyUsageEntries(record).reverse() : [];
   const legacyTotal = Number(record?.legacyUsageTB || 0);
-  el.usageHistoryTotal.textContent = `${record ? usageTotal(record).toFixed(3) : "0.000"} TB this month`;
+  const total = record ? usageTotal(record) : 0;
+  el.usageHistoryTotal.textContent = `${formatGbOrTb(total).text} this month`;
 
   if (legacyTotal > 0) {
     const imported = document.createElement("div");
     imported.className = "usage-history-item imported";
-    imported.innerHTML = `<span>Imported previous usage</span><strong>${legacyTotal.toFixed(3)} TB</strong>`;
+    imported.innerHTML = `<span>Imported previous usage</span><strong>${formatGbOrTb(legacyTotal).text}</strong>`;
     el.usageDailyHistory.append(imported);
   }
 
@@ -1481,7 +1951,7 @@ function renderUsageHistory(record) {
     const date = document.createElement("span");
     date.textContent = formatUsageDate(entry.date);
     const value = document.createElement("strong");
-    value.textContent = `${entry.value.toFixed(3)} TB`;
+    value.textContent = formatGbOrTb(entry.value).text;
     item.append(date, value);
     if (isAdmin()) {
       const actions = document.createElement("div");
@@ -1491,7 +1961,8 @@ function renderUsageHistory(record) {
       editButton.textContent = "Edit";
       editButton.onclick = () => {
         el.usageDateInput.value = entry.date;
-        el.usageDailyInput.value = entry.value;
+        const u = vizState.inputUnit || "GB";
+        el.usageDailyInput.value = u === "GB" ? Number((entry.value * 1000).toFixed(3)) : entry.value;
         el.usageDailyInput.focus();
       };
       const deleteButton = document.createElement("button");
@@ -1508,18 +1979,38 @@ function renderUsageHistory(record) {
 
 function syncUsageMachineContext() {
   const machine = el.usageMachineInput.value.trim().toUpperCase();
-  const record = currentMonthUsageRecords().find((item) => String(item.machine || "").trim().toUpperCase() === machine);
-  if (!record) {
-    el.usageId.value = "";
+  if (!machine) {
+    if (el.usageMachineHint) el.usageMachineHint.classList.add("hidden");
     renderUsageHistory(null);
     return;
   }
-  el.usageId.value = record.id;
-  if (!el.usageCustomerInput.value) el.usageCustomerInput.value = record.customer || "";
-  if (!el.usageBillTypeInput.value) el.usageBillTypeInput.value = record.billType || "";
-  el.usageLimitInput.value = record.usageLimitTB || 5;
-  el.usageNotesInput.value = record.notes || "";
-  renderUsageHistory(record);
+  const linkedDevice = state.deviceRecords.find((d) => String(d.deviceId || "").trim().toUpperCase() === machine);
+  const linkedBill = state.billRecords.find((b) => String(b.machine || "").trim().toUpperCase() === machine);
+  const record = currentMonthUsageRecords().find((item) => String(item.machine || "").trim().toUpperCase() === machine);
+
+  if (record) {
+    el.usageId.value = record.id;
+    if (!el.usageCustomerInput.value) el.usageCustomerInput.value = record.customer || "";
+    if (!el.usageBillTypeInput.value) el.usageBillTypeInput.value = record.billType || "";
+    el.usageLimitInput.value = record.usageLimitTB || 5;
+    if (record.notes) el.usageNotesInput.value = record.notes;
+    renderUsageHistory(record);
+  } else {
+    el.usageId.value = "";
+    if (linkedDevice && !el.usageCustomerInput.value) el.usageCustomerInput.value = linkedDevice.name || "";
+    if (linkedDevice && !el.usageBillTypeInput.value) el.usageBillTypeInput.value = linkedDevice.planStatus || "";
+    if (linkedBill && !el.usageCustomerInput.value) el.usageCustomerInput.value = linkedBill.customer || "";
+    if (linkedBill && !el.usageBillTypeInput.value) el.usageBillTypeInput.value = linkedBill.billType || "";
+    renderUsageHistory(null);
+  }
+
+  if (el.usageMachineHint) {
+    const custName = el.usageCustomerInput.value || linkedDevice?.name || linkedBill?.customer || "";
+    const plan = el.usageBillTypeInput.value || linkedDevice?.planStatus || "normal";
+    const curTotal = record ? formatGbOrTb(usageTotal(record)).text : "0 GB";
+    el.usageMachineHint.textContent = `Customer: ${custName || "-"} • Plan: ${plan.toUpperCase()} • This Month: ${curTotal}`;
+    el.usageMachineHint.classList.remove("hidden");
+  }
 }
 
 async function removeDailyUsage(record, usageDate) {
@@ -1823,11 +2314,93 @@ el.exportDevicesBtn.addEventListener("click", exportDevices);
 
 el.usageForm.addEventListener("submit", saveUsageRecord);
 el.resetUsageBtn.addEventListener("click", resetUsageForm);
+el.usageMachineInput.addEventListener("input", syncUsageMachineContext);
 el.usageMachineInput.addEventListener("change", syncUsageMachineContext);
 el.usageDateInput.addEventListener("change", () => {
-  const record = state.usageRecords.find((item) => item.id === el.usageId.value);
-  el.usageDailyInput.value = record?.dailyUsage?.[el.usageDateInput.value] ?? 0;
+  const machine = el.usageMachineInput.value.trim().toUpperCase();
+  const record = state.usageRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine);
+  const valTB = record?.dailyUsage?.[el.usageDateInput.value];
+  if (valTB !== undefined && valTB !== null) {
+    const u = vizState.inputUnit || "GB";
+    el.usageDailyInput.value = u === "GB" ? Number((valTB * 1000).toFixed(3)) : valTB;
+  }
 });
+
+if (el.usageUnitToggleGroup) {
+  el.usageUnitToggleGroup.querySelectorAll(".unit-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const newUnit = btn.dataset.unit;
+      const oldUnit = vizState.inputUnit;
+      if (newUnit === oldUnit) return;
+      const val = Number(el.usageDailyInput.value);
+      if (val > 0 && Number.isFinite(val)) {
+        el.usageDailyInput.value = newUnit === "TB" ? Number((val / 1000).toFixed(4)) : Number((val * 1000).toFixed(2));
+      }
+      setUsageModalUnit(newUnit);
+    });
+  });
+}
+
+if (el.usageSearchInput) {
+  el.usageSearchInput.addEventListener("input", renderUsagePage);
+}
+
+if (el.closeMachineChartModalBtn) {
+  el.closeMachineChartModalBtn.addEventListener("click", closeMachineChartModal);
+}
+if (el.machineChartModal) {
+  el.machineChartModal.addEventListener("click", (event) => {
+    if (event.target === el.machineChartModal) closeMachineChartModal();
+  });
+}
+
+if (el.modalVizPeriodTabs) {
+  el.modalVizPeriodTabs.querySelectorAll(".starlink-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      modalChartState.period = tab.dataset.period;
+      el.modalVizPeriodTabs.querySelectorAll(".starlink-tab").forEach((t) => t.classList.toggle("active", t === tab));
+      renderModalMachineVisualizer();
+    });
+  });
+}
+
+if (el.modalInlineUnitToggle) {
+  el.modalInlineUnitToggle.querySelectorAll(".unit-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      modalChartState.unit = btn.dataset.unit;
+      el.modalInlineUnitToggle.querySelectorAll(".unit-pill").forEach((b) => b.classList.toggle("active", b === btn));
+    });
+  });
+}
+
+if (el.modalInlineUsageForm) {
+  el.modalInlineUsageForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const date = el.modalInlineDate.value;
+    const rawVal = Number(el.modalInlineAmount.value || 0);
+    const unit = modalChartState.unit || "GB";
+    const valTB = unit === "TB" ? rawVal : rawVal / 1000;
+    const machine = modalChartState.machineId;
+    if (!machine || !date || valTB < 0) return;
+
+    try {
+      await api("/api/usage/record", {
+        method: "POST",
+        body: JSON.stringify({
+          machine,
+          date,
+          usageAmountTB: valTB
+        })
+      });
+      el.modalInlineAmount.value = "";
+      await refreshState();
+      renderModalMachineVisualizer();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+}
+
 el.openUsageDialogBtn.addEventListener("click", () => {
   resetUsageForm();
   setDialogOpen(el.usageDialog, true);
@@ -1898,6 +2471,7 @@ el.colorDialog.addEventListener("click", (event) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    closeMachineChartModal();
     setDialogOpen(el.entryDialog, false);
     setDialogOpen(el.billDialog, false);
     setDialogOpen(el.deviceDialog, false);

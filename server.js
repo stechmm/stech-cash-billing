@@ -476,6 +476,9 @@ function buildCustomerBootstrap(db, customer) {
       planStatus: device.planStatus || "normal"
     } : null,
     usage,
+    usageRecords: db.usageRecords.filter((item) => (
+      String(item.machine || "").trim().toUpperCase() === linkedDeviceId
+    )),
     bill: bill ? {
       machine: bill.machine || "",
       billDate: bill.billDate || "",
@@ -1082,15 +1085,15 @@ async function handleApi(req, res, pathname) {
   if (pathname === "/api/usage/record" && req.method === "POST") {
     if (!requireTab(user, "usagePage", res)) return;
     const body = await readBody(req);
-    const record = body.record || {};
-    const monthKey = record.monthKey || db.activeMonth || currentMonthKey();
+    const record = body.record || body || {};
+    const usageDate = String(record.usageDate || record.date || "").trim();
+    const monthKey = record.monthKey || (usageDate.length >= 7 ? usageDate.slice(0, 7) : (db.activeMonth || currentMonthKey()));
     const machine = String(record.machine || "").trim();
-    const usageDate = String(record.usageDate || "").trim();
     if (!machine) {
       return json(res, 400, { error: "Machine is required" });
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(usageDate) || !usageDate.startsWith(`${monthKey}-`)) {
-      return json(res, 400, { error: "Choose a date inside the selected month" });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(usageDate)) {
+      return json(res, 400, { error: "Valid date YYYY-MM-DD is required" });
     }
     const existingIndex = db.usageRecords.findIndex((item) => {
       if (record.id && item.id === record.id) return true;
@@ -1105,19 +1108,23 @@ async function handleApi(req, res, pathname) {
     if (record.removeDate) {
       delete dailyUsage[usageDate];
     } else {
-      const dailyValue = Number(record.dailyUsageTB || 0);
+      const dailyValue = Number(record.dailyUsageTB !== undefined ? record.dailyUsageTB : (record.usageAmountTB !== undefined ? record.usageAmountTB : 0));
       if (!Number.isFinite(dailyValue) || dailyValue < 0) {
         return json(res, 400, { error: "Daily usage must be zero or more" });
       }
       dailyUsage[usageDate] = dailyValue;
     }
+    const linkedDevice = db.deviceRecords.find((item) => String(item.deviceId || "").trim().toUpperCase() === machine.toUpperCase());
+    const linkedBill = db.billRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine.toUpperCase());
+    const autoCustomer = linkedDevice?.name || linkedBill?.customer || "";
+    const autoBillType = linkedDevice?.planStatus || linkedBill?.billType || "";
     const canEditDetails = !existing || user.role === "admin";
     const payload = {
       id: existing?.id || record.id || makeId(),
       monthKey,
       machine,
-      customer: canEditDetails ? String(record.customer || existing?.customer || "").trim() : existing.customer,
-      billType: canEditDetails ? String(record.billType || existing?.billType || "").trim() : existing.billType,
+      customer: canEditDetails ? String(record.customer || existing?.customer || autoCustomer).trim() : (existing?.customer || autoCustomer),
+      billType: canEditDetails ? String(record.billType || existing?.billType || autoBillType).trim() : (existing?.billType || autoBillType),
       usageLimitTB: canEditDetails ? Number(record.usageLimitTB || existing?.usageLimitTB || 5) : existing.usageLimitTB,
       dailyUsage,
       legacyUsageTB: Number(existing?.legacyUsageTB || 0),

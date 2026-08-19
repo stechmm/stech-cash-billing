@@ -47,7 +47,23 @@ const customerEl = {
   receiptInput: document.querySelector("#customerReceiptInput"),
   receiptButton: document.querySelector("#customerReceiptBtn"),
   voiceButton: document.querySelector("#customerVoiceBtn"),
-  attachmentPreview: document.querySelector("#customerAttachmentPreview")
+  attachmentPreview: document.querySelector("#customerAttachmentPreview"),
+
+  customerVizTotal: document.querySelector("#customerVizTotal"),
+  customerVizBadge: document.querySelector("#customerVizBadge"),
+  customerVizPeriodTabs: document.querySelector("#customerVizPeriodTabs"),
+  customerCycleNav: document.querySelector("#customerCycleNav"),
+  customerVizPlanLabel: document.querySelector("#customerVizPlanLabel"),
+  customerVizSubTotal: document.querySelector("#customerVizSubTotal"),
+  customerVizLimitLabel: document.querySelector("#customerVizLimitLabel"),
+  customerChartSvg: document.querySelector("#customerChartSvg"),
+  customerChartTooltip: document.querySelector("#customerChartTooltip")
+};
+
+const customerVizState = {
+  period: "daily",
+  activeMonth: "",
+  activeYear: new Date().getFullYear()
 };
 
 let customerPendingAttachment = null;
@@ -113,40 +129,212 @@ function customerUsageTotal() {
   return customerUsageEntries().reduce((sum, item) => sum + item.value, Number(customerState.usage?.legacyUsageTB || 0));
 }
 
-function customerUsageLevel(total, limit) {
-  if (total >= limit) return "critical";
-  if (total >= Math.max(0, limit - 0.5)) return "warning";
-  return "safe";
+function formatGbOrTbCustomer(valueTB) {
+  const gb = Number(valueTB || 0) * 1000;
+  if (gb >= 1000) {
+    return { number: valueTB.toFixed(2), unit: "TB", text: `${valueTB.toFixed(2)} TB`, gb };
+  }
+  return { number: gb >= 100 ? gb.toFixed(0) : gb.toFixed(1), unit: "GB", text: `${gb >= 100 ? gb.toFixed(0) : gb.toFixed(1)} GB`, gb };
 }
 
-function makeCustomerEmpty(text) {
-  const node = document.createElement("div");
-  node.className = "customer-empty";
-  node.textContent = text;
-  return node;
+function renderStarlinkCustomerChart(containerSvg, tooltipEl, dataPoints, options = {}) {
+  if (!containerSvg) return;
+  const width = 800;
+  const height = 200;
+  const padLeft = 55;
+  const padRight = 15;
+  const padTop = 25;
+  const padBottom = 30;
+  const chartW = width - padLeft - padRight;
+  const chartH = height - padTop - padBottom;
+
+  const maxGB = Math.max(...dataPoints.map((d) => d.valueGB), 10);
+  let yAxisMax = 50;
+  if (maxGB > 50) yAxisMax = Math.ceil(maxGB / 50) * 50;
+  else if (maxGB <= 10) yAxisMax = 10;
+  else if (maxGB <= 25) yAxisMax = 25;
+
+  const numPoints = Math.max(dataPoints.length, 1);
+  const barWidth = Math.max(Math.min((chartW / numPoints) * 0.55, 22), 6);
+  const step = chartW / numPoints;
+
+  let svgHtml = `
+    <defs>
+      <linearGradient id="custBarGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#38bdf8" />
+        <stop offset="100%" stop-color="#0284c7" />
+      </linearGradient>
+      <linearGradient id="custBarGradActive" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#67e8f9" />
+        <stop offset="100%" stop-color="#38bdf8" />
+      </linearGradient>
+    </defs>
+  `;
+
+  const gridSteps = [yAxisMax, Math.round(yAxisMax / 2), 0];
+  gridSteps.forEach((val) => {
+    const y = padTop + chartH - (val / yAxisMax * chartH);
+    svgHtml += `
+      <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="${val === 0 ? "0" : "3,3"}" />
+      <text x="${padLeft - 8}" y="${y + 4}" fill="#64748b" font-size="10" font-weight="600" text-anchor="end">${val} GB</text>
+    `;
+  });
+
+  dataPoints.forEach((d, idx) => {
+    const x = padLeft + idx * step + (step - barWidth) / 2;
+    const barH = Math.max((d.valueGB / yAxisMax) * chartH, d.valueGB > 0 ? 3 : 0);
+    const y = padTop + chartH - barH;
+    const isSpecial = d.isCurrent;
+
+    svgHtml += `
+      <rect class="chart-bar-track" data-idx="${idx}" x="${x - (step - barWidth) / 2}" y="${padTop}" width="${step}" height="${chartH}" fill="transparent" style="cursor: pointer;" />
+      <rect class="chart-bar ${isSpecial ? "current" : ""}" data-idx="${idx}" x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="3" ry="3" fill="${isSpecial ? "url(#custBarGradActive)" : "url(#custBarGrad)"}" />
+    `;
+  });
+
+  const labelInterval = options.format === "daily" ? Math.max(Math.ceil(numPoints / 6), 1) : 1;
+  dataPoints.forEach((d, idx) => {
+    if (idx === 0 || idx === numPoints - 1 || idx % labelInterval === 0) {
+      const x = padLeft + idx * step + step / 2;
+      svgHtml += `
+        <text x="${x}" y="${height - 8}" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle">${d.label}</text>
+      `;
+    }
+  });
+
+  containerSvg.innerHTML = svgHtml;
+
+  const tracks = containerSvg.querySelectorAll(".chart-bar-track, .chart-bar");
+  tracks.forEach((element) => {
+    element.addEventListener("mouseenter", () => {
+      const idx = parseInt(element.dataset.idx, 10);
+      const point = dataPoints[idx];
+      if (!point || !tooltipEl) return;
+      tooltipEl.innerHTML = `
+        <strong style="color:#ffffff; font-size:12px;">${point.fullLabel || point.label}</strong><br>
+        <span style="color:#38bdf8; font-weight:700;">${point.valueGB.toFixed(2)} GB</span> 
+        <span style="color:#94a3b8;">(${point.valueTB.toFixed(3)} TB)</span>
+      `;
+      tooltipEl.classList.remove("hidden");
+      const rect = containerSvg.getBoundingClientRect();
+      const ptX = ((padLeft + idx * step + step / 2) / width) * rect.width;
+      const barH = Math.max((point.valueGB / yAxisMax) * chartH, 4);
+      const ptY = ((padTop + chartH - barH) / height) * rect.height;
+      tooltipEl.style.left = `${ptX}px`;
+      tooltipEl.style.top = `${ptY}px`;
+    });
+    element.addEventListener("mouseleave", () => {
+      if (tooltipEl) tooltipEl.classList.add("hidden");
+    });
+  });
 }
 
-function makeAnnouncementCard(item) {
-  const card = document.createElement("article");
-  card.className = "announcement-card";
-  const header = document.createElement("header");
-  const title = document.createElement("h3");
-  title.textContent = item.title || "Announcement";
-  const type = document.createElement("span");
-  type.className = `notice-type ${item.type || "general"}`;
-  type.textContent = item.type || "general";
-  header.append(title, type);
-  const message = document.createElement("p");
-  message.textContent = item.message || "";
-  const time = document.createElement("time");
-  time.textContent = customerDate(item.updatedAt || item.createdAt, true);
-  card.append(header, message, time);
-  return card;
-}
+function renderCustomerVisualizer() {
+  if (!customerEl.customerChartSvg) return;
+  const currentMonth = customerVizState.activeMonth || customerState.activeMonth || new Date().toISOString().slice(0, 7);
+  customerVizState.activeMonth = currentMonth;
+  const [yearStr, monthStr] = currentMonth.split("-");
+  const yearNum = Number(yearStr) || new Date().getFullYear();
+  const monthNum = Number(monthStr) || new Date().getMonth() + 1;
 
-function renderCustomerNavigation() {
-  customerEl.pages.forEach((page) => page.classList.toggle("active", page.id === customerState.activePage));
-  customerEl.navButtons.forEach((button) => button.classList.toggle("active", button.dataset.customerPage === customerState.activePage));
+  const allRecords = customerState.usageRecords || (customerState.usage ? [customerState.usage] : []);
+  const activeRecord = allRecords.find((r) => r.monthKey === currentMonth) || customerState.usage || null;
+  const limitTB = Number(activeRecord?.usageLimitTB || 5);
+  const planName = String(customerState.device?.planStatus || activeRecord?.billType || "Roam Data").replaceAll("_", " ");
+
+  if (customerEl.customerVizPlanLabel) customerEl.customerVizPlanLabel.textContent = planName.toUpperCase();
+  if (customerEl.customerVizBadge) customerEl.customerVizBadge.textContent = customerState.device?.deviceId || customerState.customer?.linkedDeviceId || "Device";
+
+  if (customerEl.customerCycleNav) {
+    customerEl.customerCycleNav.innerHTML = "";
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    for (let m = 1; m <= 12; m++) {
+      const mKey = `${yearNum}-${String(m).padStart(2, "0")}`;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `cycle-nav-btn ${mKey === currentMonth ? "active" : ""}`;
+      btn.textContent = monthNames[m - 1];
+      btn.onclick = () => {
+        customerVizState.activeMonth = mKey;
+        renderCustomerVisualizer();
+      };
+      customerEl.customerCycleNav.append(btn);
+    }
+  }
+
+  let dataPoints = [];
+  let totalPeriodTB = 0;
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  if (customerVizState.period === "daily") {
+    const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateKey = `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const dayTB = Number(activeRecord?.dailyUsage?.[dateKey] || 0);
+      totalPeriodTB += dayTB;
+      const dateObj = new Date(`${dateKey}T00:00:00`);
+      const dayShort = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" }).format(dateObj);
+      dataPoints.push({
+        label: `${day} ${monthNames[monthNum - 1]}`,
+        fullLabel: `${dayShort} ${yearNum}`,
+        valueTB: dayTB,
+        valueGB: dayTB * 1000,
+        isCurrent: dateKey === todayStr
+      });
+    }
+  } else if (customerVizState.period === "monthly") {
+    monthNames.forEach((name, mIdx) => {
+      const mKey = `${yearNum}-${String(mIdx + 1).padStart(2, "0")}`;
+      const rec = allRecords.find((r) => r.monthKey === mKey);
+      let mTB = 0;
+      if (rec) {
+        mTB = Object.values(rec.dailyUsage || {}).reduce((s, v) => s + Number(v || 0), Number(rec.legacyUsageTB || 0));
+      }
+      totalPeriodTB += mTB;
+      dataPoints.push({
+        label: name,
+        fullLabel: `${name} ${yearNum}`,
+        valueTB: mTB,
+        valueGB: mTB * 1000,
+        isCurrent: mKey === currentMonth
+      });
+    });
+  } else if (customerVizState.period === "yearly") {
+    const years = new Set([yearNum - 1, yearNum, yearNum + 1]);
+    allRecords.forEach((r) => {
+      if (r.monthKey) {
+        const y = Number(r.monthKey.split("-")[0]);
+        if (y) years.add(y);
+      }
+    });
+    const sortedYears = Array.from(years).sort();
+    sortedYears.forEach((y) => {
+      let yTB = 0;
+      allRecords.filter((r) => String(r.monthKey || "").startsWith(`${y}-`)).forEach((r) => {
+        yTB += Object.values(r.dailyUsage || {}).reduce((s, v) => s + Number(v || 0), Number(r.legacyUsageTB || 0));
+      });
+      totalPeriodTB += yTB;
+      dataPoints.push({
+        label: String(y),
+        fullLabel: `Year ${y}`,
+        valueTB: yTB,
+        valueGB: yTB * 1000,
+        isCurrent: y === yearNum
+      });
+    });
+  }
+
+  const formattedTotal = formatGbOrTbCustomer(totalPeriodTB);
+  if (customerEl.customerVizTotal) customerEl.customerVizTotal.textContent = formattedTotal.text;
+  if (customerEl.customerVizSubTotal) customerEl.customerVizSubTotal.textContent = formattedTotal.text;
+  if (customerEl.customerVizLimitLabel) customerEl.customerVizLimitLabel.textContent = `${limitTB.toFixed(1)} TB Limit`;
+
+  renderStarlinkCustomerChart(customerEl.customerChartSvg, customerEl.customerChartTooltip, dataPoints, {
+    format: customerVizState.period,
+    limitTB
+  });
 }
 
 function renderCustomerApp() {
@@ -184,12 +372,8 @@ function renderCustomerApp() {
     ? makeAnnouncementCard(customerState.announcements[0])
     : document.createTextNode("No announcements yet."));
 
-  customerEl.usageMonth.textContent = customerMonthLabel(customerState.activeMonth);
-  const percent = limit > 0 ? Math.min(100, (total / limit) * 100) : 0;
-  customerEl.usageProgress.style.width = `${percent}%`;
-  customerEl.usageProgress.className = level === "safe" ? "" : level;
-  customerEl.usageProgressText.textContent = `${total.toFixed(3)} / ${limit.toFixed(1)} TB`;
-  customerEl.lastSync.textContent = entries.length ? `Latest ${customerDate(entries[0].date)}` : "No entries";
+  renderCustomerVisualizer();
+
   customerEl.dailyUsageList.innerHTML = "";
   if (!entries.length) customerEl.dailyUsageList.append(makeCustomerEmpty("No daily usage has been recorded yet."));
   entries.forEach((item) => {
@@ -198,7 +382,7 @@ function renderCustomerApp() {
     const date = document.createElement("span");
     date.textContent = customerDate(item.date);
     const value = document.createElement("strong");
-    value.textContent = `${item.value.toFixed(3)} TB`;
+    value.textContent = formatGbOrTbCustomer(item.value).text;
     row.append(date, value);
     customerEl.dailyUsageList.append(row);
   });
@@ -396,6 +580,16 @@ customerEl.navButtons.forEach((button) => button.addEventListener("click", async
 customerEl.receiptButton.addEventListener("click", () => customerEl.receiptInput.click());
 customerEl.receiptInput.addEventListener("change", () => setCustomerAttachment(customerEl.receiptInput.files[0], "receipt"));
 customerEl.voiceButton.addEventListener("click", toggleCustomerRecording);
+
+if (customerEl.customerVizPeriodTabs) {
+  customerEl.customerVizPeriodTabs.querySelectorAll(".customer-viz-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      customerVizState.period = tab.dataset.period;
+      customerEl.customerVizPeriodTabs.querySelectorAll(".customer-viz-tab").forEach((t) => t.classList.toggle("active", t === tab));
+      renderCustomerVisualizer();
+    });
+  });
+}
 
 async function initCustomerApp() {
   const session = await customerApi("/api/customer/session").catch(() => ({ customer: null }));

@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>S-Tech Cash In/Out</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
@@ -358,49 +361,58 @@
       </section>
 
       <section id="usagePage" class="page-view">
-        <section class="bill-dashboard usage-dashboard">
-          <div class="bill-card bill-blue">
-            <span>Total Tracked</span>
-            <strong id="usageTrackedCount">0</strong>
-            <small>Usage records this month</small>
+        <!-- Top Fleet Usage KPI Summary -->
+        <section class="summary-grid usage-fleet-summary">
+          <div class="summary-panel">
+            <div>
+              <span class="summary-kicker">Fleet Total</span>
+              <div class="summary-title"><strong id="fleetUsageTotalValue">0 GB</strong></div>
+            </div>
+            <span id="fleetUsageSubLabel" style="font-size:11px; opacity:0.9;">Total recorded usage across all machines</span>
           </div>
-          <div class="bill-card bill-green">
-            <span>Safe Usage</span>
-            <strong id="usageSafeCount">0</strong>
-            <small>Below warning threshold</small>
+
+          <div class="metric balance">
+            <span>Active Machines</span>
+            <strong id="usageActiveMachinesCount">0</strong>
+            <small>Registered in system</small>
           </div>
-          <div class="bill-card bill-warn">
-            <span>Near 5 TB</span>
-            <strong id="usageWarnCount">0</strong>
-            <small>4.5 TB to 4.99 TB</small>
+
+          <div class="metric income">
+            <span>Recorded Today</span>
+            <strong id="usageRecordedTodayCount">0</strong>
+            <small id="usageRecordedTodaySub">0 completed</small>
           </div>
-          <div class="bill-card bill-red">
-            <span>Exceeded</span>
-            <strong id="usageExceededCount">0</strong>
-            <small>5 TB or more</small>
+
+          <div class="metric expense">
+            <span>Pending Today</span>
+            <strong id="usagePendingTodayCount">0</strong>
+            <small id="usagePendingTodaySub">0 machines remaining</small>
           </div>
         </section>
 
-        <section class="device-panel">
+        <!-- Monthly Usage Sheet Table -->
+        <section class="device-panel usage-sheet-panel">
           <div class="ledger-topline">
             <div>
-              <span class="summary-kicker">Monthly Usage</span>
-              <strong>Daily Data Usage Tracker</strong>
+              <span class="summary-kicker">Monthly Data Sheet</span>
+              <strong>Machine Usage Ledger (Click machine to view Chart)</strong>
             </div>
-            <button id="openUsageDialogBtn" class="entry-toggle" type="button">Add Daily Usage</button>
+            <div class="header-tools">
+              <input id="usageSearchInput" type="search" placeholder="Search machine or customer..." style="min-height:34px; width:220px; font-size:12px;">
+              <button id="openUsageDialogBtn" class="entry-toggle" type="button">+ Add Daily Usage</button>
+            </div>
           </div>
-          <table class="device-table usage-table">
+          <table class="device-table usage-table usage-sheet-table">
             <thead>
               <tr>
-                <th>Machine</th>
+                <th style="width: 110px;">Machine</th>
                 <th>Customer</th>
-                <th>Bill Type</th>
-                <th>Today</th>
-                <th>Last Entry</th>
-                <th>Month Total</th>
-                <th>Remaining</th>
-                <th>Alert</th>
-                <th class="admin-action-col">Action</th>
+                <th>Plan Status</th>
+                <th style="width: 140px;">Today's Record</th>
+                <th style="width: 140px;" class="money">Month Total</th>
+                <th style="width: 110px;">Limit</th>
+                <th style="width: 110px;">Remaining</th>
+                <th style="width: 160px; text-align: center;">Actions</th>
               </tr>
             </thead>
             <tbody id="usageBody"></tbody>
@@ -690,7 +702,7 @@
     </div>
 
     <div id="usageDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="usageDialogTitle">
-      <div class="modal-panel wide-modal">
+      <div class="modal-panel usage-modal-panel">
         <div class="modal-head">
           <div>
             <span class="summary-kicker">Daily Usage</span>
@@ -698,49 +710,169 @@
           </div>
           <button id="closeUsageDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
         </div>
-        <form id="usageForm" class="dialog-form usage-form">
+        <form id="usageForm" class="dialog-form usage-form-simplified">
           <input type="hidden" id="usageId">
-          <label>
-            User ID
-            <input id="usageMachineInput" type="text" placeholder="F05" required>
-          </label>
-          <label>
-            Name
-            <input id="usageCustomerInput" type="text" placeholder="Name">
-          </label>
-          <label>
-            Bill Type
-            <input id="usageBillTypeInput" type="text" placeholder="jp/normal">
-          </label>
-          <label>
-            Limit (TB)
-            <input id="usageLimitInput" type="number" min="1" step="0.1" value="5">
-          </label>
-          <label>
-            Usage Date
-            <input id="usageDateInput" type="date" required>
-          </label>
-          <label>
-            Daily Usage (TB)
-            <input id="usageDailyInput" type="number" min="0" step="0.001" value="0" required>
-          </label>
-          <label class="wide">
-            Notes
-            <input id="usageNotesInput" type="text" placeholder="Optional note">
-          </label>
+          
+          <div class="usage-quick-fields">
+            <!-- 1. Machine / Device ID -->
+            <label class="quick-field">
+              <span class="field-title">Device ID / Machine</span>
+              <input id="usageMachineInput" list="usageMachineDataList" type="text" placeholder="e.g. F01" required autocomplete="off">
+              <datalist id="usageMachineDataList"></datalist>
+              <div id="usageMachineHint" class="machine-hint-pill hidden"></div>
+            </label>
+
+            <!-- 2. Usage Date -->
+            <label class="quick-field">
+              <span class="field-title">Date</span>
+              <input id="usageDateInput" type="date" required>
+            </label>
+
+            <!-- 3. Usage Amount + GB/TB Unit Toggle -->
+            <label class="quick-field">
+              <span class="field-title">Usage Amount</span>
+              <div class="amount-input-group">
+                <input id="usageDailyInput" type="number" min="0" step="any" placeholder="0" required>
+                <div class="unit-toggle-pills" id="usageUnitToggleGroup">
+                  <button type="button" class="unit-pill active" data-unit="GB">GB</button>
+                  <button type="button" class="unit-pill" data-unit="TB">TB</button>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <!-- Collapsible Advanced Details -->
+          <details class="usage-collapsible-options">
+            <summary>More details (Customer, Bill Type, Limit, Notes)</summary>
+            <div class="optional-fields-grid">
+              <label>
+                Customer Name
+                <input id="usageCustomerInput" type="text" placeholder="Auto-linked from Device DB">
+              </label>
+              <label>
+                Bill Type
+                <input id="usageBillTypeInput" type="text" placeholder="Auto-linked">
+              </label>
+              <label>
+                Limit (TB)
+                <input id="usageLimitInput" type="number" min="0.1" step="0.1" value="5">
+              </label>
+              <label class="wide">
+                Notes
+                <input id="usageNotesInput" type="text" placeholder="Optional note">
+              </label>
+            </div>
+          </details>
+
           <div class="form-actions">
-            <button type="submit" id="saveUsageBtn" class="primary">Save Usage</button>
+            <button type="submit" id="saveUsageBtn" class="primary">Save Daily Usage</button>
             <button type="button" id="resetUsageBtn">Clear</button>
             <button type="button" id="cancelUsageBtn">Cancel</button>
           </div>
+
           <section class="usage-history wide" aria-label="Daily usage history">
             <div class="usage-history-head">
-              <strong>Daily History</strong>
-              <span id="usageHistoryTotal">0.00 TB this month</span>
+              <strong>Daily History (This Month)</strong>
+              <span id="usageHistoryTotal">0 GB this month</span>
             </div>
             <div id="usageDailyHistory" class="usage-history-list"></div>
           </section>
         </form>
+      </div>
+    </div>
+
+    <!-- Machine Interactive Chart Modal Box -->
+    <div id="machineChartModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="machineChartModalTitle">
+      <div class="modal-panel wide-modal machine-chart-modal-panel">
+        <div class="modal-head">
+          <div class="machine-modal-header-lockup">
+            <span id="machineChartMachineBadge" class="starlink-machine-badge" style="font-size: 14px; padding: 4px 14px;">F05</span>
+            <div>
+              <strong id="machineChartModalTitle" style="font-size: 18px;">Machine Data Usage</strong>
+              <span id="machineChartSubtitle" class="summary-kicker" style="color: #94a3b8; font-size: 11px; text-transform: none;">U Kyaw | Roam Unlimited</span>
+            </div>
+          </div>
+          <button id="closeMachineChartModalBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+        </div>
+
+        <div class="machine-chart-modal-body">
+          <!-- Starlink Chart in Modal -->
+          <div class="starlink-card modal-starlink-card" id="modalStarlinkVisualizer">
+            <div class="starlink-header">
+              <div class="starlink-main-stat">
+                <span class="starlink-label">Total data usage</span>
+                <div class="starlink-stat-row">
+                  <strong id="modalVizTotalValue" class="starlink-total-number">0 GB</strong>
+                  <span id="modalVizPeriodBadge" class="starlink-machine-badge">August 2026</span>
+                </div>
+              </div>
+
+              <div class="starlink-controls">
+                <div class="starlink-period-tabs" id="modalVizPeriodTabs">
+                  <button type="button" class="starlink-tab active" data-period="daily">Daily</button>
+                  <button type="button" class="starlink-tab" data-period="monthly">Monthly</button>
+                  <button type="button" class="starlink-tab" data-period="yearly">Yearly</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="starlink-cycle-nav" id="modalVizCycleNav"></div>
+
+            <div class="starlink-chart-wrapper">
+              <div class="starlink-chart-legend">
+                <div class="legend-item">
+                  <span class="legend-dash"></span>
+                  <strong id="modalVizPlanLabel">Roam Data</strong>
+                </div>
+                <div class="legend-stat">
+                  <strong id="modalVizSubTotal">0 GB</strong>
+                  <span id="modalVizLimitLabel" class="legend-limit">5.0 TB Limit</span>
+                </div>
+              </div>
+
+              <div class="starlink-chart-container" id="modalStarlinkChartContainer">
+                <svg id="modalStarlinkChartSvg" class="starlink-chart-svg" preserveAspectRatio="none" viewBox="0 0 800 220"></svg>
+                <div id="modalStarlinkTooltip" class="starlink-tooltip hidden"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Inline Add for this Machine -->
+          <div class="modal-inline-add-bar">
+            <strong>+ Record Usage For This Machine:</strong>
+            <form id="modalInlineUsageForm" class="inline-usage-form">
+              <input type="date" id="modalInlineDate" required style="width: 140px;">
+              <input type="number" id="modalInlineAmount" min="0" step="any" placeholder="Amount (e.g. 15)" required style="width: 120px;">
+              <div class="unit-toggle-pills" id="modalInlineUnitToggle">
+                <button type="button" class="unit-pill active" data-unit="GB">GB</button>
+                <button type="button" class="unit-pill" data-unit="TB">TB</button>
+              </div>
+              <button type="submit" class="primary" style="padding: 0 16px; min-height: 36px;">Save</button>
+            </form>
+          </div>
+
+          <!-- 30-Day Daily Breakdown Table -->
+          <div class="modal-daily-breakdown">
+            <div class="breakdown-header">
+              <strong>Daily Recorded History (<span id="modalBreakdownCount">0</span> entries)</strong>
+              <span id="modalBreakdownTotal" class="summary-kicker">0 GB Total</span>
+            </div>
+            <div class="breakdown-list-wrapper">
+              <table class="modal-breakdown-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Day</th>
+                    <th class="money">Usage (GB)</th>
+                    <th class="money">Usage (TB)</th>
+                    <th style="width: 90px; text-align: center;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="modalBreakdownBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
