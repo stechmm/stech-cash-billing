@@ -1265,15 +1265,51 @@ function renderSupportPage() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `support-conversation${state.selectedSupportCustomerId === customer.id ? " active" : ""}`;
-    const identity = document.createElement("div");
+
+    const rawName = (customer.fullName || customer.username || "User").trim();
+    const initials = rawName.split(/\s+/).map((p) => p[0]).filter(Boolean).slice(0, 2).join("").toUpperCase() || "U";
+
+    const avatar = document.createElement("div");
+    avatar.className = "conv-avatar";
+    avatar.textContent = initials;
+
+    const main = document.createElement("div");
+    main.className = "conv-main";
+
+    const topRow = document.createElement("div");
+    topRow.className = "conv-top-row";
+
     const name = document.createElement("strong");
+    name.className = "conv-name";
     name.textContent = customer.fullName || customer.username;
-    const device = document.createElement("span");
-    device.textContent = `${customer.linkedDeviceId || "No User ID"} | ${customer.username}`;
-    identity.append(name, device);
+
+    const machineTag = document.createElement("span");
+    machineTag.className = "conv-machine-badge";
+    machineTag.textContent = customer.linkedDeviceId || "No ID";
+
+    topRow.append(name, machineTag);
+
+    const midRow = document.createElement("div");
+    midRow.className = "conv-mid-row";
+
+    const userTag = document.createElement("span");
+    userTag.className = "conv-username";
+    userTag.textContent = `@${customer.username}`;
+
+    midRow.append(userTag);
+
+    const previewRow = document.createElement("div");
+    previewRow.className = "conv-preview-row";
+
     const preview = document.createElement("small");
+    preview.className = "conv-preview";
     preview.textContent = last?.message || (last?.attachment?.kind === "audio" ? "Voice message" : last?.attachment ? "Payment receipt" : "No messages yet");
-    button.append(identity, preview);
+
+    previewRow.append(preview);
+
+    main.append(topRow, midRow, previewRow);
+    button.append(avatar, main);
+
     if (unread) {
       const badge = document.createElement("b");
       badge.textContent = unread;
