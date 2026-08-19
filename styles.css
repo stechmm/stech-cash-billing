@@ -2447,70 +2447,169 @@ input:disabled {
 .quick-field {
   display: grid;
   gap: 6px;
+/* Ultra-Compact & Elegant Daily Usage Modal */
+.usage-compact-modal {
+  max-width: 420px;
+  border-radius: 18px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(226, 232, 240, 0.9);
 }
-.quick-field .field-title {
-  font-size: 13px;
+.usage-compact-modal .modal-head {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #ffffff;
+}
+.usage-compact-modal .modal-head .summary-kicker {
+  color: #93c5fd;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.usage-compact-modal .modal-head strong {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+}
+.usage-compact-modal .modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.usage-compact-modal .modal-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.usage-compact-form {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+.compact-field-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.compact-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.compact-field.wide {
+  grid-column: 1 / -1;
+}
+.compact-label {
+  font-size: 12px;
   font-weight: 700;
-  color: #1e293b;
+  color: #334155;
 }
-.machine-hint-pill {
+.compact-field input {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  background: #f8fafc;
+  transition: all 0.15s ease;
+}
+.compact-field input:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.compact-hint {
   font-size: 11px;
-  color: #0f766e;
-  background: #e6f7f5;
-  border: 1px solid #bfece6;
-  border-radius: 6px;
-  padding: 4px 8px;
-  margin-top: 4px;
+  color: #0284c7;
+  font-weight: 700;
+  margin-top: 2px;
 }
-.amount-input-group {
+
+.compact-amount-row {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px;
   align-items: center;
 }
-.unit-toggle-pills {
+.compact-units {
   display: flex;
   background: #e2e8f0;
   padding: 3px;
-  border-radius: 8px;
+  border-radius: 9px;
   gap: 2px;
+  height: 40px;
+  align-items: center;
 }
-.unit-pill {
+.compact-units .unit-pill {
   border: none;
   background: transparent;
   padding: 6px 12px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: #64748b;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
-  transition: all 0.15s;
+  height: 34px;
+  transition: all 0.15s ease;
 }
-.unit-pill.active {
+.compact-units .unit-pill.active {
   background: #2563eb;
   color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
 }
-.usage-collapsible-options {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: #f8fafc;
-  margin-bottom: 14px;
-}
-.usage-collapsible-options summary {
-  font-size: 12px;
-  font-weight: 600;
-  color: #475569;
-  cursor: pointer;
-}
-.optional-fields-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+
+.compact-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
 }
-.optional-fields-grid .wide {
-  grid-column: 1 / -1;
+.btn-cancel {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  padding: 9px 18px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.btn-save {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  border: none;
+  padding: 9px 24px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transition: all 0.15s ease;
+}
+.btn-save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
 }
 
 /* Machine Clickable Pill & Today Status Badges */

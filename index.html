@@ -702,38 +702,38 @@
     </div>
 
     <div id="usageDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="usageDialogTitle">
-      <div class="modal-panel usage-modal-panel">
+      <div class="modal-panel usage-compact-modal">
         <div class="modal-head">
           <div>
-            <span class="summary-kicker">Daily Usage</span>
+            <span class="summary-kicker">Quick Record</span>
             <strong id="usageDialogTitle">Add Daily Usage</strong>
           </div>
           <button id="closeUsageDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
         </div>
-        <form id="usageForm" class="dialog-form usage-form-simplified">
+        <form id="usageForm" class="dialog-form usage-compact-form">
           <input type="hidden" id="usageId">
           
-          <div class="usage-quick-fields">
-            <!-- 1. Machine / Device ID -->
-            <label class="quick-field">
-              <span class="field-title">Device ID / Machine</span>
+          <div class="compact-field-group">
+            <!-- 1. Device ID / Machine -->
+            <label class="compact-field">
+              <span class="compact-label">Device ID / Machine</span>
               <input id="usageMachineInput" list="usageMachineDataList" type="text" placeholder="e.g. F01" required autocomplete="off">
               <datalist id="usageMachineDataList"></datalist>
-              <div id="usageMachineHint" class="machine-hint-pill hidden"></div>
+              <div id="usageMachineHint" class="compact-hint hidden"></div>
             </label>
 
-            <!-- 2. Usage Date -->
-            <label class="quick-field">
-              <span class="field-title">Date</span>
+            <!-- 2. Date -->
+            <label class="compact-field">
+              <span class="compact-label">Date</span>
               <input id="usageDateInput" type="date" required>
             </label>
 
             <!-- 3. Usage Amount + GB/TB Unit Toggle -->
-            <label class="quick-field">
-              <span class="field-title">Usage Amount</span>
-              <div class="amount-input-group">
-                <input id="usageDailyInput" type="number" min="0" step="any" placeholder="0" required>
-                <div class="unit-toggle-pills" id="usageUnitToggleGroup">
+            <label class="compact-field wide">
+              <span class="compact-label">Usage Amount</span>
+              <div class="compact-amount-row">
+                <input id="usageDailyInput" type="number" min="0" step="any" placeholder="Enter amount (e.g. 15.5)" required>
+                <div class="unit-toggle-pills compact-units" id="usageUnitToggleGroup">
                   <button type="button" class="unit-pill active" data-unit="GB">GB</button>
                   <button type="button" class="unit-pill" data-unit="TB">TB</button>
                 </div>
@@ -741,42 +741,16 @@
             </label>
           </div>
 
-          <!-- Collapsible Advanced Details -->
-          <details class="usage-collapsible-options">
-            <summary>More details (Customer, Bill Type, Limit, Notes)</summary>
-            <div class="optional-fields-grid">
-              <label>
-                Customer Name
-                <input id="usageCustomerInput" type="text" placeholder="Auto-linked from Device DB">
-              </label>
-              <label>
-                Bill Type
-                <input id="usageBillTypeInput" type="text" placeholder="Auto-linked">
-              </label>
-              <label>
-                Limit (TB)
-                <input id="usageLimitInput" type="number" min="0.1" step="0.1" value="5">
-              </label>
-              <label class="wide">
-                Notes
-                <input id="usageNotesInput" type="text" placeholder="Optional note">
-              </label>
-            </div>
-          </details>
+          <!-- Hidden inputs for auto-populated device details if needed -->
+          <input id="usageCustomerInput" type="hidden">
+          <input id="usageBillTypeInput" type="hidden">
+          <input id="usageLimitInput" type="hidden" value="5">
+          <input id="usageNotesInput" type="hidden">
 
-          <div class="form-actions">
-            <button type="submit" id="saveUsageBtn" class="primary">Save Daily Usage</button>
-            <button type="button" id="resetUsageBtn">Clear</button>
-            <button type="button" id="cancelUsageBtn">Cancel</button>
+          <div class="compact-modal-actions">
+            <button type="button" id="cancelUsageBtn" class="btn-cancel">Cancel</button>
+            <button type="submit" id="saveUsageBtn" class="primary btn-save">Save Usage</button>
           </div>
-
-          <section class="usage-history wide" aria-label="Daily usage history">
-            <div class="usage-history-head">
-              <strong>Daily History (This Month)</strong>
-              <span id="usageHistoryTotal">0 GB this month</span>
-            </div>
-            <div id="usageDailyHistory" class="usage-history-list"></div>
-          </section>
         </form>
       </div>
     </div>

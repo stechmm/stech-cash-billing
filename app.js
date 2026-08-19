@@ -1924,6 +1924,7 @@ function editUsageRecord(id) {
 }
 
 function renderUsageHistory(record) {
+  if (!el.usageDailyHistory) return;
   el.usageDailyHistory.innerHTML = "";
   const entries = record ? dailyUsageEntries(record).reverse() : [];
   const legacyTotal = Number(record?.legacyUsageTB || 0);
