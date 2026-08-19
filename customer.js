@@ -394,6 +394,18 @@ function renderCustomerApp() {
   renderCustomerNavigation();
 }
 
+function renderCustomerNavigation() {
+  customerEl.pages.forEach((page) => {
+    page.classList.toggle("active", page.id === customerState.activePage);
+  });
+  customerEl.navButtons.forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.customerPage === customerState.activePage);
+  });
+  if (customerState.activePage === "customerUsagePage") {
+    renderCustomerVisualizer();
+  }
+}
+
 function renderCustomerMessages() {
   const messages = customerState.messages;
   customerEl.messageList.innerHTML = "";
