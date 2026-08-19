@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=3.1">
+    <link rel="stylesheet" href="styles.css?v=3.2">
   </head>
   <body>
     <section id="loginScreen" class="login-screen">
@@ -701,44 +701,59 @@
       </div>
     </div>
 
+    <!-- Add Daily Usage Obsidian Modal -->
     <div id="usageDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="usageDialogTitle">
-      <div class="modal-panel usage-compact-modal">
-        <div class="modal-head">
-          <div>
-            <span class="summary-kicker">Quick Record</span>
-            <strong id="usageDialogTitle">Add Daily Usage</strong>
+      <div class="modal-panel usage-obsidian-modal" style="max-width: 480px !important; width: min(480px, 95vw) !important; background: #080c15 !important; color: #f8fafc !important; border-radius: 24px !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; padding: 0 !important; overflow: hidden !important; box-shadow: 0 30px 80px rgba(0,0,0,0.85), 0 0 50px rgba(37,99,235,0.15) !important;">
+        <div class="obsidian-header" style="display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; background: #0d121f; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+          <div class="obsidian-identity" style="display: flex; align-items: center; gap: 12px;">
+            <span class="obsidian-badge" style="display: inline-flex; align-items: center; padding: 6px 12px; background: #162032; color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 10px; font-size: 13px; font-weight: 900;">🛰️</span>
+            <div class="obsidian-title-group" style="display: flex; flex-direction: column; gap: 2px;">
+              <strong id="usageDialogTitle" style="display: block; color: #ffffff; font-size: 17px; font-weight: 800; margin: 0;">Add Daily Usage</strong>
+              <span class="obsidian-sub" style="display: block; color: #94a3b8; font-size: 11.5px; font-weight: 600;">Record Starlink terminal daily consumption</span>
+            </div>
           </div>
-          <button id="closeUsageDialogBtn" class="modal-close" type="button" aria-label="Close dialog">x</button>
+          <button id="closeUsageDialogBtn" class="obsidian-close-btn" type="button" aria-label="Close dialog" onclick="setDialogOpen(el.usageDialog, false)" style="display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; font-size: 14px; font-weight: 700; cursor: pointer;">✕</button>
         </div>
-        <form id="usageForm" class="dialog-form usage-compact-form">
+
+        <form id="usageForm" style="padding: 22px 24px; display: grid; gap: 16px; background: #080c15;">
           <input type="hidden" id="usageId">
           
-          <div class="compact-field-group">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
             <!-- 1. Device ID / Machine -->
-            <label class="compact-field">
-              <span class="compact-label">Device ID / Machine</span>
-              <input id="usageMachineInput" list="usageMachineDataList" type="text" placeholder="e.g. F01" required autocomplete="off">
+            <label style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;">Device ID / Machine</span>
+              <input id="usageMachineInput" list="usageMachineDataList" type="text" placeholder="e.g. F01" required autocomplete="off" style="height: 42px; padding: 0 12px; background: #131a29; border: 1px solid rgba(255,255,255,0.14); color: #ffffff; border-radius: 10px; font-size: 13px; font-weight: 700;">
               <datalist id="usageMachineDataList"></datalist>
-              <div id="usageMachineHint" class="compact-hint hidden"></div>
+              <div id="usageMachineHint" class="compact-hint hidden" style="font-size: 11px; color: #34d399; font-weight: 700; margin-top: 2px;"></div>
             </label>
 
             <!-- 2. Date -->
-            <label class="compact-field">
-              <span class="compact-label">Date</span>
-              <input id="usageDateInput" type="date" required>
+            <label style="display: flex; flex-direction: column; gap: 6px;">
+              <span style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;">Date</span>
+              <input id="usageDateInput" type="date" required style="height: 42px; padding: 0 12px; background: #131a29; border: 1px solid rgba(255,255,255,0.14); color: #ffffff; border-radius: 10px; font-size: 13px; font-weight: 600;">
             </label>
+          </div>
 
-            <!-- 3. Usage Amount + GB/TB Unit Toggle -->
-            <label class="compact-field wide">
-              <span class="compact-label">Usage Amount</span>
-              <div class="compact-amount-row">
-                <input id="usageDailyInput" type="number" min="0" step="any" placeholder="Enter amount (e.g. 15.5)" required>
-                <div class="unit-toggle-pills compact-units" id="usageUnitToggleGroup">
-                  <button type="button" class="unit-pill active" data-unit="GB">GB</button>
-                  <button type="button" class="unit-pill" data-unit="TB">TB</button>
-                </div>
+          <!-- 3. Usage Amount + GB/TB Unit Toggle -->
+          <label style="display: flex; flex-direction: column; gap: 6px;">
+            <span style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;">Usage Amount</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #131a29; border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 4px 10px;">
+              <input id="usageDailyInput" type="number" min="0" step="any" placeholder="0.0" required style="height: 42px; width: 100%; background: transparent; border: none; color: #ffffff; font-size: 22px; font-weight: 900; outline: none;">
+              <div class="unit-toggle-pills compact-units" id="usageUnitToggleGroup" style="display: flex; background: #080c15; border: 1px solid rgba(255,255,255,0.12); padding: 3px; border-radius: 9px; gap: 2px;">
+                <button type="button" class="unit-pill active" data-unit="GB" style="border: none; background: #2563eb; color: #ffffff; padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 7px; cursor: pointer; transition: all 0.15s;">GB</button>
+                <button type="button" class="unit-pill" data-unit="TB" style="border: none; background: transparent; color: #64748b; padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 7px; cursor: pointer; transition: all 0.15s;">TB</button>
               </div>
-            </label>
+            </div>
+          </label>
+
+          <!-- Quick Presets -->
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="font-size: 11px; color: #64748b; font-weight: 700; margin-right: 4px;">Presets:</span>
+            <button type="button" class="preset-chip" onclick="applyUsagePreset(5)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; cursor: pointer;">+5 GB</button>
+            <button type="button" class="preset-chip" onclick="applyUsagePreset(10)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; cursor: pointer;">+10 GB</button>
+            <button type="button" class="preset-chip" onclick="applyUsagePreset(20)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; cursor: pointer;">+20 GB</button>
+            <button type="button" class="preset-chip" onclick="applyUsagePreset(50)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; cursor: pointer;">+50 GB</button>
+            <button type="button" class="preset-chip" onclick="applyUsagePreset(100)" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #38bdf8; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; cursor: pointer;">+100 GB</button>
           </div>
 
           <!-- Hidden inputs for auto-populated device details if needed -->
@@ -747,9 +762,9 @@
           <input id="usageLimitInput" type="hidden" value="5">
           <input id="usageNotesInput" type="hidden">
 
-          <div class="compact-modal-actions">
-            <button type="button" id="cancelUsageBtn" class="btn-cancel">Cancel</button>
-            <button type="submit" id="saveUsageBtn" class="primary btn-save">Save Usage</button>
+          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
+            <button type="button" id="cancelUsageBtn" class="btn-cancel" onclick="setDialogOpen(el.usageDialog, false)" style="border: 1px solid rgba(255,255,255,0.15); background: #131a29; color: #cbd5e1; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;">Cancel</button>
+            <button type="submit" id="saveUsageBtn" class="primary btn-save" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border: none; padding: 10px 26px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);">Save Daily Usage</button>
           </div>
         </form>
       </div>
@@ -1077,6 +1092,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=3.1"></script>
+    <script src="app.js?v=3.2"></script>
   </body>
 </html>

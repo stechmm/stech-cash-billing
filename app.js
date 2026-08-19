@@ -1837,9 +1837,22 @@ function setUsageModalUnit(unit) {
   vizState.inputUnit = unit;
   if (!el.usageUnitToggleGroup) return;
   el.usageUnitToggleGroup.querySelectorAll(".unit-pill").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.unit === unit);
+    const isActive = btn.dataset.unit === unit;
+    btn.classList.toggle("active", isActive);
+    btn.style.background = isActive ? "#2563eb" : "transparent";
+    btn.style.color = isActive ? "#ffffff" : "#64748b";
   });
 }
+
+function applyUsagePreset(val) {
+  const current = Number(el.usageDailyInput?.value || 0);
+  const next = current > 0 ? (current + val) : val;
+  if (el.usageDailyInput) {
+    el.usageDailyInput.value = Number(next.toFixed(2));
+    el.usageDailyInput.focus();
+  }
+}
+window.applyUsagePreset = applyUsagePreset;
 
 async function saveUsageRecord(event) {
   event.preventDefault();

@@ -2442,174 +2442,43 @@ input:disabled {
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
-  margin-bottom: 14px;
-}
 .quick-field {
   display: grid;
   gap: 6px;
-/* Ultra-Compact & Elegant Daily Usage Modal */
-.usage-compact-modal {
-  max-width: 420px;
-  border-radius: 18px;
-  background: #ffffff;
-  overflow: hidden;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-}
-.usage-compact-modal .modal-head {
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #1e3a8a, #2563eb);
-  color: #ffffff;
-}
-.usage-compact-modal .modal-head .summary-kicker {
-  color: #93c5fd;
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.usage-compact-modal .modal-head strong {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 800;
-}
-.usage-compact-modal .modal-close {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-.usage-compact-modal .modal-close:hover {
-  background: rgba(255, 255, 255, 0.35);
 }
 
-.usage-compact-form {
-  padding: 20px;
-  display: grid;
-  gap: 16px;
+/* ==========================================================================
+   DAILY USAGE OBSIDIAN MODAL (Luxury SpaceX Quick Entry Dialog)
+   ========================================================================== */
+#usageDialog .modal-panel,
+.usage-obsidian-modal {
+  max-width: 480px !important;
+  width: min(480px, 95vw) !important;
+  background: #080c15 !important;
+  color: #f8fafc !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 50px rgba(37, 99, 235, 0.15) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
 }
-.compact-field-group {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.compact-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.compact-field.wide {
-  grid-column: 1 / -1;
-}
-.compact-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #334155;
-}
-.compact-field input {
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  background: #f8fafc;
-  transition: all 0.15s ease;
-}
-.compact-field input:focus {
-  background: #ffffff;
-  border-color: #2563eb;
+
+#usageDialog input {
+  font-family: inherit;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
-.compact-hint {
-  font-size: 11px;
-  color: #0284c7;
-  font-weight: 700;
-  margin-top: 2px;
+#usageDialog input:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
 }
 
-.compact-amount-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: center;
-}
-.compact-units {
-  display: flex;
-  background: #e2e8f0;
-  padding: 3px;
-  border-radius: 9px;
-  gap: 2px;
-  height: 40px;
-  align-items: center;
-}
-.compact-units .unit-pill {
-  border: none;
-  background: transparent;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #64748b;
-  border-radius: 7px;
-  cursor: pointer;
-  height: 34px;
+.preset-chip {
   transition: all 0.15s ease;
 }
-.compact-units .unit-pill.active {
-  background: #2563eb;
-  color: #ffffff;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
-}
-
-.compact-modal-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 8px;
-  padding-top: 14px;
-  border-top: 1px solid #f1f5f9;
-}
-.btn-cancel {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #475569;
-  padding: 9px 18px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-.btn-cancel:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-.btn-save {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
-  color: #ffffff;
-  border: none;
-  padding: 9px 24px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-  transition: all 0.15s ease;
-}
-.btn-save:hover {
+.preset-chip:hover {
+  background: rgba(56, 189, 248, 0.18) !important;
+  border-color: #38bdf8 !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
 }
 
 /* Machine Clickable Pill & Today Status Badges */
