@@ -2877,3 +2877,68 @@ input:disabled {
 .modal-breakdown-table tbody tr:hover {
   background: #f8fbff;
 }
+
+.modal-starlink-card .starlink-chart-wrapper {
+  margin-top: 14px;
+}
+.modal-starlink-card .starlink-chart-legend {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.modal-starlink-card .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+.modal-starlink-card .legend-dash {
+  width: 14px;
+  height: 3px;
+  background: #38bdf8;
+  border-radius: 2px;
+}
+.modal-starlink-card .legend-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  color: #ffffff;
+}
+.modal-starlink-card .legend-limit {
+  color: #38bdf8;
+  font-weight: 600;
+}
+.modal-starlink-card .starlink-chart-container {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.modal-starlink-card .starlink-chart-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.modal-starlink-card .starlink-tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #1e293b;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transform: translate(-50%, -120%);
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 50;
+  white-space: nowrap;
+}

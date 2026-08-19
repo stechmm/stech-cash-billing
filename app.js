@@ -608,16 +608,11 @@ function openMachineChartModal(machineId, monthKey = "") {
   }
   
   renderModalMachineVisualizer();
-  if (el.machineChartModal) {
-    el.machineChartModal.classList.remove("hidden");
-    el.machineChartModal.classList.add("open");
-  }
+  setDialogOpen(el.machineChartModal, true);
 }
 
 function closeMachineChartModal() {
-  if (!el.machineChartModal) return;
-  el.machineChartModal.classList.remove("open");
-  el.machineChartModal.classList.add("hidden");
+  setDialogOpen(el.machineChartModal, false);
 }
 
 function renderModalMachineVisualizer() {
@@ -1628,17 +1623,13 @@ function resetDeviceForm() {
   el.planStatusInput.value = "normal";
 }
 
-function resetUsageForm() {
-  el.usageForm.reset();
-  el.usageId.value = "";
-  el.usageDialogTitle.textContent = "Add Daily Usage";
-  el.saveUsageBtn.textContent = "Save Daily Usage";
-  el.usageLimitInput.value = "5";
-  el.usageDateInput.min = `${state.activeMonth}-01`;
-  el.usageDateInput.max = usageMonthLastDate();
-  el.usageDateInput.value = usageDefaultDate();
-  el.usageDailyInput.value = "0";
-  renderUsageHistory(null);
+function openUsageDialog(recordId = null, machineId = "") {
+  resetUsageForm();
+  if (machineId) {
+    el.usageMachineInput.value = machineId;
+    syncUsageMachineContext();
+  }
+  setDialogOpen(el.usageDialog, true);
 }
 
 function resetUserForm() {
