@@ -1602,11 +1602,13 @@ function resetDeviceForm() {
 
 function openUsageDialog(recordId = null, machineId = "") {
   resetUsageForm();
-  if (machineId) {
+  if (machineId && el.usageMachineInput) {
     el.usageMachineInput.value = machineId;
     syncUsageMachineContext();
   }
-  setDialogOpen(el.usageDialog, true);
+  if (el.usageDialog) {
+    setDialogOpen(el.usageDialog, true);
+  }
 }
 window.openUsageDialog = openUsageDialog;
 
@@ -1815,13 +1817,14 @@ async function deleteDeviceRecord(id) {
 }
 
 function resetUsageForm() {
-  el.usageForm.reset();
-  el.usageId.value = "";
-  el.usageDialogTitle.textContent = "Add Daily Usage";
-  el.saveUsageBtn.textContent = "Save Daily Usage";
-  el.usageLimitInput.value = "5";
-  el.usageDateInput.value = localDateKey();
-  el.usageDailyInput.value = "";
+  if (el.usageForm) el.usageForm.reset();
+  if (el.usageId) el.usageId.value = "";
+  if (el.usageDialogTitle) el.usageDialogTitle.textContent = "Add Daily Usage";
+  if (el.saveUsageBtn) el.saveUsageBtn.textContent = "Save Daily Usage";
+  if (el.usageLimitInput) el.usageLimitInput.value = "5";
+  if (el.usageDateInput) el.usageDateInput.value = localDateKey();
+  if (el.usageDailyInput) el.usageDailyInput.value = "";
+  if (el.usageMachineInput) el.usageMachineInput.value = "";
   if (el.usageMachineHint) {
     el.usageMachineHint.textContent = "";
     el.usageMachineHint.classList.add("hidden");
