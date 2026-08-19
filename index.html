@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=5.4">
+    <link rel="stylesheet" href="styles.css?v=5.5">
   </head>
   <body>
     <section id="loginScreen" class="login-screen">
@@ -47,7 +47,6 @@
             <button class="menu-item" type="button" data-page="devicePage">Device DB</button>
             <button class="menu-item" type="button" data-page="usagePage">Data Usage</button>
             <button class="menu-item" type="button" data-page="supportPage">Customer Support</button>
-            <button class="menu-item admin-only-btn" type="button" data-page="adminPage">Admin Panel</button>
           </nav>
           <div class="user-chip">
             <strong id="currentUserName">User</strong>
@@ -456,335 +455,64 @@
       </section>
 
       <section id="adminPage" class="page-view">
-        <!-- Admin Top Navigation Sub-menu -->
-        <div class="admin-nav-bar">
-          <div class="admin-nav-tabs">
-            <button class="admin-tab-btn active" type="button" data-admin-tab="adminTabVisual">
-              <span class="admin-tab-icon">🎨</span>
-              <span>Live Visual Customizer</span>
-              <span class="elementor-badge">LIVE EDITOR</span>
-            </button>
-            <button class="admin-tab-btn" type="button" data-admin-tab="adminTabUsers">
-              <span class="admin-tab-icon">👥</span>
-              <span>Staff &amp; Permissions</span>
-            </button>
-            <button class="admin-tab-btn" type="button" data-admin-tab="adminTabCustomers">
-              <span class="admin-tab-icon">📱</span>
-              <span>Customer Accounts</span>
-            </button>
-            <button class="admin-tab-btn" type="button" data-admin-tab="adminTabBackup">
-              <span class="admin-tab-icon">💾</span>
-              <span>Backup &amp; Storage</span>
-            </button>
+        <section class="device-dashboard">
+          <div class="bill-card bill-blue">
+            <span>Total Users</span>
+            <strong id="userCount">0</strong>
+            <small>All system accounts</small>
           </div>
-          <div class="admin-stats-summary">
-            <div class="admin-mini-stat">
-              <span>Users</span>
-              <strong id="userCount">0</strong>
-            </div>
-            <div class="admin-mini-stat">
-              <span>Customers</span>
-              <strong id="customerAccountCount">0</strong>
-            </div>
+          <div class="bill-card bill-green">
+            <span>Admins</span>
+            <strong id="adminCount">0</strong>
+            <small>Full access</small>
           </div>
-        </div>
-
-        <!-- TAB 1: Live Visual Builder (Elementor-Style) -->
-        <div id="adminTabVisual" class="admin-tab-content active">
-          <div class="builder-workspace">
-            <!-- Left Inspector Controls -->
-            <aside class="builder-inspector">
-              <div class="builder-inspector-header">
-                <div>
-                  <span class="summary-kicker">Elementor Style</span>
-                  <h3>Visual Customizer</h3>
-                </div>
-                <button id="customizerSaveBtn" class="primary builder-save-btn" type="button">
-                  <span>Publish Live</span>
-                </button>
-              </div>
-
-              <div class="builder-sections">
-                <!-- Section 1: Branding & Identity -->
-                <details class="builder-group" open>
-                  <summary class="builder-group-title">
-                    <span>🚀 Branding &amp; Identity</span>
-                  </summary>
-                  <div class="builder-fields">
-                    <label>
-                      Application Name
-                      <input id="customizerAppName" type="text" value="SpaceLink" placeholder="e.g. SpaceLink">
-                    </label>
-                    <label>
-                      Header Kicker / Subtitle
-                      <input id="customizerAppKicker" type="text" value="Satellite &amp; Cash Operations" placeholder="e.g. Satellite &amp; Cash Operations">
-                    </label>
-                    <label>
-                      Support Hotline
-                      <input id="customizerHotline" type="text" value="+95 9 777 888 999" placeholder="e.g. +95 9 777 888 999">
-                    </label>
-                    <label>
-                      Currency Symbol
-                      <input id="customizerCurrency" type="text" value="MMK" placeholder="e.g. MMK, USD, THB">
-                    </label>
-                  </div>
-                </details>
-
-                <!-- Section 2: Theme Engine & Accent Palette -->
-                <details class="builder-group" open>
-                  <summary class="builder-group-title">
-                    <span>🎨 Theme Engine &amp; Colors</span>
-                  </summary>
-                  <div class="builder-fields">
-                    <div class="color-presets-wrap">
-                      <span class="field-label">Accent Color Presets</span>
-                      <div class="color-swatches">
-                        <button type="button" class="swatch-btn active" data-color="#38bdf8" style="background:#38bdf8;" title="Electric Cyan"></button>
-                        <button type="button" class="swatch-btn" data-color="#2563eb" style="background:#2563eb;" title="SpaceX Blue"></button>
-                        <button type="button" class="swatch-btn" data-color="#10b981" style="background:#10b981;" title="Emerald Aurora"></button>
-                        <button type="button" class="swatch-btn" data-color="#a855f7" style="background:#a855f7;" title="Cyberpunk Violet"></button>
-                        <button type="button" class="swatch-btn" data-color="#f59e0b" style="background:#f59e0b;" title="Solar Gold"></button>
-                        <button type="button" class="swatch-btn" data-color="#f43f5e" style="background:#f43f5e;" title="Nebula Crimson"></button>
-                      </div>
-                    </div>
-                    <label class="inline-color-label">
-                      <span>Custom Color Picker</span>
-                      <input id="customizerAccentColor" type="color" value="#38bdf8">
-                    </label>
-                    <label>
-                      Theme Background Style
-                      <select id="customizerBgPreset">
-                        <option value="obsidian">Deep Obsidian (#070a12)</option>
-                        <option value="navy">Midnight Navy (#0a0f1d)</option>
-                        <option value="cyber">Cyberpunk Space (#0c0919)</option>
-                      </select>
-                    </label>
-                  </div>
-                </details>
-
-                <!-- Section 3: Customer Portal Hero & Alert Banner -->
-                <details class="builder-group" open>
-                  <summary class="builder-group-title">
-                    <span>📢 Live Announcements &amp; Banner</span>
-                  </summary>
-                  <div class="builder-fields">
-                    <label class="checkbox-row">
-                      <input id="customizerBannerEnabled" type="checkbox" checked>
-                      <span>Enable Top Alert Banner</span>
-                    </label>
-                    <label>
-                      Banner Announcement Text
-                      <input id="customizerBannerText" type="text" value="⚡ Starlink Priority &amp; Roam services active and operational.">
-                    </label>
-                    <label>
-                      Portal Welcome Greeting
-                      <input id="customizerHeroGreeting" type="text" value="Welcome back">
-                    </label>
-                    <label>
-                      Portal Service Subtitle
-                      <input id="customizerHeroSubtitle" type="text" value="Satellite connectivity, usage tracking, and billing operations.">
-                    </label>
-                  </div>
-                </details>
-
-                <!-- Section 4: Modular Features Toggle -->
-                <details class="builder-group">
-                  <summary class="builder-group-title">
-                    <span>🧩 Module Visibility Toggles</span>
-                  </summary>
-                  <div class="builder-fields">
-                    <label class="checkbox-row">
-                      <input id="customizerModUsageChart" type="checkbox" checked>
-                      <span>Starlink Roam Usage Visualizer</span>
-                    </label>
-                    <label class="checkbox-row">
-                      <input id="customizerModDaily" type="checkbox" checked>
-                      <span>Daily Usage History Matrix</span>
-                    </label>
-                    <label class="checkbox-row">
-                      <input id="customizerModNotices" type="checkbox" checked>
-                      <span>Customer Notices &amp; Broadcasts</span>
-                    </label>
-                    <label class="checkbox-row">
-                      <input id="customizerModChat" type="checkbox" checked>
-                      <span>Live Billing &amp; Support Chat</span>
-                    </label>
-                    <label class="checkbox-row">
-                      <input id="customizerModSpecs" type="checkbox" checked>
-                      <span>Satellite Kit &amp; Device Specs Card</span>
-                    </label>
-                  </div>
-                </details>
-              </div>
-
-              <div class="builder-inspector-footer">
-                <button id="customizerResetBtn" class="secondary" type="button">Reset Defaults</button>
-                <a href="/customer" target="_blank" class="preview-external-link">Open Portal ↗</a>
-              </div>
-            </aside>
-
-            <!-- Right Live Preview Canvas -->
-            <main class="builder-canvas-wrapper">
-              <div class="builder-canvas-bar">
-                <div class="viewport-toggles">
-                  <button id="viewportDesktopBtn" class="viewport-btn active" type="button">🖥️ Desktop</button>
-                  <button id="viewportMobileBtn" class="viewport-btn" type="button">📱 Mobile (iPhone)</button>
-                </div>
-                <div class="canvas-live-badge">
-                  <span class="pulse-dot"></span>
-                  <span>Interactive Real-Time Preview</span>
-                </div>
-              </div>
-
-              <div id="builderPreviewFrameContainer" class="builder-frame-container desktop">
-                <!-- Interactive Live Mockup Canvas -->
-                <div id="builderLiveMockup" class="mockup-screen">
-                  <!-- Live Banner -->
-                  <div id="mockupBanner" class="mockup-banner">
-                    <span id="mockupBannerText">⚡ Starlink Priority &amp; Roam services active and operational.</span>
-                  </div>
-
-                  <!-- Live Customer App Header -->
-                  <div class="mockup-header">
-                    <div class="mockup-brand">
-                      <div class="mockup-logo">S</div>
-                      <div>
-                        <span id="mockupAppKicker">SpaceLink Customer</span>
-                        <strong id="mockupAppName">SpaceLink</strong>
-                      </div>
-                    </div>
-                    <span class="mockup-status-badge">ONLINE</span>
-                  </div>
-
-                  <!-- Live Welcome Card -->
-                  <div class="mockup-welcome-card">
-                    <span class="mockup-kicker">THIS MONTH</span>
-                    <h2 id="mockupHeroGreeting">Welcome back</h2>
-                    <p id="mockupHeroSubtitle">Satellite connectivity, usage tracking, and billing operations.</p>
-                  </div>
-
-                  <!-- Live Stat Cards -->
-                  <div class="mockup-stat-grid">
-                    <div class="mockup-stat-card usage">
-                      <span>Total Used</span>
-                      <strong>3.42 TB</strong>
-                      <small>Unlimited Roam</small>
-                    </div>
-                    <div class="mockup-stat-card remaining">
-                      <span>Days Remaining</span>
-                      <strong>12 Days</strong>
-                      <small>Until billing reset</small>
-                    </div>
-                  </div>
-
-                  <!-- Live Starlink Chart Mockup -->
-                  <div id="mockupSectionChart" class="mockup-box">
-                    <div class="mockup-box-head">
-                      <span>Starlink Data Visualizer</span>
-                      <strong id="mockupAccentTag" class="mockup-accent-pill">High-Speed</strong>
-                    </div>
-                    <div class="mockup-chart-bars">
-                      <div class="m-bar" style="height: 45%;"></div>
-                      <div class="m-bar" style="height: 70%;"></div>
-                      <div class="m-bar" style="height: 30%;"></div>
-                      <div class="m-bar" style="height: 90%;"></div>
-                      <div class="m-bar" style="height: 60%;"></div>
-                      <div class="m-bar" style="height: 85%;"></div>
-                      <div class="m-bar active" style="height: 100%;"></div>
-                    </div>
-                  </div>
-
-                  <!-- Live Support Chat Box Mockup -->
-                  <div id="mockupSectionChat" class="mockup-box">
-                    <div class="mockup-box-head">
-                      <span>Live Support Preview</span>
-                      <small id="mockupHotlineTag">+95 9 777 888 999</small>
-                    </div>
-                    <div class="mockup-chat-preview">
-                      <div class="mockup-bubble staff">Hello! How can SpaceLink assist your satellite today?</div>
-                      <div class="mockup-bubble customer">Please check my data usage for F05.</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </main>
+          <div class="bill-card bill-amber">
+            <span>Standard Users</span>
+            <strong id="standardUserCount">0</strong>
+            <small>Restricted tabs</small>
           </div>
-        </div>
+          <div class="bill-card bill-gray">
+            <span>Visible Tabs</span>
+            <strong id="tabOptionCount">7</strong>
+            <small>Permission checklist</small>
+          </div>
+        </section>
 
-        <!-- TAB 2: Staff & User Permissions -->
-        <div id="adminTabUsers" class="admin-tab-content">
-          <section class="device-panel">
-            <div class="ledger-topline">
-              <div>
-                <span class="summary-kicker">Admin Panel</span>
-                <strong>System Staff &amp; Role Permissions</strong>
-              </div>
-              <button id="openUserDialogBtn" class="entry-toggle" type="button">Create User</button>
+        <section class="device-panel">
+          <div class="ledger-topline">
+            <div>
+              <span class="summary-kicker">Admin Panel</span>
+              <strong>User Accounts and Permissions</strong>
             </div>
-            <table class="device-table user-table">
-              <thead>
-                <tr>
-                  <th>Full Name</th>
-                  <th>Username</th>
-                  <th>Role</th>
-                  <th>Allowed Tabs</th>
-                  <th class="admin-action-col">Action</th>
-                </tr>
-              </thead>
-              <tbody id="userBody"></tbody>
-            </table>
-          </section>
-        </div>
+            <button id="openUserDialogBtn" class="entry-toggle" type="button">Create User</button>
+          </div>
+          <table class="device-table user-table">
+            <thead>
+              <tr>
+                <th>Full Name</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Allowed Tabs</th>
+                <th class="admin-action-col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="userBody"></tbody>
+          </table>
+        </section>
 
-        <!-- TAB 3: Customer Login Accounts -->
-        <div id="adminTabCustomers" class="admin-tab-content">
-          <section class="device-panel">
-            <div class="ledger-topline">
-              <div>
-                <span class="summary-kicker">Customer App</span>
-                <strong>Customer Portal Login Accounts</strong>
-              </div>
-              <button id="openCustomerAccountDialogBtn" class="entry-toggle" type="button">Create Customer</button>
+        <section class="device-panel">
+          <div class="ledger-topline">
+            <div>
+              <span class="summary-kicker">Customer App</span>
+              <strong>Customer Login Accounts</strong>
             </div>
-            <table class="device-table customer-account-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Username</th>
-                  <th>User ID</th>
-                  <th>Status</th>
-                  <th>Customer App</th>
-                  <th class="admin-action-col">Action</th>
-                </tr>
-              </thead>
-              <tbody id="customerAccountBody"></tbody>
-            </table>
-          </section>
-        </div>
-
-        <!-- TAB 4: Backup & System Storage -->
-        <div id="adminTabBackup" class="admin-tab-content">
-          <section class="device-panel">
-            <div class="ledger-topline">
-              <div>
-                <span class="summary-kicker">System Utilities</span>
-                <strong>Database Backup &amp; CSV Export</strong>
-              </div>
-            </div>
-            <div class="backup-actions-grid">
-              <div class="backup-card">
-                <h4>Full System Backup</h4>
-                <p>Download complete JSON database snapshot including cash records, bills, devices, and settings.</p>
-                <a href="/api/export/backup.json" class="button primary" download="spacelink-backup.json">Export JSON Backup</a>
-              </div>
-              <div class="backup-card">
-                <h4>Device Database Export</h4>
-                <p>Export all registered satellite machines, serials, and kit numbers as CSV.</p>
-                <a href="/api/export/devices.csv" class="button secondary" download="spacelink-devices.csv">Export Devices CSV</a>
-              </div>
-            </div>
-          </section>
-        </div>
+            <button id="openCustomerAccountDialogBtn" class="entry-toggle" type="button">Create Customer</button>
+          </div>
+          <table class="device-table customer-account-table">
+            <thead><tr><th>Name</th><th>Username</th><th>User ID</th><th>Status</th><th>Customer App</th><th class="admin-action-col">Action</th></tr></thead>
+            <tbody id="customerAccountBody"></tbody>
+          </table>
+        </section>
       </section>
     </main>
 
@@ -1351,6 +1079,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=5.1"></script>
+    <script src="app.js?v=5.5"></script>
   </body>
 </html>
