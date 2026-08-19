@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=5.0">
+    <link rel="stylesheet" href="styles.css?v=5.1">
   </head>
   <body>
     <section id="loginScreen" class="login-screen">
@@ -35,8 +35,8 @@
         <div class="brand-lockup">
           <span class="brand-mark">S</span>
           <div>
-            <p class="eyebrow">Satellite &amp; Cash Operations</p>
             <h1>SpaceLink</h1>
+            <p class="brand-subtitle">Billing Service</p>
           </div>
         </div>
         <div class="header-actions">
@@ -60,15 +60,13 @@
               <span></span>
             </summary>
             <div class="utility-panel">
-              <button id="adminPanelBtn" class="utility-item hidden" type="button">Admin Panel</button>
-              <button id="printBtn" class="utility-item" type="button">Print</button>
-              <button id="exportJsonBtn" class="utility-item" type="button">Backup</button>
-              <button id="openColorSettingsBtn" class="utility-item" type="button">Color Settings</button>
-              <label class="utility-item file-item">
-                Restore
-                <input id="importJsonInput" type="file" accept="application/json">
-              </label>
-              <button id="logoutBtn" class="utility-item" type="button">Logout</button>
+              <button id="adminPanelBtn" class="utility-item" type="button">⚙️ Admin Panel</button>
+              <button id="printBtn" class="utility-item" type="button">🖨️ Print Sheet</button>
+              <button id="exportJsonBtn" class="utility-item" type="button">💾 Export Backup</button>
+              <button id="openColorSettingsBtn" class="utility-item" type="button">🎨 Color Settings</button>
+              <button id="restoreBackupBtn" class="utility-item" type="button">📥 Restore Backup</button>
+              <input id="importJsonInput" type="file" accept="application/json" class="hidden">
+              <button id="logoutBtn" class="utility-item danger-item" type="button">🚪 Logout</button>
             </div>
           </details>
         </div>
@@ -1353,6 +1351,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=5.0"></script>
+    <script src="app.js?v=5.1"></script>
   </body>
 </html>

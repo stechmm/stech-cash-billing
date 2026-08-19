@@ -2761,6 +2761,13 @@ el.printBtn.addEventListener("click", () => {
   window.print();
 });
 el.exportJsonBtn.addEventListener("click", exportBackup);
+const restoreBackupBtn = document.querySelector("#restoreBackupBtn");
+if (restoreBackupBtn) {
+  restoreBackupBtn.addEventListener("click", () => {
+    closeUtilityMenu();
+    el.importJsonInput.click();
+  });
+}
 el.importJsonInput.addEventListener("change", importBackup);
 el.logoutBtn.addEventListener("click", doLogout);
 
