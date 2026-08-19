@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=3.2">
+    <link rel="stylesheet" href="styles.css?v=3.3">
   </head>
   <body>
     <section id="loginScreen" class="login-screen">
@@ -712,7 +712,7 @@
               <span class="obsidian-sub" style="display: block; color: #94a3b8; font-size: 11.5px; font-weight: 600;">Record Starlink terminal daily consumption</span>
             </div>
           </div>
-          <button id="closeUsageDialogBtn" class="obsidian-close-btn" type="button" aria-label="Close dialog" onclick="setDialogOpen(el.usageDialog, false)" style="display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; font-size: 14px; font-weight: 700; cursor: pointer;">✕</button>
+          <button id="closeUsageDialogBtn" class="obsidian-close-btn" type="button" aria-label="Close dialog" onclick="closeUsageDialog()" style="display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #cbd5e1; font-size: 14px; font-weight: 700; cursor: pointer;">✕</button>
         </div>
 
         <form id="usageForm" style="padding: 22px 24px; display: grid; gap: 16px; background: #080c15;">
@@ -763,7 +763,7 @@
           <input id="usageNotesInput" type="hidden">
 
           <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);">
-            <button type="button" id="cancelUsageBtn" class="btn-cancel" onclick="setDialogOpen(el.usageDialog, false)" style="border: 1px solid rgba(255,255,255,0.15); background: #131a29; color: #cbd5e1; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;">Cancel</button>
+            <button type="button" id="cancelUsageBtn" class="btn-cancel" onclick="closeUsageDialog()" style="border: 1px solid rgba(255,255,255,0.15); background: #131a29; color: #cbd5e1; padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;">Cancel</button>
             <button type="submit" id="saveUsageBtn" class="primary btn-save" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border: none; padding: 10px 26px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);">Save Daily Usage</button>
           </div>
         </form>
@@ -1092,6 +1092,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=3.2"></script>
+    <script src="app.js?v=3.3"></script>
   </body>
 </html>

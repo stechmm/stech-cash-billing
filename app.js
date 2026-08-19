@@ -1612,6 +1612,15 @@ function openUsageDialog(recordId = null, machineId = "") {
 }
 window.openUsageDialog = openUsageDialog;
 
+function closeUsageDialog() {
+  const dialog = el?.usageDialog || document.querySelector("#usageDialog");
+  if (dialog) {
+    dialog.classList.remove("open");
+    dialog.classList.add("hidden");
+  }
+}
+window.closeUsageDialog = closeUsageDialog;
+
 function resetUserForm() {
   el.userForm.reset();
   el.userRecordId.value = "";
@@ -2397,11 +2406,17 @@ el.openUsageDialogBtn.addEventListener("click", () => {
   resetUsageForm();
   setDialogOpen(el.usageDialog, true);
 });
-el.closeUsageDialogBtn.addEventListener("click", () => setDialogOpen(el.usageDialog, false));
-el.cancelUsageBtn.addEventListener("click", () => setDialogOpen(el.usageDialog, false));
-el.usageDialog.addEventListener("click", (event) => {
-  if (event.target === el.usageDialog) setDialogOpen(el.usageDialog, false);
-});
+if (el.closeUsageDialogBtn) {
+  el.closeUsageDialogBtn.addEventListener("click", closeUsageDialog);
+}
+if (el.cancelUsageBtn) {
+  el.cancelUsageBtn.addEventListener("click", closeUsageDialog);
+}
+if (el.usageDialog) {
+  el.usageDialog.addEventListener("click", (event) => {
+    if (event.target === el.usageDialog) closeUsageDialog();
+  });
+}
 
 el.userForm.addEventListener("submit", saveUserRecord);
 el.resetUserBtn.addEventListener("click", resetUserForm);
