@@ -1113,7 +1113,7 @@ function renderUsagePage() {
     const machineBtn = document.createElement("button");
     machineBtn.type = "button";
     machineBtn.className = "machine-pill-btn";
-    machineBtn.innerHTML = `🛰️ <strong>${machineId}</strong>`;
+    machineBtn.innerHTML = `<strong>${machineId}</strong>`;
     machineBtn.title = "Click to inspect full chart & daily history";
     machineBtn.onclick = (e) => {
       e.stopPropagation();
@@ -1160,7 +1160,7 @@ function renderUsagePage() {
     tdActions.innerHTML = `
       <div class="action-col-btns">
         <button type="button" class="view-chart-btn" style="min-height:28px; padding:0 10px; border-radius:7px; background:#0f172a; color:#38bdf8; font-size:11px; font-weight:800; border:1px solid rgba(56,189,248,0.3); cursor:pointer;">📊 View Chart</button>
-        <button type="button" class="quick-add-btn" style="min-height:28px; padding:0 10px; border-radius:7px; background:#2563eb; color:#fff; font-size:11px; font-weight:800; border:none; cursor:pointer;">➕ Add</button>
+        <button type="button" class="quick-add-btn" style="min-height:28px; padding:0 12px; border-radius:7px; background:#2563eb; color:#fff; font-size:11px; font-weight:800; border:none; cursor:pointer;">Add</button>
       </div>
     `;
 
