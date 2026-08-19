@@ -252,8 +252,7 @@ button { cursor: pointer; }
   outline: none;
 }
 .chat-composer button {
-  min-width: 62px;
-  min-height: 42px;
+  height: 42px;
   border: 0;
   border-radius: 10px;
   color: #fff;
@@ -263,16 +262,35 @@ button { cursor: pointer; }
   transition: all 0.15s ease;
 }
 .chat-composer .composer-tool {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  padding: 0;
   background: #162032;
   border: 1px solid rgba(56, 189, 248, 0.3);
   color: #38bdf8;
 }
+.chat-composer .composer-tool:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.chat-composer .composer-tool svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
 .chat-composer .composer-tool.recording {
   background: #dc2626;
   color: #fff;
-  border: none;
+  border-color: #ef4444;
+  animation: pulse 1s infinite;
 }
 .chat-composer .composer-send {
+  min-width: 66px;
+  padding: 0 14px;
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   box-shadow: 0 3px 10px rgba(37, 99, 235, 0.35);
 }

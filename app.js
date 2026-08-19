@@ -56,10 +56,10 @@ const el = {
   pageViews: document.querySelectorAll(".page-view"),
   currentUserName: document.querySelector("#currentUserName"),
   currentUserRole: document.querySelector("#currentUserRole"),
-  utilityMenu: document.querySelector(".utility-menu"),
+  utilityMenu: document.querySelector("#utilityMenu") || document.querySelector(".utility-menu"),
   adminPanelBtn: document.querySelector("#adminPanelBtn"),
-  printBtn: document.querySelector("#printBtn"),
   exportJsonBtn: document.querySelector("#exportJsonBtn"),
+  restoreBackupBtn: document.querySelector("#restoreBackupBtn"),
   importJsonInput: document.querySelector("#importJsonInput"),
   logoutBtn: document.querySelector("#logoutBtn"),
 
@@ -827,9 +827,9 @@ function renderHeader() {
     item.classList.toggle("active", item.dataset.page === state.activePage);
   });
   const adminOnly = state.user.role !== "admin";
-  el.adminPanelBtn.classList.toggle("hidden", adminOnly);
-  el.exportJsonBtn.classList.toggle("hidden", adminOnly);
-  el.importJsonInput.closest(".file-item").classList.toggle("hidden", adminOnly);
+  if (el.adminPanelBtn) el.adminPanelBtn.classList.toggle("hidden", adminOnly);
+  if (el.exportJsonBtn) el.exportJsonBtn.classList.toggle("hidden", adminOnly);
+  if (el.restoreBackupBtn) el.restoreBackupBtn.classList.toggle("hidden", adminOnly);
   document.querySelectorAll(".admin-action-col").forEach((node) => node.classList.toggle("hidden", adminOnly));
 }
 
@@ -1425,6 +1425,9 @@ function setSupportAttachment(file, kind) {
   el.supportAttachmentPreview.classList.remove("hidden");
 }
 
+const MIC_ICON_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>';
+const STOP_ICON_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>';
+
 async function toggleSupportRecording() {
   if (supportRecorder?.state === "recording") {
     supportRecorder.stop();
@@ -1442,11 +1445,11 @@ async function toggleSupportRecording() {
       setSupportAttachment(new File([blob], `voice-${Date.now()}.webm`, { type: mime }), "audio");
       supportRecordingStream?.getTracks().forEach((track) => track.stop());
       supportRecordingStream = null;
-      el.supportVoiceBtn.textContent = "Voice";
+      el.supportVoiceBtn.innerHTML = MIC_ICON_SVG;
       el.supportVoiceBtn.classList.remove("recording");
     };
     supportRecorder.start();
-    el.supportVoiceBtn.textContent = "Stop";
+    el.supportVoiceBtn.innerHTML = STOP_ICON_SVG;
     el.supportVoiceBtn.classList.add("recording");
   } catch {
     alert("Microphone permission is required to send a voice message.");
@@ -2531,20 +2534,37 @@ document.addEventListener("keydown", (event) => {
 el.rateInput.addEventListener("input", updateCalculator);
 el.costInput.addEventListener("input", updateCalculator);
 el.priceInput.addEventListener("input", updateCalculator);
-el.printBtn.addEventListener("click", () => {
-  closeUtilityMenu();
-  window.print();
-});
-el.exportJsonBtn.addEventListener("click", exportBackup);
-const restoreBackupBtn = document.querySelector("#restoreBackupBtn");
-if (restoreBackupBtn) {
-  restoreBackupBtn.addEventListener("click", () => {
+
+if (el.exportJsonBtn) {
+  el.exportJsonBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    exportBackup();
+  });
+}
+if (el.restoreBackupBtn) {
+  el.restoreBackupBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
     closeUtilityMenu();
     el.importJsonInput.click();
   });
 }
-el.importJsonInput.addEventListener("change", importBackup);
-el.logoutBtn.addEventListener("click", doLogout);
+if (el.importJsonInput) {
+  el.importJsonInput.addEventListener("change", importBackup);
+}
+if (el.logoutBtn) {
+  el.logoutBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    doLogout();
+  });
+}
+
+document.addEventListener("click", (event) => {
+  if (el.utilityMenu && el.utilityMenu.hasAttribute("open")) {
+    if (!el.utilityMenu.contains(event.target)) {
+      closeUtilityMenu();
+    }
+  }
+});
 
 resetEntryForm();
 resetBillForm();
