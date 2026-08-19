@@ -18,7 +18,7 @@ const CUSTOMER_SESSION_COOKIE = "stech_customer_session";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const STORAGE_MODE = process.env.DB_CLIENT === "mysql" || process.env.DB_HOST ? "mysql" : "json";
 const MYSQL_TABLE = process.env.DB_TABLE || "app_state";
-const USER_TABS = ["dashboardPage", "cashPage", "billPage", "devicePage", "usagePage", "supportPage"];
+const USER_TABS = ["dashboardPage", "cashPage", "billPage", "devicePage", "usagePage", "supportPage", "adminPage"];
 const STATIC_TYPES = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -76,6 +76,26 @@ function defaultSnapshot() {
     customerAccounts: [],
     announcements: [],
     supportMessages: [],
+    appSettings: {
+      appName: "SpaceLink",
+      appKicker: "Satellite & Cash Operations",
+      accentColor: "#38bdf8",
+      themePreset: "obsidian",
+      supportHotline: "+95 9 777 888 999",
+      supportEmail: "support@spacelink.mm",
+      currencySymbol: "MMK",
+      heroGreeting: "Welcome back",
+      heroSubtitle: "Satellite connectivity, usage tracking, and billing operations.",
+      bannerEnabled: true,
+      bannerText: "⚡ Starlink Priority & Roam services active and operational.",
+      enabledModules: {
+        usageChart: true,
+        dailyHistory: true,
+        announcements: true,
+        supportChat: true,
+        deviceSpecs: true
+      }
+    },
     months: {
       [monthKey]: {
         openingCash: 0,
@@ -115,6 +135,31 @@ function ensureCustomerFeatures(db) {
   if (!Array.isArray(db.customerAccounts)) db.customerAccounts = [];
   if (!Array.isArray(db.announcements)) db.announcements = [];
   if (!Array.isArray(db.supportMessages)) db.supportMessages = [];
+}
+
+function ensureAppSettings(db) {
+  if (!db.appSettings || typeof db.appSettings !== "object") {
+    db.appSettings = {
+      appName: "SpaceLink",
+      appKicker: "Satellite & Cash Operations",
+      accentColor: "#38bdf8",
+      themePreset: "obsidian",
+      supportHotline: "+95 9 777 888 999",
+      supportEmail: "support@spacelink.mm",
+      currencySymbol: "MMK",
+      heroGreeting: "Welcome back",
+      heroSubtitle: "Satellite connectivity, usage tracking, and billing operations.",
+      bannerEnabled: true,
+      bannerText: "⚡ Starlink Priority & Roam services active and operational.",
+      enabledModules: {
+        usageChart: true,
+        dailyHistory: true,
+        announcements: true,
+        supportChat: true,
+        deviceSpecs: true
+      }
+    };
+  }
 }
 
 function normalizeAllowedTabs(user) {
@@ -428,6 +473,7 @@ function buildBootstrap(db, user) {
   ensureUsageRecords(db);
   ensureUserPermissions(db);
   ensureCustomerFeatures(db);
+  ensureAppSettings(db);
   return {
     user: safeUser(user),
     activeMonth: db.activeMonth,
@@ -439,7 +485,8 @@ function buildBootstrap(db, user) {
     users: user.role === "admin" ? db.users.map(safeUser) : [],
     customerAccounts: canAccess(user, "supportPage") || user.role === "admin" ? db.customerAccounts.map(safeCustomerAccount) : [],
     announcements: canAccess(user, "supportPage") || user.role === "admin" ? db.announcements : [],
-    supportMessages: canAccess(user, "supportPage") || user.role === "admin" ? db.supportMessages : []
+    supportMessages: canAccess(user, "supportPage") || user.role === "admin" ? db.supportMessages : [],
+    appSettings: db.appSettings
   };
 }
 
@@ -447,6 +494,7 @@ function buildCustomerBootstrap(db, customer) {
   ensureActiveMonth(db);
   ensureUsageRecords(db);
   ensureCustomerFeatures(db);
+  ensureAppSettings(db);
   const linkedDeviceId = String(customer.linkedDeviceId || "").trim().toUpperCase();
   const device = db.deviceRecords.find((item) => String(item.deviceId || "").trim().toUpperCase() === linkedDeviceId) || null;
   const usage = db.usageRecords.find((item) => (
@@ -460,7 +508,7 @@ function buildCustomerBootstrap(db, customer) {
     .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")))
     .map((item) => ({
       ...item,
-      senderName: item.senderType === "customer" ? customer.fullName : (staffNames.get(item.senderId) || "S-Tech Support")
+      senderName: item.senderType === "customer" ? customer.fullName : (staffNames.get(item.senderId) || "SpaceLink Support")
     }));
   return {
     customer: safeCustomerAccount(customer),
@@ -490,7 +538,8 @@ function buildCustomerBootstrap(db, customer) {
     announcements: db.announcements
       .filter((item) => item.active !== false)
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || ""))),
-    messages
+    messages,
+    appSettings: db.appSettings
   };
 }
 
@@ -1247,8 +1296,27 @@ async function handleApi(req, res, pathname) {
     if (!Array.isArray(snapshot.customerAccounts)) snapshot.customerAccounts = [];
     if (!Array.isArray(snapshot.announcements)) snapshot.announcements = [];
     if (!Array.isArray(snapshot.supportMessages)) snapshot.supportMessages = [];
+    if (!snapshot.appSettings) ensureAppSettings(snapshot);
     await writeDb(snapshot);
     return json(res, 200, { ok: true });
+  }
+
+  if (pathname === "/api/settings" && req.method === "GET") {
+    ensureAppSettings(db);
+    return json(res, 200, db.appSettings);
+  }
+
+  if (pathname === "/api/settings" && req.method === "POST") {
+    if (!requireAdmin(user, res)) return;
+    const body = await readBody(req);
+    ensureAppSettings(db);
+    db.appSettings = {
+      ...db.appSettings,
+      ...(body.settings || body)
+    };
+    await writeDb(db);
+    broadcastRealtime({ type: "settings_updated", settings: db.appSettings });
+    return json(res, 200, { ok: true, settings: db.appSettings });
   }
 
   return notFound(res);

@@ -279,6 +279,42 @@ const el = {
   customerAccountStatus: document.querySelector("#customerAccountStatus"),
   resetCustomerAccountBtn: document.querySelector("#resetCustomerAccountBtn"),
   cancelCustomerAccountBtn: document.querySelector("#cancelCustomerAccountBtn"),
+  customerAccountCount: document.querySelector("#customerAccountCount"),
+
+  adminTabBtns: document.querySelectorAll(".admin-tab-btn"),
+  adminTabContents: document.querySelectorAll(".admin-tab-content"),
+  customizerAppName: document.querySelector("#customizerAppName"),
+  customizerAppKicker: document.querySelector("#customizerAppKicker"),
+  customizerHotline: document.querySelector("#customizerHotline"),
+  customizerCurrency: document.querySelector("#customizerCurrency"),
+  customizerAccentColor: document.querySelector("#customizerAccentColor"),
+  customizerBgPreset: document.querySelector("#customizerBgPreset"),
+  customizerBannerEnabled: document.querySelector("#customizerBannerEnabled"),
+  customizerBannerText: document.querySelector("#customizerBannerText"),
+  customizerHeroGreeting: document.querySelector("#customizerHeroGreeting"),
+  customizerHeroSubtitle: document.querySelector("#customizerHeroSubtitle"),
+  customizerModUsageChart: document.querySelector("#customizerModUsageChart"),
+  customizerModDaily: document.querySelector("#customizerModDaily"),
+  customizerModNotices: document.querySelector("#customizerModNotices"),
+  customizerModChat: document.querySelector("#customizerModChat"),
+  customizerModSpecs: document.querySelector("#customizerModSpecs"),
+  customizerSaveBtn: document.querySelector("#customizerSaveBtn"),
+  customizerResetBtn: document.querySelector("#customizerResetBtn"),
+  swatchBtns: document.querySelectorAll(".swatch-btn"),
+  viewportDesktopBtn: document.querySelector("#viewportDesktopBtn"),
+  viewportMobileBtn: document.querySelector("#viewportMobileBtn"),
+  builderPreviewFrameContainer: document.querySelector("#builderPreviewFrameContainer"),
+
+  mockupBanner: document.querySelector("#mockupBanner"),
+  mockupBannerText: document.querySelector("#mockupBannerText"),
+  mockupAppName: document.querySelector("#mockupAppName"),
+  mockupAppKicker: document.querySelector("#mockupAppKicker"),
+  mockupHeroGreeting: document.querySelector("#mockupHeroGreeting"),
+  mockupHeroSubtitle: document.querySelector("#mockupHeroSubtitle"),
+  mockupAccentTag: document.querySelector("#mockupAccentTag"),
+  mockupHotlineTag: document.querySelector("#mockupHotlineTag"),
+  mockupSectionChart: document.querySelector("#mockupSectionChart"),
+  mockupSectionChat: document.querySelector("#mockupSectionChat"),
 
   openColorSettingsBtn: document.querySelector("#openColorSettingsBtn"),
   colorDialog: document.querySelector("#colorDialog"),
@@ -773,6 +809,10 @@ function updateState(snapshot) {
   state.customerAccounts = snapshot.customerAccounts || [];
   state.announcements = snapshot.announcements || [];
   state.supportMessages = snapshot.supportMessages || [];
+  if (snapshot.appSettings) {
+    state.appSettings = { ...state.appSettings, ...snapshot.appSettings };
+    applyLiveSettings(state.appSettings);
+  }
   if (!state.selectedSupportCustomerId && state.customerAccounts.length) {
     state.selectedSupportCustomerId = state.customerAccounts[0].id;
   }
@@ -1498,10 +1538,11 @@ function renderAdminAnnouncements() {
 
 function renderAdminPage() {
   const admins = state.users.filter((user) => user.role === "admin").length;
-  el.userCount.textContent = state.users.length;
-  el.adminCount.textContent = admins;
-  el.standardUserCount.textContent = Math.max(0, state.users.length - admins);
-  el.userBody.innerHTML = "";
+  if (el.userCount) el.userCount.textContent = state.users.length;
+  if (el.adminCount) el.adminCount.textContent = admins;
+  if (el.standardUserCount) el.standardUserCount.textContent = Math.max(0, state.users.length - admins);
+  if (el.customerAccountCount) el.customerAccountCount.textContent = state.customerAccounts.length;
+  if (el.userBody) el.userBody.innerHTML = "";
 
   state.users.forEach((user) => {
     const row = el.userRowTemplate.content.firstElementChild.cloneNode(true);
@@ -1514,20 +1555,206 @@ function renderAdminPage() {
       : (user.allowedTabs || []).map((tab) => TAB_LABELS[tab] || tab).join(", ");
     row.querySelector(".edit-user").onclick = () => editUserRecord(user.id);
     row.querySelector(".delete-user").onclick = () => deleteUserRecord(user.id);
-    el.userBody.append(row);
+    if (el.userBody) el.userBody.append(row);
   });
 
-  el.customerAccountBody.innerHTML = "";
-  state.customerAccounts.forEach((customer) => {
-    const row = el.customerAccountRowTemplate.content.firstElementChild.cloneNode(true);
-    row.querySelector(".customer-account-name").textContent = customer.fullName || "";
-    row.querySelector(".customer-account-username").textContent = customer.username || "";
-    row.querySelector(".customer-account-device").textContent = customer.linkedDeviceId || "";
-    row.querySelector(".customer-account-status").textContent = customer.active === false ? "Inactive" : "Active";
-    row.querySelector(".edit-customer-account").onclick = () => editCustomerAccount(customer.id);
-    row.querySelector(".delete-customer-account").onclick = () => deleteCustomerAccount(customer.id);
-    el.customerAccountBody.append(row);
+  if (el.customerAccountBody) {
+    el.customerAccountBody.innerHTML = "";
+    state.customerAccounts.forEach((customer) => {
+      const row = el.customerAccountRowTemplate.content.firstElementChild.cloneNode(true);
+      row.querySelector(".customer-account-name").textContent = customer.fullName || "";
+      row.querySelector(".customer-account-username").textContent = customer.username || "";
+      row.querySelector(".customer-account-device").textContent = customer.linkedDeviceId || "";
+      row.querySelector(".customer-account-status").textContent = customer.active === false ? "Inactive" : "Active";
+      row.querySelector(".edit-customer-account").onclick = () => editCustomerAccount(customer.id);
+      row.querySelector(".delete-customer-account").onclick = () => deleteCustomerAccount(customer.id);
+      el.customerAccountBody.append(row);
+    });
+  }
+
+  // Populate Visual Customizer from State
+  if (state.appSettings) {
+    if (el.customizerAppName) el.customizerAppName.value = state.appSettings.appName || "SpaceLink";
+    if (el.customizerAppKicker) el.customizerAppKicker.value = state.appSettings.appKicker || "Satellite & Cash Operations";
+    if (el.customizerHotline) el.customizerHotline.value = state.appSettings.supportHotline || "+95 9 777 888 999";
+    if (el.customizerCurrency) el.customizerCurrency.value = state.appSettings.currencySymbol || "MMK";
+    if (el.customizerAccentColor) el.customizerAccentColor.value = state.appSettings.accentColor || "#38bdf8";
+    if (el.customizerBgPreset) el.customizerBgPreset.value = state.appSettings.themePreset || "obsidian";
+    if (el.customizerBannerEnabled) el.customizerBannerEnabled.checked = state.appSettings.bannerEnabled !== false;
+    if (el.customizerBannerText) el.customizerBannerText.value = state.appSettings.bannerText || "⚡ Starlink Priority & Roam services active and operational.";
+    if (el.customizerHeroGreeting) el.customizerHeroGreeting.value = state.appSettings.heroGreeting || "Welcome back";
+    if (el.customizerHeroSubtitle) el.customizerHeroSubtitle.value = state.appSettings.heroSubtitle || "Satellite connectivity, usage tracking, and billing operations.";
+    if (el.customizerModUsageChart) el.customizerModUsageChart.checked = state.appSettings.enabledModules?.usageChart !== false;
+    if (el.customizerModDaily) el.customizerModDaily.checked = state.appSettings.enabledModules?.dailyHistory !== false;
+    if (el.customizerModNotices) el.customizerModNotices.checked = state.appSettings.enabledModules?.announcements !== false;
+    if (el.customizerModChat) el.customizerModChat.checked = state.appSettings.enabledModules?.supportChat !== false;
+    if (el.customizerModSpecs) el.customizerModSpecs.checked = state.appSettings.enabledModules?.deviceSpecs !== false;
+  }
+  updateVisualPreview();
+}
+
+function initAdminSubTabs() {
+  if (!el.adminTabBtns || !el.adminTabBtns.length) return;
+  el.adminTabBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const targetTabId = btn.dataset.adminTab;
+      el.adminTabBtns.forEach((b) => b.classList.toggle("active", b === btn));
+      el.adminTabContents.forEach((c) => c.classList.toggle("active", c.id === targetTabId));
+    });
   });
+}
+
+function updateVisualPreview() {
+  const name = el.customizerAppName?.value || "SpaceLink";
+  const kicker = el.customizerAppKicker?.value || "Satellite & Cash Operations";
+  const hotline = el.customizerHotline?.value || "+95 9 777 888 999";
+  const greeting = el.customizerHeroGreeting?.value || "Welcome back";
+  const subtitle = el.customizerHeroSubtitle?.value || "Satellite connectivity, usage tracking, and billing operations.";
+  const bannerText = el.customizerBannerText?.value || "⚡ Starlink Priority & Roam services active and operational.";
+  const bannerEnabled = el.customizerBannerEnabled ? el.customizerBannerEnabled.checked : true;
+  const accentColor = el.customizerAccentColor?.value || "#38bdf8";
+
+  if (el.mockupAppName) el.mockupAppName.textContent = name;
+  if (el.mockupAppKicker) el.mockupAppKicker.textContent = `${name} Customer`;
+  if (el.mockupHeroGreeting) el.mockupHeroGreeting.textContent = greeting;
+  if (el.mockupHeroSubtitle) el.mockupHeroSubtitle.textContent = subtitle;
+  if (el.mockupBannerText) el.mockupBannerText.textContent = bannerText;
+  if (el.mockupBanner) el.mockupBanner.style.display = bannerEnabled ? "block" : "none";
+  if (el.mockupHotlineTag) el.mockupHotlineTag.textContent = hotline;
+
+  if (el.mockupAccentTag) {
+    el.mockupAccentTag.style.color = accentColor;
+    el.mockupAccentTag.style.background = `${accentColor}22`;
+  }
+  document.querySelectorAll(".m-bar.active").forEach((b) => {
+    b.style.background = accentColor;
+    b.style.boxShadow = `0 0 10px ${accentColor}80`;
+  });
+
+  if (el.mockupSectionChart && el.customizerModUsageChart) {
+    el.mockupSectionChart.style.display = el.customizerModUsageChart.checked ? "block" : "none";
+  }
+  if (el.mockupSectionChat && el.customizerModChat) {
+    el.mockupSectionChat.style.display = el.customizerModChat.checked ? "block" : "none";
+  }
+}
+
+function applyLiveSettings(settings) {
+  if (!settings) return;
+  if (settings.appName) {
+    const brandH1 = document.querySelector(".brand-lockup h1");
+    if (brandH1) brandH1.textContent = settings.appName;
+    document.title = settings.appName;
+  }
+  if (settings.appKicker) {
+    const brandEyebrow = document.querySelector(".brand-lockup .eyebrow");
+    if (brandEyebrow) brandEyebrow.textContent = settings.appKicker;
+  }
+  if (settings.accentColor) {
+    document.documentElement.style.setProperty("--accent", settings.accentColor);
+  }
+}
+
+async function saveVisualSettings() {
+  if (!isAdmin()) return;
+  const payload = {
+    appName: el.customizerAppName?.value.trim() || "SpaceLink",
+    appKicker: el.customizerAppKicker?.value.trim() || "Satellite & Cash Operations",
+    supportHotline: el.customizerHotline?.value.trim() || "+95 9 777 888 999",
+    currencySymbol: el.customizerCurrency?.value.trim() || "MMK",
+    accentColor: el.customizerAccentColor?.value || "#38bdf8",
+    themePreset: el.customizerBgPreset?.value || "obsidian",
+    bannerEnabled: el.customizerBannerEnabled ? el.customizerBannerEnabled.checked : true,
+    bannerText: el.customizerBannerText?.value.trim() || "⚡ Starlink Priority & Roam services active and operational.",
+    heroGreeting: el.customizerHeroGreeting?.value.trim() || "Welcome back",
+    heroSubtitle: el.customizerHeroSubtitle?.value.trim() || "Satellite connectivity, usage tracking, and billing operations.",
+    enabledModules: {
+      usageChart: el.customizerModUsageChart ? el.customizerModUsageChart.checked : true,
+      dailyHistory: el.customizerModDaily ? el.customizerModDaily.checked : true,
+      announcements: el.customizerModNotices ? el.customizerModNotices.checked : true,
+      supportChat: el.customizerModChat ? el.customizerModChat.checked : true,
+      deviceSpecs: el.customizerModSpecs ? el.customizerModSpecs.checked : true
+    }
+  };
+
+  try {
+    const res = await api("/api/settings", {
+      method: "POST",
+      body: JSON.stringify({ settings: payload })
+    });
+    state.appSettings = res.settings;
+    applyLiveSettings(state.appSettings);
+    if (el.customizerSaveBtn) {
+      const origText = el.customizerSaveBtn.innerHTML;
+      el.customizerSaveBtn.innerHTML = "<span>✓ Published!</span>";
+      setTimeout(() => { el.customizerSaveBtn.innerHTML = origText; }, 2000);
+    }
+  } catch (err) {
+    alert(err.message || "Failed to save settings");
+  }
+}
+
+function initVisualBuilder() {
+  initAdminSubTabs();
+
+  const inputs = [
+    el.customizerAppName, el.customizerAppKicker, el.customizerHotline, el.customizerCurrency,
+    el.customizerAccentColor, el.customizerBgPreset, el.customizerBannerEnabled, el.customizerBannerText,
+    el.customizerHeroGreeting, el.customizerHeroSubtitle, el.customizerModUsageChart,
+    el.customizerModDaily, el.customizerModNotices, el.customizerModChat, el.customizerModSpecs
+  ];
+
+  inputs.forEach((input) => {
+    if (!input) return;
+    input.addEventListener("input", updateVisualPreview);
+    input.addEventListener("change", updateVisualPreview);
+  });
+
+  if (el.swatchBtns) {
+    el.swatchBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const color = btn.dataset.color;
+        el.swatchBtns.forEach((b) => b.classList.toggle("active", b === btn));
+        if (el.customizerAccentColor) el.customizerAccentColor.value = color;
+        updateVisualPreview();
+      });
+    });
+  }
+
+  if (el.viewportDesktopBtn && el.viewportMobileBtn && el.builderPreviewFrameContainer) {
+    el.viewportDesktopBtn.addEventListener("click", () => {
+      el.viewportDesktopBtn.classList.add("active");
+      el.viewportMobileBtn.classList.remove("active");
+      el.builderPreviewFrameContainer.classList.remove("mobile");
+      el.builderPreviewFrameContainer.classList.add("desktop");
+    });
+    el.viewportMobileBtn.addEventListener("click", () => {
+      el.viewportMobileBtn.classList.add("active");
+      el.viewportDesktopBtn.classList.remove("active");
+      el.builderPreviewFrameContainer.classList.remove("desktop");
+      el.builderPreviewFrameContainer.classList.add("mobile");
+    });
+  }
+
+  if (el.customizerSaveBtn) {
+    el.customizerSaveBtn.addEventListener("click", saveVisualSettings);
+  }
+
+  if (el.customizerResetBtn) {
+    el.customizerResetBtn.addEventListener("click", () => {
+      if (el.customizerAppName) el.customizerAppName.value = "SpaceLink";
+      if (el.customizerAppKicker) el.customizerAppKicker.value = "Satellite & Cash Operations";
+      if (el.customizerHotline) el.customizerHotline.value = "+95 9 777 888 999";
+      if (el.customizerCurrency) el.customizerCurrency.value = "MMK";
+      if (el.customizerAccentColor) el.customizerAccentColor.value = "#38bdf8";
+      if (el.customizerBgPreset) el.customizerBgPreset.value = "obsidian";
+      if (el.customizerBannerEnabled) el.customizerBannerEnabled.checked = true;
+      if (el.customizerBannerText) el.customizerBannerText.value = "⚡ Starlink Priority & Roam services active and operational.";
+      if (el.customizerHeroGreeting) el.customizerHeroGreeting.value = "Welcome back";
+      if (el.customizerHeroSubtitle) el.customizerHeroSubtitle.value = "Satellite connectivity, usage tracking, and billing operations.";
+      updateVisualPreview();
+    });
+  }
 }
 
 function updateCalculator() {
@@ -2547,6 +2774,7 @@ resetAnnouncementForm();
 applyBillColors(loadBillColors());
 syncColorInputs();
 updateCalculator();
+initVisualBuilder();
 boot();
 
 setInterval(() => {
