@@ -1516,13 +1516,13 @@ input:disabled {
 
 .secondary-btn {
   min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--line);
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 999px;
-  background: #fff;
-  color: var(--navy);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8fafc;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
 }
 
 .header-tools {
@@ -1932,7 +1932,7 @@ input:disabled {
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
-  background: #fff;
+  background: #0d121f;
 }
 
 .bill-dashboard {
@@ -2934,6 +2934,7 @@ input:disabled {
   display: grid;
   grid-template-columns: 1fr;
   gap: 14px;
+}
 .quick-field {
   display: grid;
   gap: 6px;
@@ -3007,14 +3008,14 @@ input:disabled {
   white-space: nowrap;
 }
 .today-status-badge.recorded {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 .today-status-badge.pending {
-  background: #fffbeb;
-  color: #92400e;
-  border: 1px solid #fde68a;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 /* Machine Chart Modal Layout */
