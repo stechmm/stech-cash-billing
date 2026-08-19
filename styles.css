@@ -2657,89 +2657,160 @@ input:disabled {
 }
 
 /* Machine Chart Modal Layout */
-.machine-chart-modal-panel {
-  max-width: 860px;
-  background: #ffffff;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+/* ==========================================================================
+   MACHINE STARLINK OBSIDIAN MODAL (Ultra-Premium SpaceX Experience)
+   ========================================================================== */
+.machine-obsidian-modal {
+  max-width: 840px !important;
+  width: 95% !important;
+  background: #080c15 !important;
+  color: #f8fafc !important;
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.8), 0 0 50px rgba(56, 189, 248, 0.08) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
 }
-.machine-modal-header-lockup {
+
+.obsidian-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: #0d121f;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.obsidian-identity {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.machine-chart-modal-body {
-  padding: 20px;
-  display: grid;
-  gap: 16px;
-  background: #f8fafc;
-}
-.modal-starlink-card {
-  background: #090d16 !important;
-  color: #f8fafc !important;
-  border-radius: 16px !important;
-  padding: 20px 24px !important;
-  margin-bottom: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4) !important;
-}
-.modal-starlink-card .starlink-header {
-  display: flex;
-  justify-content: space-between;
+
+.obsidian-badge {
+  display: inline-flex;
   align-items: center;
-  margin-bottom: 12px;
-}
-.modal-starlink-card .starlink-label {
+  padding: 6px 14px;
+  background: #162032;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
   font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.obsidian-title-group strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.obsidian-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11.5px;
   color: #94a3b8;
   font-weight: 600;
 }
-.modal-starlink-card .starlink-total-number {
-  font-size: 32px;
-  font-weight: 800;
+
+.obsidian-close-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.obsidian-close-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: scale(1.05);
+}
+
+.obsidian-body {
+  padding: 22px 26px;
+  display: grid;
+  gap: 18px;
+  background: #080c15;
+}
+
+.obsidian-body .starlink-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.obsidian-body .starlink-label {
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.obsidian-body .starlink-total-number {
+  font-size: 34px;
+  font-weight: 900;
   color: #ffffff;
+  letter-spacing: -0.02em;
 }
-.modal-starlink-card .starlink-period-tabs {
+
+.obsidian-body .starlink-period-tabs {
   display: inline-flex;
-  gap: 3px;
-  background: #161b22;
-  padding: 3px;
-  border-radius: 8px;
-  border: 1px solid #30363d;
+  gap: 4px;
+  background: #131a29;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
-.modal-starlink-card .starlink-tab {
+
+.obsidian-body .starlink-tab {
   background: transparent;
   color: #94a3b8;
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.modal-starlink-card .starlink-tab:hover {
+
+.obsidian-body .starlink-tab:hover {
   color: #ffffff;
 }
-.modal-starlink-card .starlink-tab.active {
+
+.obsidian-body .starlink-tab.active {
   background: #ffffff;
   color: #0b1120;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
-.modal-starlink-card .starlink-cycle-nav {
+.obsidian-body .starlink-cycle-nav {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   overflow-x: auto;
-  padding: 8px 0;
+  padding: 6px 0 10px;
   scrollbar-width: none;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.modal-starlink-card .starlink-cycle-nav::-webkit-scrollbar {
+.obsidian-body .starlink-cycle-nav::-webkit-scrollbar {
   display: none;
 }
-.modal-starlink-card .cycle-nav-btn {
+
+.obsidian-body .cycle-nav-btn {
   background: transparent;
   border: none;
   color: #64748b;
@@ -2751,183 +2822,87 @@ input:disabled {
   white-space: nowrap;
   transition: color 0.15s;
 }
-.modal-starlink-card .cycle-nav-btn:hover {
+
+.obsidian-body .cycle-nav-btn:hover {
   color: #cbd5e1;
 }
-.modal-starlink-card .cycle-nav-btn.active {
+
+.obsidian-body .cycle-nav-btn.active {
   color: #38bdf8;
   font-weight: 800;
   position: relative;
 }
-.modal-starlink-card .cycle-nav-btn.active::after {
+
+.obsidian-body .cycle-nav-btn.active::after {
   content: "";
   position: absolute;
-  bottom: -9px;
+  bottom: -11px;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 2.5px;
   background: #38bdf8;
+  border-radius: 2px;
 }
 
-.modal-inline-add-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 14px 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-}
-.modal-inline-add-bar strong {
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 700;
-}
-.inline-usage-form {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.inline-usage-form input {
-  min-height: 36px;
-  padding: 6px 10px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.inline-usage-form input:focus {
-  border-color: #2563eb;
-  outline: none;
-}
-.inline-usage-form .unit-toggle-pills {
-  display: flex;
-  background: #e2e8f0;
-  padding: 3px;
-  border-radius: 8px;
-  gap: 2px;
-}
-.inline-usage-form .unit-pill {
-  border: none;
-  background: transparent;
-  padding: 5px 10px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #64748b;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.inline-usage-form .unit-pill.active {
-  background: #2563eb;
-  color: #ffffff;
+.obsidian-body .starlink-chart-wrapper {
+  margin-top: 4px;
 }
 
-.modal-daily-breakdown {
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: #ffffff;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
-}
-.breakdown-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #f8fafc;
-}
-.breakdown-header strong {
-  font-size: 13px;
-  color: #0f172a;
-  font-weight: 700;
-}
-.breakdown-list-wrapper {
-  max-height: 220px;
-  overflow-y: auto;
-}
-.modal-breakdown-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-.modal-breakdown-table th {
-  background: #f8fafc;
-  color: #475569;
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 8px 12px;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: left;
-}
-.modal-breakdown-table td {
-  height: 38px;
-  padding: 6px 12px;
-  font-size: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #1e293b;
-  font-weight: 600;
-}
-.modal-breakdown-table tbody tr:hover {
-  background: #f8fbff;
-}
-
-.modal-starlink-card .starlink-chart-wrapper {
-  margin-top: 14px;
-}
-.modal-starlink-card .starlink-chart-legend {
+.obsidian-body .starlink-chart-legend {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-.modal-starlink-card .legend-item {
+
+.obsidian-body .legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12px;
   color: #38bdf8;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
-.modal-starlink-card .legend-dash {
+
+.obsidian-body .legend-dash {
   width: 14px;
-  height: 3px;
+  height: 3.5px;
   background: #38bdf8;
   border-radius: 2px;
 }
-.modal-starlink-card .legend-stat {
+
+.obsidian-body .legend-stat {
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12.5px;
   color: #ffffff;
 }
-.modal-starlink-card .legend-limit {
+
+.obsidian-body .legend-limit {
   color: #38bdf8;
-  font-weight: 600;
+  font-weight: 700;
 }
-.modal-starlink-card .starlink-chart-container {
+
+.obsidian-body .starlink-chart-container {
   position: relative;
   width: 100%;
-  height: 220px;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 12px;
+  height: 240px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   overflow: hidden;
 }
-.modal-starlink-card .starlink-chart-svg {
+
+.obsidian-body .starlink-chart-svg {
   width: 100%;
   height: 100%;
   display: block;
 }
-.modal-starlink-card .starlink-tooltip {
+
+.obsidian-body .starlink-tooltip {
   position: absolute;
   pointer-events: none;
   background: #1e293b;
@@ -2941,6 +2916,37 @@ input:disabled {
   transition: opacity 0.15s, transform 0.15s;
   z-index: 50;
   white-space: nowrap;
+}
+
+.obsidian-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.obsidian-stat-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.obsidian-stat-card span {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.obsidian-stat-card strong {
+  font-size: 15px;
+  color: #f8fafc;
+  font-weight: 800;
 }
 
 /* Usage Sheet Table - Unclipped Customer Names & Actions */

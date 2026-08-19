@@ -210,13 +210,10 @@ const el = {
   modalStarlinkChartContainer: document.querySelector("#modalStarlinkChartContainer"),
   modalStarlinkChartSvg: document.querySelector("#modalStarlinkChartSvg"),
   modalStarlinkTooltip: document.querySelector("#modalStarlinkTooltip"),
-  modalInlineUsageForm: document.querySelector("#modalInlineUsageForm"),
-  modalInlineDate: document.querySelector("#modalInlineDate"),
-  modalInlineAmount: document.querySelector("#modalInlineAmount"),
-  modalInlineUnitToggle: document.querySelector("#modalInlineUnitToggle"),
-  modalBreakdownCount: document.querySelector("#modalBreakdownCount"),
-  modalBreakdownTotal: document.querySelector("#modalBreakdownTotal"),
-  modalBreakdownBody: document.querySelector("#modalBreakdownBody"),
+  modalStatTotal: document.querySelector("#modalStatTotal"),
+  modalStatLimit: document.querySelector("#modalStatLimit"),
+  modalStatRemaining: document.querySelector("#modalStatRemaining"),
+  modalStatStatus: document.querySelector("#modalStatStatus"),
 
   supportUnreadTotal: document.querySelector("#supportUnreadTotal"),
   supportConversationList: document.querySelector("#supportConversationList"),
@@ -724,65 +721,26 @@ function renderModalMachineVisualizer() {
   if (el.modalVizTotalValue) el.modalVizTotalValue.textContent = formattedTotal.text;
   if (el.modalVizSubTotal) el.modalVizSubTotal.textContent = formattedTotal.text;
 
+  // Month Stats Strip
+  const monthTotalTB = targetRecord ? usageTotal(targetRecord) : 0;
+  const remainingTB = Math.max(limitTB - monthTotalTB, 0);
+  const isExceeded = monthTotalTB >= limitTB;
+  const isNearLimit = monthTotalTB >= Math.max(limitTB - 0.5, 0);
+
+  if (el.modalStatTotal) el.modalStatTotal.textContent = formatGbOrTb(monthTotalTB).text;
+  if (el.modalStatLimit) el.modalStatLimit.textContent = `${limitTB.toFixed(1)} TB`;
+  if (el.modalStatRemaining) {
+    el.modalStatRemaining.textContent = `${remainingTB.toFixed(2)} TB`;
+    el.modalStatRemaining.style.color = isExceeded ? "#ef4444" : "#38bdf8";
+  }
+  if (el.modalStatStatus) {
+    el.modalStatStatus.textContent = isExceeded ? "Limit Reached" : (isNearLimit ? "Near 5 TB" : "Normal Safe");
+    el.modalStatStatus.style.color = isExceeded ? "#ef4444" : (isNearLimit ? "#f59e0b" : "#34d399");
+  }
+
   renderStarlinkChart(el.modalStarlinkChartSvg, el.modalStarlinkTooltip, dataPoints, {
     format: modalChartState.period,
     limitTB
-  });
-
-  renderModalDailyBreakdown(targetRecord, currentMonth);
-}
-
-function renderModalDailyBreakdown(record, monthKey) {
-  if (!el.modalBreakdownBody) return;
-  el.modalBreakdownBody.innerHTML = "";
-  
-  const dailyEntries = Object.entries(record?.dailyUsage || {})
-    .map(([date, val]) => ({ date, valueTB: Number(val || 0), valueGB: Number(val || 0) * 1000 }))
-    .sort((a, b) => b.date.localeCompare(a.date));
-
-  const totalGB = dailyEntries.reduce((sum, item) => sum + item.valueGB, 0);
-  const totalTB = dailyEntries.reduce((sum, item) => sum + item.valueTB, 0);
-
-  if (el.modalBreakdownCount) el.modalBreakdownCount.textContent = dailyEntries.length;
-  if (el.modalBreakdownTotal) el.modalBreakdownTotal.textContent = `${totalGB.toFixed(2)} GB (${totalTB.toFixed(3)} TB)`;
-
-  if (!dailyEntries.length) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td colspan="5" style="text-align: center; color: #94a3b8; padding: 18px;">No daily usage records added for ${monthLabel(monthKey)} yet.</td>`;
-    el.modalBreakdownBody.append(tr);
-    return;
-  }
-
-  dailyEntries.forEach((item) => {
-    const tr = document.createElement("tr");
-    const dateObj = new Date(`${item.date}T00:00:00`);
-    const dayName = new Intl.DateTimeFormat("en", { weekday: "short" }).format(dateObj);
-    
-    tr.innerHTML = `
-      <td><strong>${item.date}</strong></td>
-      <td><span style="color: #64748b; font-weight:600;">${dayName}</span></td>
-      <td class="money" style="color: #0284c7;"><strong>${item.valueGB.toFixed(2)} GB</strong></td>
-      <td class="money" style="color: #64748b;">${item.valueTB.toFixed(3)} TB</td>
-      <td style="text-align: center;">
-        <button type="button" class="danger delete-day-btn" style="min-height: 24px; padding: 2px 8px; font-size: 10px;" title="Delete this day entry">✕</button>
-      </td>
-    `;
-
-    const delBtn = tr.querySelector(".delete-day-btn");
-    if (delBtn && record) {
-      delBtn.onclick = async () => {
-        if (!confirm(`Delete usage for ${item.date}?`)) return;
-        delete record.dailyUsage[item.date];
-        await api(`/api/usage/${encodeURIComponent(record.id)}`, {
-          method: "PUT",
-          body: JSON.stringify(record)
-        });
-        await refreshState();
-        renderModalMachineVisualizer();
-      };
-    }
-
-    el.modalBreakdownBody.append(tr);
   });
 }
 
@@ -2355,43 +2313,6 @@ if (el.modalVizPeriodTabs) {
       el.modalVizPeriodTabs.querySelectorAll(".starlink-tab").forEach((t) => t.classList.toggle("active", t === tab));
       renderModalMachineVisualizer();
     });
-  });
-}
-
-if (el.modalInlineUnitToggle) {
-  el.modalInlineUnitToggle.querySelectorAll(".unit-pill").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      modalChartState.unit = btn.dataset.unit;
-      el.modalInlineUnitToggle.querySelectorAll(".unit-pill").forEach((b) => b.classList.toggle("active", b === btn));
-    });
-  });
-}
-
-if (el.modalInlineUsageForm) {
-  el.modalInlineUsageForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const date = el.modalInlineDate.value;
-    const rawVal = Number(el.modalInlineAmount.value || 0);
-    const unit = modalChartState.unit || "GB";
-    const valTB = unit === "TB" ? rawVal : rawVal / 1000;
-    const machine = modalChartState.machineId;
-    if (!machine || !date || valTB < 0) return;
-
-    try {
-      await api("/api/usage/record", {
-        method: "POST",
-        body: JSON.stringify({
-          machine,
-          date,
-          usageAmountTB: valTB
-        })
-      });
-      el.modalInlineAmount.value = "";
-      await refreshState();
-      renderModalMachineVisualizer();
-    } catch (err) {
-      alert(err.message);
-    }
   });
 }
 
