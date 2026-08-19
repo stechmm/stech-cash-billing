@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=5.5">
+    <link rel="stylesheet" href="styles.css?v=5.6">
   </head>
   <body>
     <section id="loginScreen" class="login-screen">
@@ -734,11 +734,11 @@
           <!-- 3. Usage Amount + GB/TB Unit Toggle -->
           <label style="display: flex; flex-direction: column; gap: 6px;">
             <span style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;">Usage Amount</span>
-            <div style="display: flex; align-items: center; justify-content: space-between; background: #131a29; border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 12px; padding: 4px 10px;">
-              <input id="usageDailyInput" type="number" min="0" step="any" placeholder="0.0" required style="height: 42px; width: 100%; background: transparent; border: none; color: #ffffff; font-size: 22px; font-weight: 900; outline: none;">
-              <div class="unit-toggle-pills compact-units" id="usageUnitToggleGroup" style="display: flex; background: #080c15; border: 1px solid rgba(255,255,255,0.12); padding: 3px; border-radius: 9px; gap: 2px;">
-                <button type="button" class="unit-pill active" data-unit="GB" style="border: none; background: #2563eb; color: #ffffff; padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 7px; cursor: pointer; transition: all 0.15s;">GB</button>
-                <button type="button" class="unit-pill" data-unit="TB" style="border: none; background: transparent; color: #64748b; padding: 6px 14px; font-size: 12px; font-weight: 800; border-radius: 7px; cursor: pointer; transition: all 0.15s;">TB</button>
+            <div class="usage-amount-container">
+              <input id="usageDailyInput" type="number" min="0" step="any" placeholder="0.0" required>
+              <div class="unit-toggle-pills compact-units" id="usageUnitToggleGroup">
+                <button type="button" class="unit-pill active" data-unit="GB">GB</button>
+                <button type="button" class="unit-pill" data-unit="TB">TB</button>
               </div>
             </div>
           </label>
@@ -1079,6 +1079,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=5.5"></script>
+    <script src="app.js?v=5.6"></script>
   </body>
 </html>
