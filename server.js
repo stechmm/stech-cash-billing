@@ -57,6 +57,8 @@ function ensureActiveMonth(db) {
     db.months[monthKey] = { openingCash: 0, entries: [] };
   }
   db.activeMonth = monthKey;
+  rollBillRecordsToMonth(db, monthKey);
+  reconcileBillStatusFromLedger(db);
 }
 
 function defaultSnapshot() {
@@ -526,6 +528,71 @@ function escapeRegex(value) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function dateInMonth(dateText, monthKey) {
+  if (!/^\d{4}-\d{2}$/.test(monthKey || "") || !/^\d{4}-\d{2}-\d{2}$/.test(dateText || "")) return dateText || "";
+  const [year, month] = monthKey.split("-").map(Number);
+  const originalDay = Number(dateText.slice(8, 10));
+  const lastDay = new Date(year, month, 0).getDate();
+  return `${monthKey}-${String(Math.min(originalDay, lastDay)).padStart(2, "0")}`;
+}
+
+function shiftDateByMonths(dateText, monthCount) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText || "") || !Number.isInteger(monthCount)) return dateText || "";
+  const [year, month, day] = dateText.split("-").map(Number);
+  const targetIndex = (year * 12) + (month - 1) + monthCount;
+  const targetYear = Math.floor(targetIndex / 12);
+  const targetMonth = targetIndex % 12;
+  const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+  return `${targetYear}-${String(targetMonth + 1).padStart(2, "0")}-${String(Math.min(day, lastDay)).padStart(2, "0")}`;
+}
+
+function monthDistance(fromMonth, toMonth) {
+  if (!/^\d{4}-\d{2}$/.test(fromMonth || "") || !/^\d{4}-\d{2}$/.test(toMonth || "")) return 0;
+  const [fromYear, fromValue] = fromMonth.split("-").map(Number);
+  const [toYear, toValue] = toMonth.split("-").map(Number);
+  return ((toYear - fromYear) * 12) + (toValue - fromValue);
+}
+
+function rollBillRecordsToMonth(db, monthKey) {
+  if (!Array.isArray(db.billRecords) || !/^\d{4}-\d{2}$/.test(monthKey || "")) return;
+  db.billRecords = db.billRecords.map((record) => {
+    const inferredCycle = /^\d{4}-\d{2}$/.test(record.cycleMonth || "")
+      ? record.cycleMonth
+      : /^\d{4}-\d{2}/.test(record.billDate || "") ? record.billDate.slice(0, 7) : monthKey;
+    if (record.status === "inactive" || inferredCycle >= monthKey) {
+      return record.cycleMonth ? record : { ...record, cycleMonth: inferredCycle };
+    }
+
+    const cycleHistory = Array.isArray(record.cycleHistory) ? [...record.cycleHistory] : [];
+    if (!cycleHistory.some((item) => item.monthKey === inferredCycle)) {
+      cycleHistory.push({
+        monthKey: inferredCycle,
+        submittedDate: record.submittedDate || "",
+        billDate: record.billDate || "",
+        cutOffDate: record.cutOffDate || "",
+        status: record.status || "sent_unpaid",
+        money: record.money || "",
+        autoPaid: Boolean(record.autoPaid)
+      });
+    }
+
+    const billMonth = /^\d{4}-\d{2}/.test(record.billDate || "") ? record.billDate.slice(0, 7) : inferredCycle;
+    const billDate = dateInMonth(record.billDate, monthKey);
+    const monthShift = monthDistance(billMonth, monthKey);
+    return {
+      ...record,
+      submittedDate: shiftDateByMonths(record.submittedDate, monthShift),
+      billDate,
+      cutOffDate: billDate ? shiftDate(billDate, -7) : "",
+      status: "sent_unpaid",
+      money: "",
+      autoPaid: false,
+      cycleMonth: monthKey,
+      cycleHistory
+    };
+  });
+}
+
 function collectMatchedMachinesFromLedger(db) {
   if (!db?.months || !Array.isArray(db.billRecords) || !db.billRecords.length) {
     return new Set();
@@ -536,15 +603,14 @@ function collectMatchedMachinesFromLedger(db) {
     .filter(Boolean);
 
   const matchedMachines = new Set();
-  Object.values(db.months).forEach((month) => {
-    const entries = Array.isArray(month?.entries) ? month.entries : [];
-    entries.forEach((entry) => {
-      const description = String(entry.description || "").trim().toUpperCase();
-      if (!description) return;
-      machineList.forEach((machine) => {
-        const pattern = new RegExp(`(^|[^A-Z0-9])${escapeRegex(machine.toUpperCase())}([^A-Z0-9]|$)`);
-        if (pattern.test(description)) matchedMachines.add(machine);
-      });
+  const month = db.months[db.activeMonth];
+  const entries = Array.isArray(month?.entries) ? month.entries : [];
+  entries.forEach((entry) => {
+    const description = String(entry.description || "").trim().toUpperCase();
+    if (!description) return;
+    machineList.forEach((machine) => {
+      const pattern = new RegExp(`(^|[^A-Z0-9])${escapeRegex(machine.toUpperCase())}([^A-Z0-9]|$)`);
+      if (pattern.test(description)) matchedMachines.add(machine);
     });
   });
 
@@ -629,6 +695,8 @@ function syncDeviceIntoBillRecords(db, deviceRecord, previousDeviceRecord = null
     money: "",
     customer: deviceRecord.name || "",
     autoPaid: false,
+    cycleMonth: db.activeMonth,
+    cycleHistory: [],
     linkedDeviceRecordId: linkedId,
     autoCreatedFromDevice: true
   });
@@ -946,7 +1014,9 @@ async function handleApi(req, res, pathname) {
       status: normalizedStatus,
       money: "",
       customer: record.customer || "",
-      autoPaid: existingRecord?.autoPaid || false
+      autoPaid: existingRecord?.autoPaid || false,
+      cycleMonth: billDate?.slice(0, 7) || db.activeMonth,
+      cycleHistory: Array.isArray(existingRecord?.cycleHistory) ? existingRecord.cycleHistory : []
     };
     const index = db.billRecords.findIndex((item) => item.id === payload.id);
     if (index >= 0) db.billRecords.splice(index, 1, payload);
