@@ -210,6 +210,10 @@ const el = {
   modalStarlinkChartContainer: document.querySelector("#modalStarlinkChartContainer"),
   modalStarlinkChartSvg: document.querySelector("#modalStarlinkChartSvg"),
   modalStarlinkTooltip: document.querySelector("#modalStarlinkTooltip"),
+  modalQuickRecordForm: document.querySelector("#modalQuickRecordForm"),
+  modalQuickDate: document.querySelector("#modalQuickDate"),
+  modalQuickAmount: document.querySelector("#modalQuickAmount"),
+  modalQuickUnitToggle: document.querySelector("#modalQuickUnitToggle"),
   modalStatTotal: document.querySelector("#modalStatTotal"),
   modalStatLimit: document.querySelector("#modalStatLimit"),
   modalStatRemaining: document.querySelector("#modalStatRemaining"),
@@ -596,12 +600,21 @@ function openMachineChartModal(machineId, monthKey = "") {
   modalChartState.machineId = machineId;
   modalChartState.activeMonth = monthKey || state.activeMonth || currentMonthKey();
   modalChartState.period = "daily";
+  modalChartState.unit = "GB";
   
-  if (el.modalInlineDate) {
-    el.modalInlineDate.value = localDateKey();
+  if (el.modalQuickDate) {
+    el.modalQuickDate.value = localDateKey();
   }
-  if (el.modalInlineAmount) {
-    el.modalInlineAmount.value = "";
+  if (el.modalQuickAmount) {
+    el.modalQuickAmount.value = "";
+  }
+  if (el.modalQuickUnitToggle) {
+    el.modalQuickUnitToggle.querySelectorAll(".unit-pill").forEach((btn) => {
+      const isGB = btn.dataset.unit === "GB";
+      btn.classList.toggle("active", isGB);
+      btn.style.background = isGB ? "#2563eb" : "transparent";
+      btn.style.color = isGB ? "#ffffff" : "#64748b";
+    });
   }
   
   renderModalMachineVisualizer();
@@ -609,8 +622,12 @@ function openMachineChartModal(machineId, monthKey = "") {
 }
 
 function closeMachineChartModal() {
-  setDialogOpen(el.machineChartModal, false);
+  if (el.machineChartModal) {
+    el.machineChartModal.classList.remove("open");
+    el.machineChartModal.classList.add("hidden");
+  }
 }
+window.closeMachineChartModal = closeMachineChartModal;
 
 function renderModalMachineVisualizer() {
   if (!el.modalStarlinkChartSvg || !modalChartState.machineId) return;
@@ -1591,6 +1608,7 @@ function openUsageDialog(recordId = null, machineId = "") {
   }
   setDialogOpen(el.usageDialog, true);
 }
+window.openUsageDialog = openUsageDialog;
 
 function resetUserForm() {
   el.userForm.reset();
@@ -2313,6 +2331,49 @@ if (el.modalVizPeriodTabs) {
       el.modalVizPeriodTabs.querySelectorAll(".starlink-tab").forEach((t) => t.classList.toggle("active", t === tab));
       renderModalMachineVisualizer();
     });
+  });
+}
+
+if (el.modalQuickUnitToggle) {
+  el.modalQuickUnitToggle.querySelectorAll(".unit-pill").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      modalChartState.unit = btn.dataset.unit;
+      el.modalQuickUnitToggle.querySelectorAll(".unit-pill").forEach((b) => {
+        const isActive = b === btn;
+        b.classList.toggle("active", isActive);
+        b.style.background = isActive ? "#2563eb" : "transparent";
+        b.style.color = isActive ? "#ffffff" : "#64748b";
+      });
+    });
+  });
+}
+
+if (el.modalQuickRecordForm) {
+  el.modalQuickRecordForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const date = el.modalQuickDate.value;
+    const rawVal = Number(el.modalQuickAmount.value || 0);
+    const unit = modalChartState.unit || "GB";
+    const valTB = unit === "TB" ? rawVal : rawVal / 1000;
+    const machine = modalChartState.machineId;
+    if (!machine || !date || valTB < 0) return;
+
+    try {
+      await api("/api/usage/record", {
+        method: "POST",
+        body: JSON.stringify({
+          machine,
+          date,
+          usageAmountTB: valTB
+        })
+      });
+      el.modalQuickAmount.value = "";
+      await refreshState();
+      renderModalMachineVisualizer();
+      renderUsagePage();
+    } catch (err) {
+      alert(err.message);
+    }
   });
 }
 
