@@ -1627,11 +1627,22 @@ function setEntryCalculatorOpen(open) {
 function setDialogOpen(node, open) {
   if (!node) return;
   if (open) {
+    if (node._hideTimer) {
+      clearTimeout(node._hideTimer);
+      node._hideTimer = null;
+    }
     node.classList.remove("hidden");
-    requestAnimationFrame(() => node.classList.add("open"));
+    void node.offsetWidth;
+    node.classList.add("open");
   } else {
     node.classList.remove("open");
-    setTimeout(() => node.classList.add("hidden"), 160);
+    if (node._hideTimer) clearTimeout(node._hideTimer);
+    node._hideTimer = setTimeout(() => {
+      if (!node.classList.contains("open")) {
+        node.classList.add("hidden");
+      }
+      node._hideTimer = null;
+    }, 180);
   }
 }
 
@@ -2482,42 +2493,93 @@ if (el.usageDialog) {
   });
 }
 
-el.userForm.addEventListener("submit", saveUserRecord);
-el.resetUserBtn.addEventListener("click", resetUserForm);
-el.userRoleInput.addEventListener("change", updatePermissionChecklist);
-el.openUserDialogBtn.addEventListener("click", () => {
-  resetUserForm();
-  setDialogOpen(el.userDialog, true);
-});
-el.closeUserDialogBtn.addEventListener("click", () => setDialogOpen(el.userDialog, false));
-el.cancelUserBtn.addEventListener("click", () => setDialogOpen(el.userDialog, false));
-el.userDialog.addEventListener("click", (event) => {
-  if (event.target === el.userDialog) setDialogOpen(el.userDialog, false);
-});
+if (el.userForm) el.userForm.addEventListener("submit", saveUserRecord);
+if (el.resetUserBtn) el.resetUserBtn.addEventListener("click", resetUserForm);
+if (el.userRoleInput) el.userRoleInput.addEventListener("change", updatePermissionChecklist);
+if (el.openUserDialogBtn) {
+  el.openUserDialogBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    resetUserForm();
+    setDialogOpen(el.userDialog, true);
+  });
+}
+if (el.closeUserDialogBtn) {
+  el.closeUserDialogBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDialogOpen(el.userDialog, false);
+  });
+}
+if (el.cancelUserBtn) {
+  el.cancelUserBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDialogOpen(el.userDialog, false);
+  });
+}
+if (el.userDialog) {
+  el.userDialog.addEventListener("click", (event) => {
+    if (event.target === el.userDialog) setDialogOpen(el.userDialog, false);
+  });
+}
 
-el.customerAccountForm.addEventListener("submit", saveCustomerAccount);
-el.resetCustomerAccountBtn.addEventListener("click", resetCustomerAccountForm);
-el.openCustomerAccountDialogBtn.addEventListener("click", () => {
-  resetCustomerAccountForm();
-  setDialogOpen(el.customerAccountDialog, true);
-});
-el.closeCustomerAccountDialogBtn.addEventListener("click", () => setDialogOpen(el.customerAccountDialog, false));
-el.cancelCustomerAccountBtn.addEventListener("click", () => setDialogOpen(el.customerAccountDialog, false));
-el.customerAccountDialog.addEventListener("click", (event) => {
-  if (event.target === el.customerAccountDialog) setDialogOpen(el.customerAccountDialog, false);
-});
+if (el.customerAccountForm) el.customerAccountForm.addEventListener("submit", saveCustomerAccount);
+if (el.resetCustomerAccountBtn) el.resetCustomerAccountBtn.addEventListener("click", resetCustomerAccountForm);
+if (el.openCustomerAccountDialogBtn) {
+  el.openCustomerAccountDialogBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    resetCustomerAccountForm();
+    setDialogOpen(el.customerAccountDialog, true);
+  });
+}
+if (el.closeCustomerAccountDialogBtn) {
+  el.closeCustomerAccountDialogBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDialogOpen(el.customerAccountDialog, false);
+  });
+}
+if (el.cancelCustomerAccountBtn) {
+  el.cancelCustomerAccountBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDialogOpen(el.customerAccountDialog, false);
+  });
+}
+if (el.customerAccountDialog) {
+  el.customerAccountDialog.addEventListener("click", (event) => {
+    if (event.target === el.customerAccountDialog) setDialogOpen(el.customerAccountDialog, false);
+  });
+}
 
-el.announcementForm.addEventListener("submit", saveAnnouncement);
-el.resetAnnouncementBtn.addEventListener("click", resetAnnouncementForm);
-el.openAnnouncementDialogBtn.addEventListener("click", () => {
-  resetAnnouncementForm();
-  setDialogOpen(el.announcementDialog, true);
-});
-el.closeAnnouncementDialogBtn.addEventListener("click", () => setDialogOpen(el.announcementDialog, false));
-el.cancelAnnouncementBtn.addEventListener("click", () => setDialogOpen(el.announcementDialog, false));
-el.announcementDialog.addEventListener("click", (event) => {
-  if (event.target === el.announcementDialog) setDialogOpen(el.announcementDialog, false);
-});
+if (el.announcementForm) el.announcementForm.addEventListener("submit", saveAnnouncement);
+if (el.resetAnnouncementBtn) el.resetAnnouncementBtn.addEventListener("click", resetAnnouncementForm);
+if (el.openAnnouncementDialogBtn) {
+  el.openAnnouncementDialogBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    resetAnnouncementForm();
+    setDialogOpen(el.announcementDialog, true);
+  });
+}
+if (el.closeAnnouncementDialogBtn) {
+  el.closeAnnouncementDialogBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDialogOpen(el.announcementDialog, false);
+  });
+}
+if (el.cancelAnnouncementBtn) {
+  el.cancelAnnouncementBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDialogOpen(el.announcementDialog, false);
+  });
+}
+if (el.announcementDialog) {
+  el.announcementDialog.addEventListener("click", (event) => {
+    if (event.target === el.announcementDialog) setDialogOpen(el.announcementDialog, false);
+  });
+}
 
 el.supportMessageForm.addEventListener("submit", sendSupportMessage);
 el.supportReceiptBtn.addEventListener("click", () => el.supportReceiptInput.click());
