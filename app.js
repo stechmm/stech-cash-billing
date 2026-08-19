@@ -56,6 +56,7 @@ const el = {
   pageViews: document.querySelectorAll(".page-view"),
   currentUserName: document.querySelector("#currentUserName"),
   currentUserRole: document.querySelector("#currentUserRole"),
+  themeToggleBtn: document.querySelector("#themeToggleBtn"),
   utilityMenu: document.querySelector("#utilityMenu") || document.querySelector(".utility-menu"),
   adminPanelBtn: document.querySelector("#adminPanelBtn"),
   exportJsonBtn: document.querySelector("#exportJsonBtn"),
@@ -372,6 +373,28 @@ function monthLabel(key) {
 function canAccess(tab) {
   if (tab === "adminPage") return state.user?.role === "admin";
   return state.user?.role === "admin" || (state.user?.allowedTabs || []).includes(tab);
+}
+
+const THEME_STORAGE_KEY = "spacelink_theme";
+
+function applyTheme(theme) {
+  if (theme === "light") {
+    document.documentElement.setAttribute("data-theme", "light");
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+  }
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
+  applyTheme(saved);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+  const next = current === "light" ? "dark" : "light";
+  applyTheme(next);
 }
 
 function loadBillColors() {
@@ -2566,6 +2589,11 @@ document.addEventListener("click", (event) => {
   }
 });
 
+if (el.themeToggleBtn) {
+  el.themeToggleBtn.addEventListener("click", toggleTheme);
+}
+
+initTheme();
 resetEntryForm();
 resetBillForm();
 resetDeviceForm();
