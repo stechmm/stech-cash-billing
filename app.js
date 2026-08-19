@@ -773,10 +773,6 @@ function updateState(snapshot) {
   state.customerAccounts = snapshot.customerAccounts || [];
   state.announcements = snapshot.announcements || [];
   state.supportMessages = snapshot.supportMessages || [];
-  if (snapshot.appSettings) {
-    state.appSettings = { ...state.appSettings, ...snapshot.appSettings };
-    applyLiveSettings(state.appSettings);
-  }
   if (!state.selectedSupportCustomerId && state.customerAccounts.length) {
     state.selectedSupportCustomerId = state.customerAccounts[0].id;
   }
