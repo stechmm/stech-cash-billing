@@ -80,6 +80,9 @@ button { cursor: pointer; }
 .customer-login-card button:hover { transform: translateY(-1px); box-shadow: 0 12px 25px rgba(37, 99, 235, 0.45); }
 .customer-error { min-height: 18px; margin-top: 10px; color: #f87171; font-size: 11.5px; text-align: center; }
 
+/* ==========================================================================
+   CUSTOMER MAIN APP SHELL (Mobile-first Frame)
+   ========================================================================== */
 .customer-app {
   max-width: 580px;
   margin: 0 auto;
@@ -87,7 +90,7 @@ button { cursor: pointer; }
   padding-bottom: 96px;
   position: relative;
   background: #080c15;
-  box-shadow: 0 0 80px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.85);
 }
 
 .customer-header {
@@ -175,6 +178,9 @@ button { cursor: pointer; }
   }
 }
 
+/* ==========================================================================
+   HOME PAGE: WELCOME HERO & STATS
+   ========================================================================== */
 .customer-welcome {
   padding: 24px 20px;
   border-radius: 22px;
@@ -282,6 +288,9 @@ button { cursor: pointer; }
   font-weight: 600;
 }
 
+/* ==========================================================================
+   SECTIONS & DEVICE INFO SPEC CARDS
+   ========================================================================== */
 .customer-section {
   margin-top: 14px;
   border: 1px solid rgba(255, 255, 255, 0.09);
@@ -362,6 +371,7 @@ button { cursor: pointer; }
   text-align: center;
 }
 
+/* Announcements Feed */
 .announcement-card {
   padding: 16px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -418,6 +428,7 @@ button { cursor: pointer; }
   color: #fb7185;
 }
 
+/* Daily Usage Rows */
 .daily-row {
   display: flex;
   align-items: center;
@@ -443,6 +454,9 @@ button { cursor: pointer; }
   color: #38bdf8;
 }
 
+/* ==========================================================================
+   SUPPORT CHAT & NATIVE COMPOSER (Telegram/WhatsApp Aesthetics)
+   ========================================================================== */
 .support-page {
   min-height: calc(100vh - 170px);
 }
@@ -474,8 +488,8 @@ button { cursor: pointer; }
 
 .customer-messages {
   display: flex;
-  min-height: calc(100vh - 290px);
-  max-height: calc(100vh - 290px);
+  min-height: calc(100vh - 300px);
+  max-height: calc(100vh - 300px);
   flex-direction: column;
   gap: 12px;
   margin: 12px 0;
@@ -541,6 +555,131 @@ button { cursor: pointer; }
   height: 38px;
 }
 
+.customer-message-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #131a29;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chat-attachment-preview button {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: #f87171;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Chat Composer Bar (Horizontal 1-Line Native Layout) */
+.chat-composer {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding: 6px !important;
+  border-radius: 18px !important;
+  background: #0d121f !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+.chat-composer input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  background: #131a29 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  outline: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.chat-composer input:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+}
+
+.chat-composer .composer-tool {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  border-radius: 12px !important;
+  background: #162032 !important;
+  color: #38bdf8 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.chat-composer .composer-tool:hover {
+  background: rgba(56, 189, 248, 0.2) !important;
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+}
+
+.chat-composer .composer-tool svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+}
+
+.chat-composer .composer-tool.recording {
+  background: #dc2626 !important;
+  color: #fff !important;
+  border-color: #ef4444 !important;
+  animation: pulse 1s infinite !important;
+}
+
+.chat-composer .composer-send {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 42px !important;
+  padding: 0 18px !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.chat-composer .composer-send:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55) !important;
+}
+
+/* ==========================================================================
+   FLOATING GLASS BOTTOM NAVIGATION BAR
+   ========================================================================== */
 .customer-bottom-nav {
   position: fixed;
   bottom: 16px;
@@ -616,15 +755,17 @@ button { cursor: pointer; }
   font-weight: 800;
 }
 
-/* Starlink / Roam Style Usage Visualizer for Customer Portal */
+/* ==========================================================================
+   STARLINK ROAM VISUALIZER CARD (Usage Page)
+   ========================================================================== */
 .starlink-card {
   background: #0d0f12;
   color: #f8fafc;
-  border-radius: 14px;
+  border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  margin-bottom: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .starlink-header {
@@ -643,9 +784,11 @@ button { cursor: pointer; }
 }
 
 .starlink-label {
-  font-size: 13px;
+  font-size: 12.5px;
   color: #94a3b8;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .starlink-stat-row {
@@ -655,8 +798,8 @@ button { cursor: pointer; }
 }
 
 .starlink-total-number {
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 900;
   color: #ffffff;
   letter-spacing: -0.5px;
   line-height: 1.1;
@@ -669,7 +812,7 @@ button { cursor: pointer; }
   border-radius: 999px;
   padding: 2px 10px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .starlink-controls {
@@ -683,7 +826,7 @@ button { cursor: pointer; }
   gap: 3px;
   background: #161b22;
   padding: 3px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid #30363d;
 }
 
@@ -691,10 +834,10 @@ button { cursor: pointer; }
   background: transparent;
   color: #94a3b8;
   border: none;
-  border-radius: 6px;
-  padding: 5px 12px;
+  border-radius: 8px;
+  padding: 6px 12px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -706,7 +849,7 @@ button { cursor: pointer; }
 .customer-viz-tab.active {
   background: #ffffff;
   color: #0d0f12;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .starlink-cycle-nav {
@@ -766,8 +909,9 @@ button { cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12.5px;
   color: #38bdf8;
+  font-weight: 600;
 }
 .legend-dash {
   width: 12px;
@@ -780,7 +924,7 @@ button { cursor: pointer; }
   display: flex;
   align-items: baseline;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12.5px;
   color: #ffffff;
 }
 .legend-limit {
