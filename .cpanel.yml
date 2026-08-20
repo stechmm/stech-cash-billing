@@ -1,0 +1,5 @@
+﻿---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/stechfpf/billing.stechmm.com
+    - /bin/cp -R * $DEPLOYPATH
