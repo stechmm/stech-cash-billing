@@ -5,6 +5,12 @@ const path = require("path");
 const crypto = require("crypto");
 const { URL } = require("url");
 const { WebSocketServer } = require("ws");
+let archiver;
+try {
+  archiver = require("archiver");
+} catch {
+  archiver = null;
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3030);
@@ -96,6 +102,21 @@ function defaultSnapshot() {
         deviceSpecs: true
       }
     },
+    systemSettings: {
+      telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || "",
+      telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
+      telegramBackupChatId: process.env.TELEGRAM_BACKUP_CHAT_ID || "",
+      telegramAlertsEnabled: true,
+      googleDriveBackupEnabled: false,
+      googleDriveFolderId: "",
+      autoBackupEnabled: true,
+      autoBackupHour: 0,
+      autoVouchersEnabled: true,
+      companyName: "S-Tech Telecommunication Services",
+      companyPhone: "+95 9 777 888 999",
+      companyVoucherFooter: "Thank you for subscribing to S-Tech Starlink High-Speed Satellite Internet."
+    },
+    vouchers: [],
     months: {
       [monthKey]: {
         openingCash: 0,
@@ -160,6 +181,184 @@ function ensureAppSettings(db) {
       }
     };
   }
+}
+
+function ensureSystemSettings(db) {
+  if (!db.systemSettings || typeof db.systemSettings !== "object") {
+    db.systemSettings = {};
+  }
+  const defaults = {
+    telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || "",
+    telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
+    telegramBackupChatId: process.env.TELEGRAM_BACKUP_CHAT_ID || "",
+    telegramAlertsEnabled: true,
+    googleDriveBackupEnabled: false,
+    googleDriveFolderId: "",
+    autoBackupEnabled: true,
+    autoBackupHour: 0,
+    autoVouchersEnabled: true,
+    companyName: "S-Tech Telecommunication Services",
+    companyPhone: "+95 9 777 888 999",
+    companyVoucherFooter: "Thank you for subscribing to S-Tech Starlink High-Speed Satellite Internet."
+  };
+  for (const [k, v] of Object.entries(defaults)) {
+    if (db.systemSettings[k] === undefined) {
+      db.systemSettings[k] = v;
+    }
+  }
+  if (!Array.isArray(db.vouchers)) db.vouchers = [];
+}
+
+async function sendTelegramNotification(db, messageText, options = {}) {
+  ensureSystemSettings(db);
+  const token = db.systemSettings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = options.chatId || db.systemSettings.telegramChatId || process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId || db.systemSettings.telegramAlertsEnabled === false) return false;
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: messageText,
+        parse_mode: "HTML",
+        disable_web_page_preview: true
+      })
+    });
+    const data = await res.json();
+    return Boolean(data && data.ok);
+  } catch (err) {
+    console.error("[Telegram Notification Error]:", err.message);
+    return false;
+  }
+}
+
+async function sendTelegramDocument(db, filePath, caption, targetChatId) {
+  ensureSystemSettings(db);
+  const token = db.systemSettings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = targetChatId || db.systemSettings.telegramBackupChatId || db.systemSettings.telegramChatId;
+  if (!token || !chatId || !fs.existsSync(filePath)) return false;
+
+  try {
+    const fileBuffer = fs.readFileSync(filePath);
+    const fileName = path.basename(filePath);
+    const blob = new Blob([fileBuffer]);
+    const formData = new FormData();
+    formData.append("chat_id", chatId);
+    formData.append("caption", caption || "📦 Database Backup");
+    formData.append("document", blob, fileName);
+
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+    return Boolean(data && data.ok);
+  } catch (err) {
+    console.error("[Telegram Send Document Error]:", err.message);
+    return false;
+  }
+}
+
+function generateAndSendVoucher(db, { customerId, customerName, machineId, amount, date, monthKey, notes, paymentMethod, staffUserId }) {
+  ensureSystemSettings(db);
+  if (db.systemSettings.autoVouchersEnabled === false) return null;
+
+  let targetCustomer = null;
+  if (customerId) {
+    targetCustomer = db.customerAccounts.find((c) => c.id === customerId);
+  }
+  if (!targetCustomer && machineId) {
+    targetCustomer = db.customerAccounts.find((c) => {
+      const linked = Array.isArray(c.linkedDeviceIds) && c.linkedDeviceIds.length > 0 ? c.linkedDeviceIds : [c.linkedDeviceId];
+      return linked.includes(machineId);
+    });
+  }
+  if (!targetCustomer && customerName) {
+    targetCustomer = db.customerAccounts.find((c) =>
+      c.fullName?.trim().toLowerCase() === customerName.trim().toLowerCase() ||
+      c.username?.toLowerCase() === customerName.trim().toLowerCase()
+    );
+  }
+  if (!targetCustomer) return null;
+
+  const cleanMonth = (monthKey || currentMonthKey()).replace("-", "");
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  const voucherNumber = `VCH-${cleanMonth}-${randomSuffix}`;
+  const numAmount = Number(amount) || 0;
+
+  const voucher = {
+    id: makeId(),
+    voucherNumber,
+    customerId: targetCustomer.id,
+    customerName: targetCustomer.fullName || targetCustomer.username || "Customer",
+    customerUsername: targetCustomer.username,
+    machineId: machineId || (Array.isArray(targetCustomer.linkedDeviceIds) ? targetCustomer.linkedDeviceIds[0] : targetCustomer.linkedDeviceId) || "-",
+    amount: numAmount,
+    currency: "MMK",
+    date: date || new Date().toISOString().slice(0, 10),
+    monthKey: monthKey || currentMonthKey(),
+    paymentMethod: paymentMethod || "Bank Transfer / Cash",
+    status: "PAID",
+    notes: notes || "Starlink Monthly Subscription",
+    companyName: db.systemSettings.companyName || "S-Tech Telecommunication Services",
+    companyPhone: db.systemSettings.companyPhone || "+95 9 777 888 999",
+    createdAt: new Date().toISOString()
+  };
+
+  if (!Array.isArray(db.vouchers)) db.vouchers = [];
+  db.vouchers.push(voucher);
+
+  // Push official Voucher Chat Message
+  const msgObj = {
+    id: makeId(),
+    customerId: targetCustomer.id,
+    senderType: "staff",
+    senderId: staffUserId || "system",
+    topic: "voucher",
+    message: `🧾 Official Payment Receipt / Voucher: ${voucher.voucherNumber}\nAmount: ${numAmount.toLocaleString()} MMK\nMachine: ${voucher.machineId}\nMonth: ${voucher.monthKey}\nStatus: PAID ✓`,
+    voucher: voucher,
+    createdAt: new Date().toISOString(),
+    readByCustomer: false,
+    readByStaff: true
+  };
+  db.supportMessages.push(msgObj);
+
+  broadcastRealtime({ type: "support_message", customerId: targetCustomer.id, voucher }, (client) => client.kind === "staff" || client.customerId === targetCustomer.id);
+  return voucher;
+}
+
+async function createBackupZip(db) {
+  const backupDir = path.join(DATA_DIR, "backups");
+  if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+
+  const timeStr = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const zipName = `backup-${timeStr}.zip`;
+  const zipPath = path.join(backupDir, zipName);
+
+  if (!archiver) {
+    throw new Error("Archiver module is not available on server");
+  }
+
+  const output = fs.createWriteStream(zipPath);
+  const archive = archiver("zip", { zlib: { level: 9 } });
+
+  return new Promise((resolve, reject) => {
+    output.on("close", async () => {
+      console.log(`[Backup] Created ${zipName} (${archive.pointer()} bytes)`);
+      if (db.systemSettings?.telegramBotToken && (db.systemSettings?.telegramBackupChatId || db.systemSettings?.telegramChatId)) {
+        await sendTelegramDocument(db, zipPath, `📦 S-Tech Billing Database Backup\nDate: ${new Date().toLocaleString()}\nFile: ${zipName}\nSize: ${(archive.pointer() / 1024).toFixed(1)} KB`);
+      }
+      resolve({ zipName, zipPath, size: archive.pointer() });
+    });
+    archive.on("error", (err) => reject(err));
+    archive.pipe(output);
+
+    if (fs.existsSync(DB_FILE)) archive.file(DB_FILE, { name: "app-db.json" });
+    if (fs.existsSync(UPLOAD_DIR)) archive.directory(UPLOAD_DIR, "uploads");
+    archive.finalize();
+  });
 }
 
 function normalizeAllowedTabs(user) {
@@ -993,6 +1192,13 @@ async function handleApi(req, res, pathname) {
     });
     await writeDb(db);
     broadcastRealtime({ type: "support_message", customerId: customer.id }, (client) => client.kind === "staff" || client.customerId === customer.id);
+
+    // Send Real-time Telegram Alert to Admin
+    const devInfo = customer.linkedDeviceId || (Array.isArray(customer.linkedDeviceIds) && customer.linkedDeviceIds.length > 0 ? customer.linkedDeviceIds.join(", ") : "-");
+    const hasImage = Boolean(attachment);
+    const alertText = `💬 <b>New Support Message</b>\n👤 <b>Customer:</b> ${customer.fullName || customer.username}\n📟 <b>Device:</b> ${devInfo}\n📝 <b>Message:</b> ${message || (hasImage ? "📷 [Sent an Image / Payment Slip]" : "")}`;
+    sendTelegramNotification(db, alertText);
+
     return json(res, 200, { ok: true });
   }
 
@@ -1173,8 +1379,25 @@ async function handleApi(req, res, pathname) {
     reconcileBillStatusFromLedger(db);
     db.billRecords.sort((a, b) => String(a.machine || "").localeCompare(String(b.machine || ""), undefined, { numeric: true }));
     db.activeMonth = monthKey;
+
+    // Auto-generate voucher if In Amount is recorded
+    let createdVoucher = null;
+    if (payload.inAmount > 0 && body.sendVoucher !== false) {
+      createdVoucher = generateAndSendVoucher(db, {
+        customerId: body.customerId,
+        customerName: body.customerName || payload.description,
+        machineId: body.machineId || payload.description,
+        amount: payload.inAmount,
+        date: payload.date,
+        monthKey,
+        notes: payload.description,
+        paymentMethod: body.paymentMethod || "Bank Transfer / Cash",
+        staffUserId: user.id
+      });
+    }
+
     await writeDb(db);
-    return json(res, 200, { ok: true });
+    return json(res, 200, { ok: true, voucher: createdVoucher });
   }
 
   if (pathname === "/api/cash/entry" && req.method === "DELETE") {
@@ -1332,9 +1555,23 @@ async function handleApi(req, res, pathname) {
       if (monthSort !== 0) return monthSort;
       return String(a.machine || "").localeCompare(String(b.machine || ""), undefined, { numeric: true });
     });
+
+    // Check for High Usage Alert (>= 4.8 TB on 5TB plan, or >= 1.9 TB on 2TB plan)
+    const totalDailyTB = Object.values(dailyUsage).reduce((sum, v) => sum + Number(v || 0), 0);
+    const totalUsageTB = totalDailyTB + Number(payload.legacyUsageTB || 0);
+    const limitTB = Number(payload.usageLimitTB || (payload.billType === "discount" ? 2.0 : 5.0));
+    const thresholdTB = payload.billType === "discount" ? 1.9 : 4.8;
+    if (totalUsageTB >= thresholdTB) {
+      const usageAlertText = `⚠️ <b>HIGH USAGE ALERT (≥ ${thresholdTB} TB)</b>\n📟 <b>Machine:</b> ${machine}\n👤 <b>Customer:</b> ${payload.customer || "-"}\n📊 <b>Total Used:</b> ${totalUsageTB.toFixed(2)} / ${limitTB.toFixed(1)} TB (${Math.round((totalUsageTB / limitTB) * 100)}%)\nTerminal is nearing its plan limit.`;
+      sendTelegramNotification(db, usageAlertText);
+    }
+
     await writeDb(db);
     const affectedCustomerIds = new Set(db.customerAccounts
-      .filter((customer) => String(customer.linkedDeviceId || "").trim().toUpperCase() === machine.toUpperCase())
+      .filter((customer) => {
+        const linked = Array.isArray(customer.linkedDeviceIds) && customer.linkedDeviceIds.length > 0 ? customer.linkedDeviceIds : [customer.linkedDeviceId];
+        return linked.map((s) => String(s || "").trim().toUpperCase()).includes(machine.toUpperCase());
+      })
       .map((customer) => customer.id));
     broadcastRealtime({ type: "usage_updated", machine }, (client) => client.kind === "staff" || affectedCustomerIds.has(client.customerId));
     return json(res, 200, { ok: true });
@@ -1361,29 +1598,17 @@ async function handleApi(req, res, pathname) {
       role: record.role === "admin" ? "admin" : "user",
       allowedTabs: Array.isArray(record.allowedTabs)
         ? record.allowedTabs.filter((tab) => USER_TABS.includes(tab))
-        : [],
-      passwordHash: record.password ? hashPassword(record.password) : ""
+        : USER_TABS
     };
+    if (record.password) {
+      payload.password = hashPassword(record.password);
+    } else if (record.id) {
+      const existing = db.users.find((item) => item.id === record.id);
+      if (existing) payload.password = existing.password;
+    }
     const index = db.users.findIndex((item) => item.id === payload.id);
-    if (db.users.some((item) => item.username === payload.username && item.id !== payload.id)) {
-      return json(res, 400, { error: "Username already exists" });
-    }
-    if (index >= 0) {
-      const current = db.users[index];
-      db.users[index] = {
-        ...current,
-        fullName: payload.fullName,
-        username: payload.username,
-        role: payload.role,
-        allowedTabs: payload.role === "admin" ? [...USER_TABS, "adminPage"] : payload.allowedTabs,
-        passwordHash: payload.passwordHash || current.passwordHash
-      };
-    } else {
-      db.users.push({
-        ...payload,
-        allowedTabs: payload.role === "admin" ? [...USER_TABS, "adminPage"] : payload.allowedTabs
-      });
-    }
+    if (index >= 0) db.users.splice(index, 1, payload);
+    else db.users.push(payload);
     await writeDb(db);
     return json(res, 200, { ok: true });
   }
@@ -1392,8 +1617,9 @@ async function handleApi(req, res, pathname) {
     if (!requireAdmin(user, res)) return;
     const target = new URL(req.url, `http://${req.headers.host}`);
     const id = target.searchParams.get("id");
-    const targetUser = db.users.find((item) => item.id === id);
-    if (targetUser?.role === "admin" && db.users.filter((item) => item.role === "admin").length <= 1) {
+    if (id === user.id) return json(res, 400, { error: "Cannot delete current user" });
+    const admins = db.users.filter((item) => item.role === "admin" && item.id !== id);
+    if (!admins.length) {
       return json(res, 400, { error: "At least one admin is required" });
     }
     db.users = db.users.filter((item) => item.id !== id);
@@ -1442,8 +1668,102 @@ async function handleApi(req, res, pathname) {
     if (!Array.isArray(snapshot.announcements)) snapshot.announcements = [];
     if (!Array.isArray(snapshot.supportMessages)) snapshot.supportMessages = [];
     if (!snapshot.appSettings) ensureAppSettings(snapshot);
+    if (!snapshot.systemSettings) ensureSystemSettings(snapshot);
     await writeDb(snapshot);
     return json(res, 200, { ok: true });
+  }
+
+  // System & Telegram Settings APIs
+  if (pathname === "/api/admin/settings" && req.method === "GET") {
+    if (!requireAdmin(user, res)) return;
+    ensureSystemSettings(db);
+    return json(res, 200, {
+      systemSettings: db.systemSettings,
+      appSettings: db.appSettings
+    });
+  }
+
+  if (pathname === "/api/admin/settings" && req.method === "POST") {
+    if (!requireAdmin(user, res)) return;
+    const body = await readBody(req);
+    ensureSystemSettings(db);
+    db.systemSettings = {
+      ...db.systemSettings,
+      ...(body.systemSettings || {})
+    };
+    await writeDb(db);
+    return json(res, 200, { ok: true, systemSettings: db.systemSettings });
+  }
+
+  if (pathname === "/api/admin/telegram/test" && req.method === "POST") {
+    if (!requireAdmin(user, res)) return;
+    const body = await readBody(req);
+    ensureSystemSettings(db);
+    const testDb = {
+      systemSettings: {
+        ...db.systemSettings,
+        ...(body.systemSettings || {})
+      }
+    };
+    const testMsg = `🚀 <b>S-Tech Billing Bot Test</b>\n✅ Telegram integration is working perfectly!\n⏰ Time: ${new Date().toLocaleString()}\n👑 Admin: ${user.fullName || user.username}`;
+    const ok = await sendTelegramNotification(testDb, testMsg);
+    if (ok) {
+      return json(res, 200, { ok: true, message: "Test notification sent successfully" });
+    }
+    return json(res, 400, { error: "Failed to send Telegram message. Please check Bot Token and Chat ID." });
+  }
+
+  // Automated & Manual Backup Download
+  if (pathname === "/api/admin/backup/download" && req.method === "GET") {
+    if (!requireAdmin(user, res)) return;
+    try {
+      const result = await createBackupZip(db);
+      const fileStream = fs.createReadStream(result.zipPath);
+      res.writeHead(200, {
+        "Content-Type": "application/zip",
+        "Content-Disposition": `attachment; filename="${result.zipName}"`,
+        "Content-Length": result.size
+      });
+      return fileStream.pipe(res);
+    } catch (err) {
+      return json(res, 500, { error: `Failed to create backup: ${err.message}` });
+    }
+  }
+
+  if (pathname === "/api/admin/backup/trigger" && req.method === "POST") {
+    if (!requireAdmin(user, res)) return;
+    try {
+      const result = await createBackupZip(db);
+      return json(res, 200, { ok: true, backup: result });
+    } catch (err) {
+      return json(res, 500, { error: `Failed to create backup: ${err.message}` });
+    }
+  }
+
+  // Voucher Management APIs
+  if (pathname === "/api/vouchers/list" && req.method === "GET") {
+    if (!requireAdmin(user, res)) return;
+    ensureSystemSettings(db);
+    return json(res, 200, { vouchers: db.vouchers || [] });
+  }
+
+  if (pathname === "/api/vouchers/send" && req.method === "POST") {
+    if (!requireAdmin(user, res)) return;
+    const body = await readBody(req);
+    const voucher = generateAndSendVoucher(db, {
+      customerId: body.customerId,
+      customerName: body.customerName,
+      machineId: body.machineId,
+      amount: body.amount,
+      date: body.date,
+      monthKey: body.monthKey,
+      notes: body.notes,
+      paymentMethod: body.paymentMethod,
+      staffUserId: user.id
+    });
+    if (!voucher) return json(res, 400, { error: "Could not find matching customer for voucher delivery" });
+    await writeDb(db);
+    return json(res, 200, { ok: true, voucher });
   }
 
   if (pathname === "/api/settings" && req.method === "GET") {
@@ -1521,6 +1841,27 @@ const realtimeHeartbeat = setInterval(() => {
   });
 }, 30000);
 realtimeHeartbeat.unref();
+
+// Daily Automated Backup Interval (Every 10 min check)
+let lastBackupDateStr = "";
+setInterval(async () => {
+  try {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const db = await readDb();
+    ensureSystemSettings(db);
+    if (db.systemSettings.autoBackupEnabled !== false) {
+      const targetHour = Number(db.systemSettings.autoBackupHour || 0);
+      if (now.getHours() === targetHour && lastBackupDateStr !== todayStr) {
+        lastBackupDateStr = todayStr;
+        console.log("[Auto-Backup] Running scheduled daily backup for", todayStr);
+        await createBackupZip(db);
+      }
+    }
+  } catch (err) {
+    console.error("[Auto-Backup Error]:", err.message);
+  }
+}, 10 * 60 * 1000).unref();
 
 server.listen(PORT, HOST, () => {
   console.log(`S-Tech app server running at http://${HOST}:${PORT}`);

@@ -8,6 +8,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "archiver": "^8.0.0",
     "dotenv": "^16.6.1",
     "mysql2": "^3.11.3",
     "ws": "^8.18.0"

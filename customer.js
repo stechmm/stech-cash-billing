@@ -588,6 +588,12 @@ function renderCustomerMessages() {
   customerEl.messageList.innerHTML = "";
   if (!messages.length) customerEl.messageList.append(makeCustomerEmpty("Start a conversation with S-Tech."));
   messages.forEach((item) => {
+    if (item.voucher || item.topic === "voucher") {
+      const v = item.voucher || {};
+      const voucherEl = makeVoucherElement(v);
+      customerEl.messageList.append(voucherEl);
+      return;
+    }
     const bubble = document.createElement("article");
     bubble.className = `message-bubble${item.senderType === "customer" ? " mine" : ""}`;
     const body = document.createElement("p");
@@ -600,6 +606,101 @@ function renderCustomerMessages() {
     customerEl.messageList.append(bubble);
   });
   customerEl.messageList.scrollTop = customerEl.messageList.scrollHeight;
+}
+
+function makeVoucherElement(v) {
+  const card = document.createElement("div");
+  card.className = "customer-voucher-card";
+  const numAmount = Number(v.amount || 0);
+  card.innerHTML = `
+    <div class="voucher-top-brand">
+      <div class="voucher-brand-title">
+        <span>🛰️</span>
+        <div>
+          <strong>${v.companyName || "S-Tech Telecommunication"}</strong>
+          <small>OFFICIAL PAYMENT RECEIPT</small>
+        </div>
+      </div>
+      <span class="voucher-stamp-paid">PAID ✓</span>
+    </div>
+    <div class="voucher-no-row">
+      <span>Voucher No:</span>
+      <strong>${v.voucherNumber || "VCH-2026-001"}</strong>
+    </div>
+    <div class="voucher-details-grid">
+      <div><span>Customer:</span><strong>${v.customerName || "-"}</strong></div>
+      <div><span>Machine ID:</span><strong>${v.machineId || "-"}</strong></div>
+      <div><span>Billing Period:</span><strong>${v.monthKey || "-"}</strong></div>
+      <div><span>Payment Date:</span><strong>${v.date || "-"}</strong></div>
+      <div><span>Payment Method:</span><strong>${v.paymentMethod || "Bank Transfer"}</strong></div>
+      <div><span>Service:</span><strong>${v.notes || "Starlink Internet"}</strong></div>
+    </div>
+    <div class="voucher-total-banner">
+      <span>AMOUNT RECEIVED</span>
+      <strong>${numAmount.toLocaleString()} MMK</strong>
+    </div>
+    <div class="voucher-footer-row">
+      <small>Thank you for subscribing to S-Tech Starlink Service.</small>
+      <button type="button" class="voucher-action-btn">
+        🖨️ Save Receipt
+      </button>
+    </div>
+  `;
+  const printBtn = card.querySelector(".voucher-action-btn");
+  if (printBtn) {
+    printBtn.onclick = () => printOrSaveVoucher(v.voucherNumber, v.customerName, v.machineId, v.amount, v.date, v.monthKey);
+  }
+  return card;
+}
+
+function printOrSaveVoucher(no, name, machine, amount, date, month) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    alert("Please allow popups to save receipt");
+    return;
+  }
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Payment Receipt - ${no || "Voucher"}</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; padding: 30px; display: flex; justify-content: center; }
+        .receipt { width: 100%; max-width: 460px; background: #fff; border: 2px solid #0f766e; border-radius: 12px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 14px; margin-bottom: 16px; }
+        .stamp { background: #dcfce7; color: #15803d; border: 2px solid #16a34a; font-weight: 900; font-size: 14px; padding: 4px 12px; border-radius: 6px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+        .total { background: #f0fdfa; border: 1px solid #99f6e4; padding: 12px; border-radius: 8px; margin: 16px 0; text-align: center; }
+        .total strong { font-size: 24px; color: #0f766e; }
+        .footer { font-size: 11.5px; color: #64748b; text-align: center; margin-top: 14px; line-height: 1.4; }
+        @media print { body { padding: 0; background: #fff; } .receipt { box-shadow: none; border: 1px solid #000; } }
+      </style>
+    </head>
+    <body>
+      <div class="receipt">
+        <div class="header">
+          <div>
+            <h2 style="margin:0; font-size:18px; color:#0f766e;">🛰️ S-Tech Telecommunication</h2>
+            <small style="color:#64748b;">Official Service Payment Receipt</small>
+          </div>
+          <div class="stamp">PAID ✓</div>
+        </div>
+        <div class="row"><span>Voucher No:</span><strong>${no || "-"}</strong></div>
+        <div class="row"><span>Customer:</span><strong>${name || "-"}</strong></div>
+        <div class="row"><span>Terminal ID:</span><strong>${machine || "-"}</strong></div>
+        <div class="row"><span>Billing Month:</span><strong>${month || "-"}</strong></div>
+        <div class="row"><span>Date:</span><strong>${date || "-"}</strong></div>
+        <div class="total">
+          <div style="font-size:11px; color:#0f766e; font-weight:700; margin-bottom:4px; letter-spacing:0.5px;">TOTAL AMOUNT RECEIVED</div>
+          <strong>${Number(amount || 0).toLocaleString()} MMK</strong>
+        </div>
+        <div class="footer">Thank you for subscribing to S-Tech Starlink High-Speed Satellite Internet.</div>
+      </div>
+      <script>window.onload = function() { window.print(); };</script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 function makeChatAttachment(attachment) {

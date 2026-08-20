@@ -1935,9 +1935,10 @@ async function saveCashEntry(event) {
     alert("Please enter an In or Out amount.");
     return;
   }
+  const sendVoucher = Boolean(document.getElementById("entrySendVoucher")?.checked);
   await api("/api/cash/entry", {
     method: "POST",
-    body: JSON.stringify({ monthKey: state.activeMonth, entry: payload })
+    body: JSON.stringify({ monthKey: state.activeMonth, entry: payload, sendVoucher })
   });
   resetEntryForm();
   setDialogOpen(el.entryDialog, false);
@@ -2896,6 +2897,117 @@ document.addEventListener("click", (event) => {
     }
   }
 });
+
+async function openSystemSettingsModal(event) {
+  if (event) event.preventDefault();
+  closeUtilityMenu();
+  try {
+    const data = await api("/api/admin/settings");
+    if (!data) return;
+    const sys = data.systemSettings || {};
+    
+    document.getElementById("settingsTelegramAlerts").checked = sys.telegramAlertsEnabled !== false;
+    document.getElementById("settingsTelegramToken").value = sys.telegramBotToken || "";
+    document.getElementById("settingsTelegramChatId").value = sys.telegramChatId || "";
+    document.getElementById("settingsTelegramBackupChatId").value = sys.telegramBackupChatId || "";
+    
+    document.getElementById("settingsAutoBackup").checked = sys.autoBackupEnabled !== false;
+    document.getElementById("settingsAutoBackupHour").value = String(sys.autoBackupHour ?? 0);
+    document.getElementById("settingsAutoVouchers").value = String(sys.autoVouchersEnabled !== false);
+    
+    document.getElementById("settingsCompanyName").value = sys.companyName || "S-Tech Telecommunication Services";
+    document.getElementById("settingsCompanyPhone").value = sys.companyPhone || "+95 9 777 888 999";
+    
+    setDialogOpen(document.getElementById("systemSettingsDialog"), true);
+  } catch (err) {
+    alert("Failed to load system settings: " + err.message);
+  }
+}
+
+function closeSystemSettingsDialog() {
+  setDialogOpen(document.getElementById("systemSettingsDialog"), false);
+}
+
+async function saveSystemSettings(event) {
+  if (event) event.preventDefault();
+  const sysPayload = {
+    telegramAlertsEnabled: document.getElementById("settingsTelegramAlerts").checked,
+    telegramBotToken: document.getElementById("settingsTelegramToken").value.trim(),
+    telegramChatId: document.getElementById("settingsTelegramChatId").value.trim(),
+    telegramBackupChatId: document.getElementById("settingsTelegramBackupChatId").value.trim(),
+    autoBackupEnabled: document.getElementById("settingsAutoBackup").checked,
+    autoBackupHour: Number(document.getElementById("settingsAutoBackupHour").value || 0),
+    autoVouchersEnabled: document.getElementById("settingsAutoVouchers").value === "true",
+    companyName: document.getElementById("settingsCompanyName").value.trim(),
+    companyPhone: document.getElementById("settingsCompanyPhone").value.trim()
+  };
+
+  try {
+    await api("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify({ systemSettings: sysPayload })
+    });
+    alert("System & Integration Settings saved successfully!");
+    closeSystemSettingsDialog();
+  } catch (err) {
+    alert("Failed to save settings: " + err.message);
+  }
+}
+
+async function testTelegramAlert() {
+  const token = document.getElementById("settingsTelegramToken").value.trim();
+  const chatId = document.getElementById("settingsTelegramChatId").value.trim();
+  if (!token || !chatId) {
+    alert("Please enter Bot Token and Chat ID first.");
+    return;
+  }
+  const btn = document.getElementById("testTelegramBtn");
+  const origText = btn.textContent;
+  btn.textContent = "⏳ Sending Test...";
+  btn.disabled = true;
+  try {
+    const res = await api("/api/admin/telegram/test", {
+      method: "POST",
+      body: JSON.stringify({
+        systemSettings: {
+          telegramBotToken: token,
+          telegramChatId: chatId,
+          telegramAlertsEnabled: true
+        }
+      })
+    });
+    alert("✅ Telegram Test Alert Sent Successfully! Check your Telegram app.");
+  } catch (err) {
+    alert("❌ Telegram Test Failed: " + (err.message || "Invalid Token or Chat ID"));
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+}
+
+async function triggerImmediateBackup() {
+  const btn = document.getElementById("triggerBackupNowBtn");
+  const orig = btn.textContent;
+  btn.textContent = "⏳ Archiving & Sending...";
+  btn.disabled = true;
+  try {
+    const res = await api("/api/admin/backup/trigger", { method: "POST" });
+    alert("✅ Backup created successfully! File: " + res.backup.zipName + " (" + (res.backup.size / 1024).toFixed(1) + " KB)");
+  } catch (err) {
+    alert("❌ Backup failed: " + err.message);
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
+function downloadZipBackup(event) {
+  if (event) event.preventDefault();
+  closeUtilityMenu();
+  window.open("/api/admin/backup/download", "_blank");
+}
+
+document.getElementById("systemSettingsForm")?.addEventListener("submit", saveSystemSettings);
 
 resetEntryForm();
 resetBillForm();

@@ -119,7 +119,9 @@
             </summary>
             <div class="utility-panel">
               <button id="adminPanelBtn" class="utility-item" type="button" onclick="openAdminPanel(event)">⚙️ Admin Panel</button>
-              <button id="exportJsonBtn" class="utility-item" type="button" onclick="exportBackup(event)">💾 Export Backup</button>
+              <button id="openSettingsBtn" class="utility-item" type="button" onclick="openSystemSettingsModal(event)">🤖 Telegram & Backup Settings</button>
+              <button id="downloadZipBackupBtn" class="utility-item" type="button" onclick="downloadZipBackup(event)">📦 Download Full Backup (.zip)</button>
+              <button id="exportJsonBtn" class="utility-item" type="button" onclick="exportBackup(event)">💾 Export Backup (JSON)</button>
               <button id="openColorSettingsBtn" class="utility-item" type="button" onclick="openColorSettings(event)">🎨 Color Settings</button>
               <button id="restoreBackupBtn" class="utility-item" type="button" onclick="triggerRestoreBackup(event)">📥 Restore Backup</button>
               <input id="importJsonInput" type="file" accept="application/json" class="hidden">
@@ -662,6 +664,12 @@
               </div>
             </div>
           </section>
+          <div class="voucher-send-option wide" style="display: flex; align-items: center; gap: 8px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); padding: 10px 14px; border-radius: 10px; margin-top: 4px;">
+            <input type="checkbox" id="entrySendVoucher" checked style="width: 18px; height: 18px; accent-color: #0284c7; cursor: pointer;">
+            <label for="entrySendVoucher" style="font-size: 12.5px; font-weight: 700; color: #38bdf8; cursor: pointer; margin: 0;">
+              🧾 Auto-Send Official E-Voucher / Receipt to Customer App
+            </label>
+          </div>
           <div class="form-actions">
             <button type="submit" id="saveBtn" class="primary">Add Record</button>
             <button type="button" id="resetBtn" onclick="resetEntryForm()">Clear</button>
@@ -1078,6 +1086,107 @@
             <button type="submit" id="saveColorBtn" class="primary">Save Colors</button>
             <button type="button" id="resetColorBtn" onclick="resetDefaultColors()">Default</button>
             <button type="button" id="cancelColorBtn" onclick="closeColorDialog()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- System & Telegram & Cloud Backup Settings Modal -->
+    <div id="systemSettingsDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="systemSettingsDialogTitle">
+      <div class="modal-panel wide-modal" style="max-width: 580px !important;">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Integrations & Data Safety</span>
+            <strong id="systemSettingsDialogTitle">Telegram Bot & Cloud Backup Settings</strong>
+          </div>
+          <button id="closeSystemSettingsDialogBtn" class="modal-close" type="button" aria-label="Close dialog" onclick="closeSystemSettingsDialog()">x</button>
+        </div>
+        <form id="systemSettingsForm" class="dialog-form" style="display: grid; gap: 16px;">
+          <!-- Section 1: Telegram Bot Alert -->
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; display: grid; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #38bdf8; font-size: 14px;">🤖 Telegram Alert Bot</strong>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
+                <input type="checkbox" id="settingsTelegramAlerts" checked style="accent-color: #0284c7;">
+                <span>Enable Alerts</span>
+              </label>
+            </div>
+            <label>
+              Bot Token (from @BotFather)
+              <input id="settingsTelegramToken" type="text" placeholder="e.g. 7123456789:AAF..." autocomplete="off">
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <label>
+                Admin Chat ID (Alerts)
+                <input id="settingsTelegramChatId" type="text" placeholder="e.g. 123456789">
+              </label>
+              <label>
+                Backup Channel/Group ID
+                <input id="settingsTelegramBackupChatId" type="text" placeholder="e.g. -100123456789">
+              </label>
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="button" id="testTelegramBtn" onclick="testTelegramAlert()" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                🚀 Test Telegram Alert
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 2: Automated Cloud & Server Backup -->
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; display: grid; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: #34d399; font-size: 14px;">💾 Cloud & Automated Backup</strong>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
+                <input type="checkbox" id="settingsAutoBackup" checked style="accent-color: #10b981;">
+                <span>Daily Auto Backup</span>
+              </label>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <label>
+                Backup Schedule Time
+                <select id="settingsAutoBackupHour">
+                  <option value="0">00:00 (Midnight)</option>
+                  <option value="1">01:00 AM</option>
+                  <option value="2">02:00 AM</option>
+                  <option value="3">03:00 AM</option>
+                  <option value="6">06:00 AM</option>
+                  <option value="12">12:00 PM (Noon)</option>
+                </select>
+              </label>
+              <label>
+                Auto-Voucher Delivery
+                <select id="settingsAutoVouchers">
+                  <option value="true">Enabled (Auto-send)</option>
+                  <option value="false">Disabled</option>
+                </select>
+              </label>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
+              <button type="button" id="triggerBackupNowBtn" onclick="triggerImmediateBackup()" style="flex: 1; background: #0f766e; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                📦 Backup & Send to Telegram Now
+              </button>
+              <button type="button" id="downloadZipBackupModalBtn" onclick="downloadZipBackup()" style="flex: 1; background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                📥 Download .ZIP Backup
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 3: Company & E-Voucher Info -->
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; display: grid; gap: 10px;">
+            <strong style="color: #fbbf24; font-size: 14px;">🧾 Company Receipt / Voucher Info</strong>
+            <label>
+              Company / Brand Name
+              <input id="settingsCompanyName" type="text" placeholder="S-Tech Telecommunication Services">
+            </label>
+            <label>
+              Support Hotline Phone
+              <input id="settingsCompanyPhone" type="text" placeholder="+95 9 777 888 999">
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button id="saveSystemSettingsBtn" type="submit" class="primary">Save Settings</button>
+            <button type="button" onclick="closeSystemSettingsDialog()">Close</button>
           </div>
         </form>
       </div>
