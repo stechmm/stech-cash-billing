@@ -6,7 +6,7 @@ const customerState = {
   announcements: [],
   messages: [],
   activeMonth: "",
-  activePage: "customerHomePage"
+  activePage: "customerSupportPage"
 };
 
 const customerEl = {
