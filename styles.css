@@ -3720,3 +3720,517 @@ input:disabled {
 }
 
 
+
+/* ==========================================================================
+   MASTER PREMIUM LIGHT THEME ENGINE (Apple/Stripe Grade)
+   ========================================================================== */
+
+html[data-theme="light"],
+body[data-theme="light"] {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .app-shell {
+  color: #0f172a !important;
+}
+
+/* 1. Header & Navigation */
+[data-theme="light"] .app-header {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .brand-lockup h1,
+[data-theme="light"] .brand-lockup .brand-name {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .brand-lockup p,
+[data-theme="light"] .brand-lockup .brand-sub {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .menu-item {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .menu-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .menu-item.active {
+  background: #ffffff !important;
+  color: #2563eb !important;
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12) !important;
+}
+
+[data-theme="light"] .user-chip {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .user-chip strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .user-chip span {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .theme-toggle-btn {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0284c7 !important;
+}
+
+[data-theme="light"] .theme-toggle-btn:hover {
+  background: #f1f5f9 !important;
+  border-color: #0284c7 !important;
+}
+
+[data-theme="light"] .utility-toggle {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .utility-toggle span {
+  background: #0f172a !important;
+}
+
+[data-theme="light"] .utility-panel {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-theme="light"] .utility-item {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .utility-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* 2. Dashboard Page */
+[data-theme="light"] .dashboard-hero {
+  background: transparent !important;
+}
+
+[data-theme="light"] .hero-copy {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .hero-copy h2 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .hero-copy p {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .summary-kicker {
+  color: #2563eb !important;
+}
+
+[data-theme="light"] .hero-badges {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .hero-pill.soft-green {
+  background: #ecfdf5 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+[data-theme="light"] .hero-pill.soft-green span { color: #047857 !important; }
+[data-theme="light"] .hero-pill.soft-green strong { color: #059669 !important; }
+
+[data-theme="light"] .hero-pill.soft-blue {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+}
+[data-theme="light"] .hero-pill.soft-blue span { color: #1d4ed8 !important; }
+[data-theme="light"] .hero-pill.soft-blue strong { color: #2563eb !important; }
+
+/* Alert Grid Cards (7 days, 1 day, suspended, inactive) */
+[data-theme="light"] .metric,
+[data-theme="light"] .alert-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .metric span,
+[data-theme="light"] .alert-card span {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .metric strong,
+[data-theme="light"] .alert-card strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .metric.status-warn {
+  background: #fefce8 !important;
+  border: 1px solid #fef08a !important;
+}
+[data-theme="light"] .metric.status-warn span { color: #854d0e !important; }
+[data-theme="light"] .metric.status-warn strong { color: #a16207 !important; }
+
+[data-theme="light"] .metric.status-danger {
+  background: #fff1f2 !important;
+  border: 1px solid #fecdd3 !important;
+}
+[data-theme="light"] .metric.status-danger span { color: #9f1239 !important; }
+[data-theme="light"] .metric.status-danger strong { color: #e11d48 !important; }
+
+[data-theme="light"] .metric.status-suspended {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+}
+[data-theme="light"] .metric.status-suspended span { color: #991b1b !important; }
+[data-theme="light"] .metric.status-suspended strong { color: #dc2626 !important; }
+
+[data-theme="light"] .metric.status-inactive {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+[data-theme="light"] .metric.status-inactive span { color: #475569 !important; }
+[data-theme="light"] .metric.status-inactive strong { color: #334155 !important; }
+
+/* Dashboard Attention Panels */
+[data-theme="light"] .attention-panel,
+[data-theme="light"] .calm-panel,
+[data-theme="light"] .card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .attention-panel h3,
+[data-theme="light"] .calm-panel h3,
+[data-theme="light"] .card h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .alert-item,
+[data-theme="light"] .guide-item {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+}
+
+[data-theme="light"] .alert-item:hover,
+[data-theme="light"] .guide-item:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-theme="light"] .alert-item strong,
+[data-theme="light"] .guide-item strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .alert-item span,
+[data-theme="light"] .guide-item p {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .alert-item.suspended {
+  background: #fff5f5 !important;
+  border: 1px solid #fecaca !important;
+}
+[data-theme="light"] .alert-item.suspended strong { color: #991b1b !important; }
+
+[data-theme="light"] .alert-item.due_7_days {
+  background: #fffdf5 !important;
+  border: 1px solid #fde68a !important;
+}
+[data-theme="light"] .alert-item.due_7_days strong { color: #92400e !important; }
+
+[data-theme="light"] .alert-item.due_1_day {
+  background: #fff5f5 !important;
+  border: 1px solid #fecdd3 !important;
+}
+[data-theme="light"] .alert-item.due_1_day strong { color: #9f1239 !important; }
+
+[data-theme="light"] .alert-empty {
+  background: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+  color: #64748b !important;
+}
+
+/* 3. Cash Ledger, Sheets & Summary Panels */
+[data-theme="light"] .summary-panel,
+[data-theme="light"] .sheet-tools,
+[data-theme="light"] .ledger-wrap,
+[data-theme="light"] .device-panel,
+[data-theme="light"] .customer-panel,
+[data-theme="light"] .admin-section,
+[data-theme="light"] .support-thread {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .ledger-topline strong,
+[data-theme="light"] .section-heading h2,
+[data-theme="light"] .section-heading h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .section-heading p {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .mini-calculator {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .calc-result span {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .calc-result output {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .calc-result.profit-result output {
+  color: #059669 !important;
+}
+
+/* 4. Tables Across All Pages */
+[data-theme="light"] table,
+[data-theme="light"] .ledger-table,
+[data-theme="light"] .device-table,
+[data-theme="light"] .usage-sheet-table,
+[data-theme="light"] .admin-table {
+  background: #ffffff !important;
+}
+
+[data-theme="light"] th {
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-weight: 800 !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] td {
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+[data-theme="light"] tbody tr:hover td {
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] tfoot td,
+[data-theme="light"] tr.total-row td {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+}
+
+/* 5. Support Chat Interface */
+[data-theme="light"] .support-workspace {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .customer-list-panel {
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .support-customer-item {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .support-customer-item:hover {
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] .support-customer-item.active {
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+[data-theme="light"] .support-customer-item.active strong {
+  color: #1d4ed8 !important;
+}
+
+[data-theme="light"] .chat-bubble.customer-bubble {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .chat-composer {
+  background: #ffffff !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .chat-composer input {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .chat-composer .composer-tool {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* 6. Modals, Dialogs & Forms */
+[data-theme="light"] .modal {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+[data-theme="light"] .modal-panel,
+[data-theme="light"] .usage-obsidian-modal,
+[data-theme="light"] .machine-obsidian-modal {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, 0.12) !important;
+  box-shadow: 0 25px 70px rgba(15, 23, 42, 0.18) !important;
+}
+
+[data-theme="light"] .modal-head,
+[data-theme="light"] .obsidian-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .modal-head strong,
+[data-theme="light"] .obsidian-header strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .obsidian-sub {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .modal-close,
+[data-theme="light"] .obsidian-close-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .modal-close:hover,
+[data-theme="light"] .obsidian-close-btn:hover {
+  background: #fee2e2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+
+[data-theme="light"] form,
+[data-theme="light"] .dialog-form,
+[data-theme="light"] #usageForm {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+[data-theme="light"] label {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .form-actions button,
+[data-theme="light"] .btn-cancel {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .form-actions button:hover,
+[data-theme="light"] .btn-cancel:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .form-actions button.primary,
+[data-theme="light"] .btn-save {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+}
+
+[data-theme="light"] .unit-toggle-pills {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+[data-theme="light"] .unit-pill {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .unit-pill.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .permission-box {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .permission-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .check-item {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .entry-calculator-panel {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-theme="light"] .entry-calculator-head strong {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .entry-calc-result output {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .entry-calc-result.profit-result output {
+  color: #059669 !important;
+}
+
