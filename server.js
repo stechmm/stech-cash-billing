@@ -15,9 +15,25 @@ try {
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3030);
 const APP_DIR = __dirname;
-const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(APP_DIR, "data"));
-const DB_FILE = path.join(DATA_DIR, "app-db.json");
-const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(DATA_DIR, "uploads"));
+function resolveDbFile() {
+  const rootDb = path.join(APP_DIR, "app-db.json");
+  const dataDir = path.resolve(process.env.DATA_DIR || path.join(APP_DIR, "data"));
+  const dataDb = path.join(dataDir, "app-db.json");
+  if (process.env.DATA_DIR) {
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    return { dataDir, dbFile: dataDb };
+  }
+  if (fs.existsSync(rootDb)) {
+    return { dataDir: APP_DIR, dbFile: rootDb };
+  }
+  if (fs.existsSync(dataDb)) {
+    return { dataDir, dbFile: dataDb };
+  }
+  // Default to root app-db.json for maximum simplicity and accessibility
+  return { dataDir: APP_DIR, dbFile: rootDb };
+}
+const { dataDir: DATA_DIR, dbFile: DB_FILE } = resolveDbFile();
+const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(APP_DIR, "uploads"));
 const MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024;
 const SESSION_COOKIE = "stech_session";
 const CUSTOMER_SESSION_COOKIE = "stech_customer_session";
@@ -376,15 +392,21 @@ function ensureUserPermissions(db) {
 }
 
 async function createJsonStorage() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  const dir = path.dirname(DB_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   if (!fs.existsSync(DB_FILE)) {
     fs.writeFileSync(DB_FILE, JSON.stringify(defaultSnapshot(), null, 2));
   }
   return {
     async read() {
+      if (!fs.existsSync(DB_FILE)) {
+        fs.writeFileSync(DB_FILE, JSON.stringify(defaultSnapshot(), null, 2));
+      }
       return JSON.parse(fs.readFileSync(DB_FILE, "utf8"));
     },
     async write(data) {
+      const parentDir = path.dirname(DB_FILE);
+      if (!fs.existsSync(parentDir)) fs.mkdirSync(parentDir, { recursive: true });
       fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
     },
     describe() {
