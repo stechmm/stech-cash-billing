@@ -378,24 +378,39 @@ function canAccess(tab) {
 const THEME_STORAGE_KEY = "spacelink_theme";
 
 function applyTheme(theme) {
-  if (theme === "light") {
+  const isLight = theme === "light";
+  if (isLight) {
     document.documentElement.setAttribute("data-theme", "light");
+    if (document.body) document.body.setAttribute("data-theme", "light");
   } else {
     document.documentElement.removeAttribute("data-theme");
+    if (document.body) document.body.removeAttribute("data-theme");
   }
-  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, isLight ? "light" : "dark");
+  } catch (e) {}
 }
 
 function initTheme() {
-  const saved = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
-  applyTheme(saved);
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
+    applyTheme(saved);
+  } catch (e) {
+    applyTheme("dark");
+  }
 }
 
-function toggleTheme() {
+function toggleTheme(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
   const next = current === "light" ? "dark" : "light";
   applyTheme(next);
 }
+window.applyTheme = applyTheme;
+window.toggleTheme = toggleTheme;
 
 function loadBillColors() {
   try {
