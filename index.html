@@ -118,14 +118,17 @@
               <span></span>
             </summary>
             <div class="utility-panel">
-              <button id="adminPanelBtn" class="utility-item" type="button" onclick="openAdminPanel(event)">⚙️ Admin Panel</button>
-              <button id="openSettingsBtn" class="utility-item" type="button" onclick="openSystemSettingsModal(event)">🤖 Telegram & Backup Settings</button>
-              <button id="downloadZipBackupBtn" class="utility-item" type="button" onclick="downloadZipBackup(event)">📦 Download Full Backup (.zip)</button>
-              <button id="exportJsonBtn" class="utility-item" type="button" onclick="exportBackup(event)">💾 Export Backup (JSON)</button>
-              <button id="openColorSettingsBtn" class="utility-item" type="button" onclick="openColorSettings(event)">🎨 Color Settings</button>
-              <button id="restoreBackupBtn" class="utility-item" type="button" onclick="triggerRestoreBackup(event)">📥 Restore Backup</button>
+              <button id="adminPanelBtn" class="utility-item" type="button" onclick="openAdminPanel(event)">Admin Panel</button>
+              <button id="openSettingsBtn" class="utility-item" type="button" onclick="openSystemSettingsModal(event)">Settings</button>
+              <div class="utility-divider"></div>
+              <button id="downloadZipBackupBtn" class="utility-item" type="button" onclick="downloadZipBackup(event)">Backup (.zip)</button>
+              <button id="exportJsonBtn" class="utility-item" type="button" onclick="exportBackup(event)">Export JSON</button>
+              <button id="restoreBackupBtn" class="utility-item" type="button" onclick="triggerRestoreBackup(event)">Restore Backup</button>
               <input id="importJsonInput" type="file" accept="application/json" class="hidden">
-              <button id="logoutBtn" class="utility-item danger-item" type="button" onclick="doLogout(event)">🚪 Logout</button>
+              <div class="utility-divider"></div>
+              <button id="openColorSettingsBtn" class="utility-item" type="button" onclick="openColorSettings(event)">Color Settings</button>
+              <div class="utility-divider"></div>
+              <button id="logoutBtn" class="utility-item danger-item" type="button" onclick="doLogout(event)">Logout</button>
             </div>
           </details>
         </div>

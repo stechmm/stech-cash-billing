@@ -853,21 +853,21 @@ h1 {
 
 .utility-panel {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   right: 0;
   z-index: 99999 !important;
   pointer-events: auto !important;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  min-width: 180px;
-  padding: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
-  background: rgba(13, 18, 31, 0.98);
+  gap: 2px;
+  min-width: 165px;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(11, 16, 28, 0.98);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 15px rgba(56, 189, 248, 0.1);
   animation: fadeIn 0.15s ease-out;
 }
 
@@ -877,28 +877,33 @@ h1 {
   pointer-events: auto !important;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 38px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: #cbd5e1;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.12s ease;
   width: 100%;
   box-shadow: none;
   transform: none;
 }
 
 .utility-item:hover {
-  background: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
   box-shadow: none;
   transform: none;
+}
+
+.utility-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 3px 4px;
 }
 
 .utility-item.danger-item {
@@ -906,7 +911,7 @@ h1 {
 }
 
 .utility-item.danger-item:hover {
-  background: rgba(239, 68, 68, 0.2) !important;
+  background: rgba(239, 68, 68, 0.15) !important;
   color: #fca5a5 !important;
 }
 
