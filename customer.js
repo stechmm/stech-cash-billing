@@ -54,6 +54,7 @@ const customerEl = {
   announcementList: document.querySelector("#customerAnnouncementList"),
   messageList: document.querySelector("#customerMessageList"),
   messageForm: document.querySelector("#customerMessageForm"),
+  replyPreview: document.querySelector("#customerReplyPreview"),
   messageInput: document.querySelector("#customerMessageInput"),
   receiptInput: document.querySelector("#customerReceiptInput"),
   receiptButton: document.querySelector("#customerReceiptBtn"),
@@ -78,6 +79,7 @@ const customerVizState = {
 };
 
 let customerPendingAttachment = null;
+let customerActiveReply = null;
 let customerRecorder = null;
 let customerRecordingStream = null;
 
@@ -102,7 +104,7 @@ function connectCustomerRealtime() {
   customerRealtimeSocket = new WebSocket(`${protocol}//${location.host}/ws`);
   customerRealtimeSocket.onmessage = (event) => {
     const message = JSON.parse(event.data || "{}");
-    if (!["support_message", "announcement_updated", "usage_updated"].includes(message.type)) return;
+    if (!["support_message", "support_message_edit", "support_message_delete", "support_message_react", "announcement_updated", "usage_updated"].includes(message.type)) return;
     if (message.customerId && message.customerId !== customerState.customer.id) return;
     clearTimeout(customerRealtimeRefresh);
     customerRealtimeRefresh = setTimeout(() => refreshCustomer(), 80);
@@ -586,7 +588,7 @@ function renderCustomerNavigation() {
 function renderCustomerMessages() {
   const messages = customerState.messages;
   customerEl.messageList.innerHTML = "";
-  if (!messages.length) customerEl.messageList.append(makeCustomerEmpty("Start a conversation with S-Tech."));
+  if (!messages.length) customerEl.messageList.append(makeCustomerEmpty("Start a conversation with SpaceLink."));
   messages.forEach((item) => {
     if (item.voucher || item.topic === "voucher") {
       const v = item.voucher || {};
@@ -594,18 +596,246 @@ function renderCustomerMessages() {
       customerEl.messageList.append(voucherEl);
       return;
     }
-    const bubble = document.createElement("article");
-    bubble.className = `message-bubble${item.senderType === "customer" ? " mine" : ""}`;
-    const body = document.createElement("p");
-    body.textContent = item.message || "";
-    if (!item.message) body.classList.add("hidden");
-    if (item.attachment) bubble.append(makeChatAttachment(item.attachment));
-    const meta = document.createElement("small");
-    meta.textContent = `${item.senderName || (item.senderType === "customer" ? "You" : "S-Tech Support")} | ${customerDate(item.createdAt, true)}`;
-    bubble.append(body, meta);
-    customerEl.messageList.append(bubble);
+    const msgRow = makeCustomerMessageRow(item);
+    customerEl.messageList.append(msgRow);
   });
   customerEl.messageList.scrollTop = customerEl.messageList.scrollHeight;
+}
+
+function makeCustomerMessageRow(item) {
+  const isMine = item.senderType === "customer";
+  const row = document.createElement("div");
+  row.className = `message-bubble-row ${isMine ? "mine" : "theirs"}`;
+  row.dataset.msgId = item.id;
+
+  const bubble = document.createElement("article");
+  bubble.className = `message-bubble ${isMine ? "mine" : ""}${item.isDeleted ? " deleted" : ""}`;
+
+  if (item.isDeleted) {
+    const p = document.createElement("p");
+    p.textContent = "🚫 This message was deleted";
+    bubble.append(p);
+    row.append(bubble);
+    return row;
+  }
+
+  if (item.replyTo) {
+    const quote = document.createElement("div");
+    quote.className = "message-reply-quote";
+    const qSender = document.createElement("strong");
+    qSender.textContent = item.replyTo.senderName || "User";
+    const qText = document.createElement("span");
+    qText.textContent = item.replyTo.text || "";
+    quote.append(qSender, qText);
+    quote.onclick = () => {
+      const target = customerEl.messageList.querySelector(`[data-msg-id="${item.replyTo.id}"]`);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+    bubble.append(quote);
+  }
+
+  if (item.attachment) {
+    bubble.append(makeChatAttachment(item.attachment));
+  }
+
+  const body = document.createElement("p");
+  body.textContent = item.message || "";
+  if (!item.message) body.classList.add("hidden");
+  bubble.append(body);
+
+  const meta = document.createElement("small");
+  const senderLabel = isMine ? "You" : (item.senderName || "SpaceLink Support");
+  const metaText = document.createElement("span");
+  metaText.textContent = `${senderLabel} | ${customerDate(item.createdAt, true)}`;
+  meta.append(metaText);
+
+  if (item.editedAt) {
+    const editedSpan = document.createElement("span");
+    editedSpan.className = "edited-tag";
+    editedSpan.textContent = "(edited)";
+    meta.append(editedSpan);
+  }
+  bubble.append(meta);
+
+  // Reactions Row
+  const reactionsRow = document.createElement("div");
+  reactionsRow.className = "message-reactions-row";
+  const userReactorId = `c_${customerState.customer?.id}`;
+  if (item.reactions && typeof item.reactions === "object") {
+    Object.entries(item.reactions).forEach(([emoji, reactors]) => {
+      if (!Array.isArray(reactors) || reactors.length === 0) return;
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = `reaction-pill ${reactors.includes(userReactorId) ? "user-reacted" : ""}`;
+      pill.innerHTML = `<span>${emoji}</span> <span>${reactors.length}</span>`;
+      pill.onclick = (e) => {
+        e.stopPropagation();
+        toggleCustomerReaction(item.id, emoji);
+      };
+      reactionsRow.append(pill);
+    });
+  }
+
+  // Floating Action Toolbar
+  const toolbar = document.createElement("div");
+  toolbar.className = "message-action-toolbar";
+
+  const reactBtn = document.createElement("button");
+  reactBtn.type = "button";
+  reactBtn.className = "action-tool-btn";
+  reactBtn.innerHTML = "😀";
+  reactBtn.title = "React with Emoji";
+  reactBtn.onclick = (e) => {
+    e.stopPropagation();
+    showCustomerEmojiPopup(item.id, toolbar);
+  };
+  toolbar.append(reactBtn);
+
+  const replyBtn = document.createElement("button");
+  replyBtn.type = "button";
+  replyBtn.className = "action-tool-btn";
+  replyBtn.innerHTML = "💬";
+  replyBtn.title = "Reply";
+  replyBtn.onclick = (e) => {
+    e.stopPropagation();
+    setCustomerReply(item, senderLabel);
+  };
+  toolbar.append(replyBtn);
+
+  if (isMine) {
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "action-tool-btn";
+    editBtn.innerHTML = "✏️";
+    editBtn.title = "Edit Message";
+    editBtn.onclick = (e) => {
+      e.stopPropagation();
+      triggerCustomerEdit(item.id, item.message);
+    };
+    toolbar.append(editBtn);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "action-tool-btn danger";
+    deleteBtn.innerHTML = "🗑️";
+    deleteBtn.title = "Delete Message";
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      triggerCustomerDelete(item.id);
+    };
+    toolbar.append(deleteBtn);
+  }
+
+  row.append(toolbar, bubble);
+  if (reactionsRow.children.length > 0) {
+    row.append(reactionsRow);
+  }
+  return row;
+}
+
+function setCustomerReply(item, senderName) {
+  customerActiveReply = {
+    id: item.id,
+    senderName,
+    text: item.message || (item.attachment ? "Attachment" : "")
+  };
+  if (customerEl.replyPreview) {
+    customerEl.replyPreview.innerHTML = `
+      <div class="reply-context-info">
+        <strong>Replying to ${senderName}</strong>
+        <span>${customerActiveReply.text}</span>
+      </div>
+      <button type="button" class="reply-cancel-btn" onclick="clearCustomerReply()" aria-label="Cancel Reply">✕</button>
+    `;
+    customerEl.replyPreview.classList.remove("hidden");
+  }
+  if (customerEl.messageInput) {
+    customerEl.messageInput.focus();
+  }
+}
+
+function clearCustomerReply() {
+  customerActiveReply = null;
+  if (customerEl.replyPreview) {
+    customerEl.replyPreview.innerHTML = "";
+    customerEl.replyPreview.classList.add("hidden");
+  }
+}
+window.clearCustomerReply = clearCustomerReply;
+
+function showCustomerEmojiPopup(msgId, targetToolbar) {
+  const existing = document.querySelector(".quick-emoji-popup");
+  if (existing) existing.remove();
+
+  const emojis = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
+  const popup = document.createElement("div");
+  popup.className = "quick-emoji-popup";
+  emojis.forEach((emoji) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "quick-emoji-btn";
+    btn.textContent = emoji;
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      popup.remove();
+      await toggleCustomerReaction(msgId, emoji);
+    };
+    popup.append(btn);
+  });
+  targetToolbar.append(popup);
+  setTimeout(() => {
+    const closeListener = (evt) => {
+      if (!popup.contains(evt.target)) {
+        popup.remove();
+        document.removeEventListener("click", closeListener);
+      }
+    };
+    document.addEventListener("click", closeListener);
+  }, 10);
+}
+
+async function toggleCustomerReaction(messageId, emoji) {
+  try {
+    await customerApi("/api/customer/messages/react", {
+      method: "POST",
+      body: JSON.stringify({ messageId, emoji })
+    });
+    await refreshCustomer();
+  } catch (err) {
+    console.error("Reaction failed:", err);
+  }
+}
+
+async function triggerCustomerEdit(messageId, currentText) {
+  const newText = prompt("Edit your message:", currentText || "");
+  if (newText === null) return;
+  const trimmed = newText.trim();
+  if (!trimmed) return alert("Message cannot be empty.");
+  if (trimmed === currentText) return;
+
+  try {
+    await customerApi("/api/customer/messages/edit", {
+      method: "POST",
+      body: JSON.stringify({ messageId, message: trimmed })
+    });
+    await refreshCustomer();
+  } catch (err) {
+    alert(err.message || "Failed to edit message");
+  }
+}
+
+async function triggerCustomerDelete(messageId) {
+  const ok = confirm("Delete this message? It will be removed for everyone.");
+  if (!ok) return;
+  try {
+    await customerApi("/api/customer/messages/delete", {
+      method: "POST",
+      body: JSON.stringify({ messageId })
+    });
+    await refreshCustomer();
+  } catch (err) {
+    alert(err.message || "Failed to delete message");
+  }
 }
 
 function makeVoucherElement(v) {
@@ -1201,6 +1431,7 @@ async function submitCustomerMessage(event) {
   const message = customerEl.messageInput.value.trim();
   if (!message && !customerPendingAttachment) return;
   const pending = customerPendingAttachment;
+  const replyContext = customerActiveReply;
   customerEl.messageInput.value = "";
   try {
     const attachment = pending ? {
@@ -1210,9 +1441,10 @@ async function submitCustomerMessage(event) {
     } : null;
     await customerApi("/api/customer/messages", {
       method: "POST",
-      body: JSON.stringify({ message, attachment })
+      body: JSON.stringify({ message, attachment, replyTo: replyContext })
     });
     clearCustomerAttachment();
+    clearCustomerReply();
     await refreshCustomer();
   } catch (error) {
     customerEl.messageInput.value = message;

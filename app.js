@@ -42,6 +42,7 @@ const state = {
 };
 
 let supportPendingAttachment = null;
+let supportActiveReply = null;
 let supportRecorder = null;
 let supportRecordingStream = null;
 
@@ -226,6 +227,7 @@ const el = {
   supportThreadName: document.querySelector("#supportThreadName"),
   supportMessageList: document.querySelector("#supportMessageList"),
   supportMessageForm: document.querySelector("#supportMessageForm"),
+  supportReplyPreview: document.querySelector("#supportReplyPreview"),
   supportMessageInput: document.querySelector("#supportMessageInput"),
   supportReceiptInput: document.querySelector("#supportReceiptInput"),
   supportReceiptBtn: document.querySelector("#supportReceiptBtn"),
@@ -325,7 +327,7 @@ function connectAppRealtime() {
   appRealtimeSocket = new WebSocket(`${protocol}//${location.host}/ws`);
   appRealtimeSocket.onmessage = (event) => {
     const message = JSON.parse(event.data || "{}");
-    if (!["support_message", "announcement_updated", "usage_updated"].includes(message.type)) return;
+    if (!["support_message", "support_message_edit", "support_message_delete", "support_message_react", "announcement_updated", "usage_updated"].includes(message.type)) return;
     clearTimeout(appRealtimeRefresh);
     appRealtimeRefresh = setTimeout(() => refreshState().catch(() => {}), 80);
   };
@@ -1402,20 +1404,247 @@ function renderSupportPage() {
       el.supportMessageList.append(empty);
     }
     thread.forEach((item) => {
-      const bubble = document.createElement("article");
-      bubble.className = `staff-message${item.senderType === "staff" ? " mine" : ""}`;
-      const body = document.createElement("p");
-      body.textContent = item.message || "";
-      if (!item.message) body.classList.add("hidden");
-      if (item.attachment) bubble.append(makeSupportAttachment(item.attachment));
-      const meta = document.createElement("small");
-      meta.textContent = `${item.senderType === "staff" ? "Staff" : selected.fullName || selected.username} | ${formatMessageTime(item.createdAt)}`;
-      bubble.append(body, meta);
-      el.supportMessageList.append(bubble);
+      const msgRow = makeSupportMessageRow(item, selected);
+      el.supportMessageList.append(msgRow);
     });
     el.supportMessageList.scrollTop = el.supportMessageList.scrollHeight;
   }
   renderAdminAnnouncements();
+}
+
+function makeSupportMessageRow(item, selected) {
+  const row = document.createElement("div");
+  row.className = `staff-message-row ${item.senderType === "staff" ? "mine" : "theirs"}`;
+  row.dataset.msgId = item.id;
+
+  const bubble = document.createElement("article");
+  bubble.className = `staff-message ${item.senderType === "staff" ? "mine" : ""}${item.isDeleted ? " deleted" : ""}`;
+
+  if (item.isDeleted) {
+    const p = document.createElement("p");
+    p.textContent = "🚫 This message was deleted";
+    bubble.append(p);
+    row.append(bubble);
+    return row;
+  }
+
+  if (item.replyTo) {
+    const quote = document.createElement("div");
+    quote.className = "message-reply-quote";
+    const qSender = document.createElement("strong");
+    qSender.textContent = item.replyTo.senderName || "User";
+    const qText = document.createElement("span");
+    qText.textContent = item.replyTo.text || "";
+    quote.append(qSender, qText);
+    quote.onclick = () => {
+      const target = el.supportMessageList.querySelector(`[data-msg-id="${item.replyTo.id}"]`);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+    bubble.append(quote);
+  }
+
+  if (item.attachment) {
+    bubble.append(makeSupportAttachment(item.attachment));
+  }
+
+  const body = document.createElement("p");
+  body.textContent = item.message || "";
+  if (!item.message) body.classList.add("hidden");
+  bubble.append(body);
+
+  const meta = document.createElement("small");
+  const senderLabel = item.senderType === "staff" ? "Staff" : (selected.fullName || selected.username);
+  const metaText = document.createElement("span");
+  metaText.textContent = `${senderLabel} | ${formatMessageTime(item.createdAt)}`;
+  meta.append(metaText);
+
+  if (item.editedAt) {
+    const editedSpan = document.createElement("span");
+    editedSpan.className = "edited-tag";
+    editedSpan.textContent = "(edited)";
+    meta.append(editedSpan);
+  }
+  bubble.append(meta);
+
+  // Reactions
+  const reactionsRow = document.createElement("div");
+  reactionsRow.className = "message-reactions-row";
+  const userReactorId = `s_${state.user?.id}`;
+  if (item.reactions && typeof item.reactions === "object") {
+    Object.entries(item.reactions).forEach(([emoji, reactors]) => {
+      if (!Array.isArray(reactors) || reactors.length === 0) return;
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className = `reaction-pill ${reactors.includes(userReactorId) ? "user-reacted" : ""}`;
+      pill.innerHTML = `<span>${emoji}</span> <span>${reactors.length}</span>`;
+      pill.onclick = (e) => {
+        e.stopPropagation();
+        toggleSupportReaction(item.id, emoji);
+      };
+      reactionsRow.append(pill);
+    });
+  }
+
+  // Floating Action Toolbar
+  const toolbar = document.createElement("div");
+  toolbar.className = "message-action-toolbar";
+
+  const reactBtn = document.createElement("button");
+  reactBtn.type = "button";
+  reactBtn.className = "action-tool-btn";
+  reactBtn.innerHTML = "😀";
+  reactBtn.title = "React with Emoji";
+  reactBtn.onclick = (e) => {
+    e.stopPropagation();
+    showSupportEmojiPopup(item.id, toolbar);
+  };
+  toolbar.append(reactBtn);
+
+  const replyBtn = document.createElement("button");
+  replyBtn.type = "button";
+  replyBtn.className = "action-tool-btn";
+  replyBtn.innerHTML = "💬";
+  replyBtn.title = "Reply";
+  replyBtn.onclick = (e) => {
+    e.stopPropagation();
+    setSupportReply(item, senderLabel);
+  };
+  toolbar.append(replyBtn);
+
+  if (item.senderType === "staff" || state.user?.role === "admin") {
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "action-tool-btn";
+    editBtn.innerHTML = "✏️";
+    editBtn.title = "Edit Message";
+    editBtn.onclick = (e) => {
+      e.stopPropagation();
+      triggerSupportEdit(item.id, item.message);
+    };
+    toolbar.append(editBtn);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "action-tool-btn danger";
+    deleteBtn.innerHTML = "🗑️";
+    deleteBtn.title = "Delete Message";
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      triggerSupportDelete(item.id);
+    };
+    toolbar.append(deleteBtn);
+  }
+
+  row.append(toolbar, bubble);
+  if (reactionsRow.children.length > 0) {
+    row.append(reactionsRow);
+  }
+  return row;
+}
+
+function setSupportReply(item, senderName) {
+  supportActiveReply = {
+    id: item.id,
+    senderName,
+    text: item.message || (item.attachment ? "Attachment" : "")
+  };
+  if (el.supportReplyPreview) {
+    el.supportReplyPreview.innerHTML = `
+      <div class="reply-context-info">
+        <strong>Replying to ${senderName}</strong>
+        <span>${supportActiveReply.text}</span>
+      </div>
+      <button type="button" class="reply-cancel-btn" onclick="clearSupportReply()" aria-label="Cancel Reply">✕</button>
+    `;
+    el.supportReplyPreview.classList.remove("hidden");
+  }
+  if (el.supportMessageInput) {
+    el.supportMessageInput.focus();
+  }
+}
+
+function clearSupportReply() {
+  supportActiveReply = null;
+  if (el.supportReplyPreview) {
+    el.supportReplyPreview.innerHTML = "";
+    el.supportReplyPreview.classList.add("hidden");
+  }
+}
+window.clearSupportReply = clearSupportReply;
+
+function showSupportEmojiPopup(msgId, targetToolbar) {
+  const existing = document.querySelector(".quick-emoji-popup");
+  if (existing) existing.remove();
+
+  const emojis = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
+  const popup = document.createElement("div");
+  popup.className = "quick-emoji-popup";
+  emojis.forEach((emoji) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "quick-emoji-btn";
+    btn.textContent = emoji;
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      popup.remove();
+      await toggleSupportReaction(msgId, emoji);
+    };
+    popup.append(btn);
+  });
+  targetToolbar.append(popup);
+  setTimeout(() => {
+    const closeListener = (evt) => {
+      if (!popup.contains(evt.target)) {
+        popup.remove();
+        document.removeEventListener("click", closeListener);
+      }
+    };
+    document.addEventListener("click", closeListener);
+  }, 10);
+}
+
+async function toggleSupportReaction(messageId, emoji) {
+  try {
+    await api("/api/support/messages/react", {
+      method: "POST",
+      body: JSON.stringify({ messageId, emoji })
+    });
+    await refreshState();
+  } catch (err) {
+    console.error("Reaction failed:", err);
+  }
+}
+
+async function triggerSupportEdit(messageId, currentText) {
+  const newText = prompt("Edit your message:", currentText || "");
+  if (newText === null) return;
+  const trimmed = newText.trim();
+  if (!trimmed) return alert("Message cannot be empty.");
+  if (trimmed === currentText) return;
+
+  try {
+    await api("/api/support/messages/edit", {
+      method: "POST",
+      body: JSON.stringify({ messageId, message: trimmed })
+    });
+    await refreshState();
+  } catch (err) {
+    alert(err.message || "Failed to edit message");
+  }
+}
+
+async function triggerSupportDelete(messageId) {
+  const ok = confirm("Delete this message? It will be removed for everyone.");
+  if (!ok) return;
+  try {
+    await api("/api/support/messages/delete", {
+      method: "POST",
+      body: JSON.stringify({ messageId })
+    });
+    await refreshState();
+  } catch (err) {
+    alert(err.message || "Failed to delete message");
+  }
 }
 
 function makeSupportAttachment(attachment) {
@@ -2409,6 +2638,7 @@ async function sendSupportMessage(event) {
   const message = el.supportMessageInput.value.trim();
   if (!customerId || (!message && !supportPendingAttachment)) return;
   const pending = supportPendingAttachment;
+  const replyContext = supportActiveReply;
   el.supportMessageInput.value = "";
   try {
     const attachment = pending ? {
@@ -2418,9 +2648,10 @@ async function sendSupportMessage(event) {
     } : null;
     await api("/api/support/message", {
       method: "POST",
-      body: JSON.stringify({ customerId, message, attachment })
+      body: JSON.stringify({ customerId, message, attachment, replyTo: replyContext })
     });
     clearSupportAttachment();
+    clearSupportReply();
     await refreshState();
   } catch (error) {
     el.supportMessageInput.value = message;

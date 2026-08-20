@@ -1475,36 +1475,95 @@ textarea:focus {
   background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.03), transparent 60%), #080c15;
 }
 
+.staff-message-row {
+  display: flex;
+  flex-direction: column;
+  max-width: 80%;
+  position: relative;
+}
+
+.staff-message-row.mine {
+  align-self: flex-end;
+}
+
+.staff-message-row.theirs {
+  align-self: flex-start;
+}
+
 .staff-message {
-  max-width: 75%;
-  padding: 12px 16px;
+  width: 100%;
+  padding: 10px 14px;
   border-radius: 16px 16px 16px 3px;
   background: #162032;
   color: #f8fafc;
-  align-self: flex-start;
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  position: relative;
+  transition: all 0.15s ease;
 }
 
 .staff-message.mine {
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, #1d4ed8, #2563eb);
   color: #ffffff;
-  align-self: flex-end;
   border-radius: 16px 16px 3px 16px;
   border: none;
   box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
 }
 
+.staff-message.deleted {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.15) !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+}
+
+.staff-message.deleted p {
+  font-style: italic;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Reply Quote Inside Message Bubble */
+.message-reply-quote {
+  background: rgba(0, 0, 0, 0.25);
+  border-left: 3px solid #38bdf8;
+  border-radius: 6px;
+  padding: 5px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.message-reply-quote strong {
+  font-size: 10.5px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.message-reply-quote span {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+/* Message Text & Meta */
 .staff-message p {
   margin: 0;
   font-size: 13px;
-  line-height: 1.55;
+  line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .staff-message small {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 6px;
   color: #94a3b8;
   font-size: 10px;
@@ -1513,6 +1572,167 @@ textarea:focus {
 
 .staff-message.mine small {
   color: rgba(255, 255, 255, 0.75);
+}
+
+.edited-tag {
+  font-size: 9.5px;
+  opacity: 0.75;
+  font-style: italic;
+}
+
+/* Hover Action Bar */
+.message-action-toolbar {
+  position: absolute;
+  top: -16px;
+  right: 8px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 2px 6px;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 10;
+}
+
+.staff-message-row:hover .message-action-toolbar,
+.message-bubble-row:hover .message-action-toolbar {
+  display: flex;
+}
+
+.action-tool-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  line-height: 1;
+}
+
+.action-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.action-tool-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* Quick Emoji Popup */
+.quick-emoji-popup {
+  position: absolute;
+  top: -42px;
+  right: 0;
+  background: #0b101b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 4px 8px;
+  display: flex;
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  z-index: 20;
+  animation: fadeIn 0.1s ease;
+}
+
+.quick-emoji-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.quick-emoji-btn:hover {
+  transform: scale(1.3);
+}
+
+/* Reactions Bar */
+.message-reactions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.reaction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.reaction-pill:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.reaction-pill.user-reacted {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #38bdf8;
+}
+
+/* Reply Preview Bar above input */
+.reply-context-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(56, 189, 248, 0.08);
+  border-left: 3px solid #38bdf8;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+
+.reply-context-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.reply-context-info strong {
+  font-size: 11px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.reply-context-info span {
+  font-size: 12px;
+  color: #cbd5e1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reply-cancel-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.reply-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 .staff-message img {
@@ -1542,8 +1762,8 @@ textarea:focus {
 
 .support-message-form {
   display: grid;
-  gap: 8px;
-  padding: 14px 18px;
+  gap: 6px;
+  padding: 12px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: #0d121f;
 }

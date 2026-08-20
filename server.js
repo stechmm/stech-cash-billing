@@ -1207,10 +1207,28 @@ async function handleApi(req, res, pathname) {
       return json(res, 400, { error: error.message });
     }
     if (!message && !attachment) return json(res, 400, { error: "Message or attachment is required" });
-    if (message.length > 2000) return json(res, 400, { error: "Message is too long" });
+    let replyTo = null;
+    if (body.replyTo && body.replyTo.id) {
+      replyTo = {
+        id: String(body.replyTo.id),
+        senderName: String(body.replyTo.senderName || "User"),
+        text: String(body.replyTo.text || "").slice(0, 150)
+      };
+    }
+
     db.supportMessages.push({
-      id: makeId(), customerId: customer.id, senderType: "customer", senderId: customer.id,
-      topic: "conversation", message, attachment, createdAt: new Date().toISOString(), readByCustomer: true, readByStaff: false
+      id: makeId(),
+      customerId: customer.id,
+      senderType: "customer",
+      senderId: customer.id,
+      topic: "conversation",
+      message,
+      attachment,
+      replyTo,
+      reactions: {},
+      createdAt: new Date().toISOString(),
+      readByCustomer: true,
+      readByStaff: false
     });
     await writeDb(db);
     broadcastRealtime({ type: "support_message", customerId: customer.id }, (client) => client.kind === "staff" || client.customerId === customer.id);
@@ -1222,6 +1240,72 @@ async function handleApi(req, res, pathname) {
     sendTelegramNotification(db, alertText);
 
     return json(res, 200, { ok: true });
+  }
+
+  if (pathname === "/api/customer/messages/edit" && req.method === "POST") {
+    const customer = requireCustomer(req, res, db);
+    if (!customer) return;
+    const body = await readBody(req);
+    const messageId = String(body.messageId || "").trim();
+    const newText = String(body.message || "").trim();
+    if (!messageId || !newText) return json(res, 400, { error: "Message ID and text are required" });
+    if (newText.length > 2000) return json(res, 400, { error: "Message is too long" });
+
+    const msg = db.supportMessages.find((m) => m.id === messageId && m.customerId === customer.id);
+    if (!msg) return json(res, 404, { error: "Message not found" });
+    if (msg.senderType !== "customer") return json(res, 403, { error: "Permission denied" });
+    if (msg.isDeleted) return json(res, 400, { error: "Cannot edit deleted message" });
+
+    msg.message = newText;
+    msg.editedAt = new Date().toISOString();
+    await writeDb(db);
+    broadcastRealtime({ type: "support_message_edit", customerId: customer.id, messageId, message: newText, editedAt: msg.editedAt }, (client) => client.kind === "staff" || client.customerId === customer.id);
+    return json(res, 200, { ok: true, message: msg });
+  }
+
+  if (pathname === "/api/customer/messages/delete" && req.method === "POST") {
+    const customer = requireCustomer(req, res, db);
+    if (!customer) return;
+    const body = await readBody(req);
+    const messageId = String(body.messageId || "").trim();
+    const msg = db.supportMessages.find((m) => m.id === messageId && m.customerId === customer.id);
+    if (!msg) return json(res, 404, { error: "Message not found" });
+    if (msg.senderType !== "customer") return json(res, 403, { error: "Permission denied" });
+
+    msg.isDeleted = true;
+    msg.message = "This message was deleted";
+    msg.attachment = null;
+    msg.deletedAt = new Date().toISOString();
+    await writeDb(db);
+    broadcastRealtime({ type: "support_message_delete", customerId: customer.id, messageId }, (client) => client.kind === "staff" || client.customerId === customer.id);
+    return json(res, 200, { ok: true });
+  }
+
+  if (pathname === "/api/customer/messages/react" && req.method === "POST") {
+    const customer = requireCustomer(req, res, db);
+    if (!customer) return;
+    const body = await readBody(req);
+    const messageId = String(body.messageId || "").trim();
+    const emoji = String(body.emoji || "").trim();
+    if (!messageId || !emoji) return json(res, 400, { error: "Message ID and emoji are required" });
+
+    const msg = db.supportMessages.find((m) => m.id === messageId && m.customerId === customer.id);
+    if (!msg) return json(res, 404, { error: "Message not found" });
+    if (!msg.reactions || typeof msg.reactions !== "object") msg.reactions = {};
+
+    const reactorId = `c_${customer.id}`;
+    if (!Array.isArray(msg.reactions[emoji])) msg.reactions[emoji] = [];
+    const idx = msg.reactions[emoji].indexOf(reactorId);
+    if (idx >= 0) {
+      msg.reactions[emoji].splice(idx, 1);
+      if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
+    } else {
+      msg.reactions[emoji].push(reactorId);
+    }
+
+    await writeDb(db);
+    broadcastRealtime({ type: "support_message_react", customerId: customer.id, messageId, reactions: msg.reactions }, (client) => client.kind === "staff" || client.customerId === customer.id);
+    return json(res, 200, { ok: true, reactions: msg.reactions });
   }
 
   if (pathname === "/api/customer/messages/read" && req.method === "POST") {
@@ -1341,13 +1425,96 @@ async function handleApi(req, res, pathname) {
     }
     if (!message && !attachment) return json(res, 400, { error: "Message or attachment is required" });
     if (message.length > 2000) return json(res, 400, { error: "Message is too long" });
+
+    let replyTo = null;
+    if (body.replyTo && body.replyTo.id) {
+      replyTo = {
+        id: String(body.replyTo.id),
+        senderName: String(body.replyTo.senderName || "Customer"),
+        text: String(body.replyTo.text || "").slice(0, 150)
+      };
+    }
+
     db.supportMessages.push({
-      id: makeId(), customerId, senderType: "staff", senderId: user.id,
-      topic: "conversation", message, attachment, createdAt: new Date().toISOString(), readByCustomer: false, readByStaff: true
+      id: makeId(),
+      customerId,
+      senderType: "staff",
+      senderId: user.id,
+      topic: "conversation",
+      message,
+      attachment,
+      replyTo,
+      reactions: {},
+      createdAt: new Date().toISOString(),
+      readByCustomer: false,
+      readByStaff: true
     });
     await writeDb(db);
     broadcastRealtime({ type: "support_message", customerId }, (client) => client.kind === "staff" || client.customerId === customerId);
     return json(res, 200, { ok: true });
+  }
+
+  if (pathname === "/api/support/messages/edit" && req.method === "POST") {
+    if (!requireTab(user, "supportPage", res)) return;
+    const body = await readBody(req);
+    const messageId = String(body.messageId || "").trim();
+    const newText = String(body.message || "").trim();
+    if (!messageId || !newText) return json(res, 400, { error: "Message ID and text are required" });
+    if (newText.length > 2000) return json(res, 400, { error: "Message is too long" });
+
+    const msg = db.supportMessages.find((m) => m.id === messageId);
+    if (!msg) return json(res, 404, { error: "Message not found" });
+    if (msg.senderType !== "staff" && user.role !== "admin") return json(res, 403, { error: "Permission denied" });
+    if (msg.isDeleted) return json(res, 400, { error: "Cannot edit deleted message" });
+
+    msg.message = newText;
+    msg.editedAt = new Date().toISOString();
+    await writeDb(db);
+    broadcastRealtime({ type: "support_message_edit", customerId: msg.customerId, messageId, message: newText, editedAt: msg.editedAt }, (client) => client.kind === "staff" || client.customerId === msg.customerId);
+    return json(res, 200, { ok: true, message: msg });
+  }
+
+  if (pathname === "/api/support/messages/delete" && req.method === "POST") {
+    if (!requireTab(user, "supportPage", res)) return;
+    const body = await readBody(req);
+    const messageId = String(body.messageId || "").trim();
+    const msg = db.supportMessages.find((m) => m.id === messageId);
+    if (!msg) return json(res, 404, { error: "Message not found" });
+    if (msg.senderType !== "staff" && user.role !== "admin") return json(res, 403, { error: "Permission denied" });
+
+    msg.isDeleted = true;
+    msg.message = "This message was deleted";
+    msg.attachment = null;
+    msg.deletedAt = new Date().toISOString();
+    await writeDb(db);
+    broadcastRealtime({ type: "support_message_delete", customerId: msg.customerId, messageId }, (client) => client.kind === "staff" || client.customerId === msg.customerId);
+    return json(res, 200, { ok: true });
+  }
+
+  if (pathname === "/api/support/messages/react" && req.method === "POST") {
+    if (!requireTab(user, "supportPage", res)) return;
+    const body = await readBody(req);
+    const messageId = String(body.messageId || "").trim();
+    const emoji = String(body.emoji || "").trim();
+    if (!messageId || !emoji) return json(res, 400, { error: "Message ID and emoji are required" });
+
+    const msg = db.supportMessages.find((m) => m.id === messageId);
+    if (!msg) return json(res, 404, { error: "Message not found" });
+    if (!msg.reactions || typeof msg.reactions !== "object") msg.reactions = {};
+
+    const reactorId = `s_${user.id}`;
+    if (!Array.isArray(msg.reactions[emoji])) msg.reactions[emoji] = [];
+    const idx = msg.reactions[emoji].indexOf(reactorId);
+    if (idx >= 0) {
+      msg.reactions[emoji].splice(idx, 1);
+      if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
+    } else {
+      msg.reactions[emoji].push(reactorId);
+    }
+
+    await writeDb(db);
+    broadcastRealtime({ type: "support_message_react", customerId: msg.customerId, messageId, reactions: msg.reactions }, (client) => client.kind === "staff" || client.customerId === msg.customerId);
+    return json(res, 200, { ok: true, reactions: msg.reactions });
   }
 
   if (pathname === "/api/support/read" && req.method === "POST") {
