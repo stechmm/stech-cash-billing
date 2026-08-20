@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=6.0">
+    <link rel="stylesheet" href="styles.css?v=6.2">
     <script>
       (function(){
         try {
@@ -426,14 +426,13 @@
           <table class="device-table usage-table usage-sheet-table">
             <thead>
               <tr>
-                <th style="width: 110px;">Machine</th>
+                <th style="width: 120px;">Machine</th>
                 <th>Customer</th>
                 <th>Plan Status</th>
-                <th style="width: 140px;">Today's Record</th>
-                <th style="width: 140px;" class="money">Month Total</th>
-                <th style="width: 110px;">Limit</th>
-                <th style="width: 110px;">Remaining</th>
-                <th style="width: 210px; text-align: center;">Actions</th>
+                <th style="width: 150px;">Today's Record</th>
+                <th style="width: 150px;" class="money">Month Total</th>
+                <th style="width: 120px;">Limit</th>
+                <th style="width: 120px;">Remaining</th>
               </tr>
             </thead>
             <tbody id="usageBody"></tbody>
@@ -766,16 +765,16 @@
           </div>
 
           <!-- 3. Usage Amount + GB/TB Unit Toggle -->
-          <label style="display: flex; flex-direction: column; gap: 6px;">
+          <div style="display: flex; flex-direction: column; gap: 6px;">
             <span style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em;">Usage Amount</span>
             <div class="usage-amount-container">
               <input id="usageDailyInput" type="number" min="0" step="any" placeholder="0.0" required>
-              <div class="unit-toggle-pills compact-units" id="usageUnitToggleGroup">
-                <button type="button" class="unit-pill active" data-unit="GB">GB</button>
-                <button type="button" class="unit-pill" data-unit="TB">TB</button>
+              <div class="unit-toggle-pills compact-units" id="usageUnitToggleGroup" style="z-index: 10; pointer-events: auto;">
+                <button type="button" class="unit-pill active" data-unit="GB" onclick="selectUsageUnit('GB')">GB</button>
+                <button type="button" class="unit-pill" data-unit="TB" onclick="selectUsageUnit('TB')">TB</button>
               </div>
             </div>
-          </label>
+          </div>
 
           <!-- Hidden inputs for auto-populated device details if needed -->
           <input id="usageCustomerInput" type="hidden">
@@ -1113,6 +1112,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=6.0"></script>
+    <script src="app.js?v=6.2"></script>
   </body>
 </html>

@@ -3294,6 +3294,8 @@ input:disabled {
   padding: 2px;
   border-radius: 8px;
   gap: 2px;
+  z-index: 10 !important;
+  pointer-events: auto !important;
 }
 .usage-amount-container .unit-pill {
   border: none;
@@ -3305,10 +3307,15 @@ input:disabled {
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
+  z-index: 11 !important;
+  pointer-events: auto !important;
+}
+.usage-amount-container .unit-pill:hover {
+  color: #ffffff;
 }
 .usage-amount-container .unit-pill.active {
-  background: #2563eb;
-  color: #ffffff;
+  background: #2563eb !important;
+  color: #ffffff !important;
 }
 
 .preset-chip {

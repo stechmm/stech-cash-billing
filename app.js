@@ -1177,30 +1177,10 @@ function renderUsagePage() {
     const tdRemaining = document.createElement("td");
     tdRemaining.textContent = `${remainingTB.toFixed(2)} TB`;
 
-    // Actions
-    const tdActions = document.createElement("td");
-    tdActions.style.textAlign = "center";
-    tdActions.innerHTML = `
-      <div class="action-col-btns">
-        <button type="button" class="view-chart-btn" style="min-height:28px; padding:0 10px; border-radius:7px; background:#0f172a; color:#38bdf8; font-size:11px; font-weight:800; border:1px solid rgba(56,189,248,0.3); cursor:pointer;">📊 View Chart</button>
-        <button type="button" class="quick-add-btn" style="min-height:28px; padding:0 12px; border-radius:7px; background:#2563eb; color:#fff; font-size:11px; font-weight:800; border:none; cursor:pointer;">Add</button>
-      </div>
-    `;
-
-    tdActions.querySelector(".view-chart-btn").onclick = (e) => {
-      e.stopPropagation();
-      openMachineChartModal(machineId, currentMonth);
-    };
-
-    tdActions.querySelector(".quick-add-btn").onclick = (e) => {
-      e.stopPropagation();
-      openUsageDialog(usageRec?.id, machineId);
-    };
-
-    // Row Click opens modal box too
+    // Row Click opens modal chart
     tr.onclick = () => openMachineChartModal(machineId, currentMonth);
 
-    tr.append(tdMachine, tdCustomer, tdPlan, tdToday, tdTotal, tdLimit, tdRemaining, tdActions);
+    tr.append(tdMachine, tdCustomer, tdPlan, tdToday, tdTotal, tdLimit, tdRemaining);
     if (el.usageBody) el.usageBody.append(tr);
   });
 
@@ -1918,15 +1898,27 @@ function resetUsageForm() {
 }
 
 function setUsageModalUnit(unit) {
-  vizState.inputUnit = unit;
+  vizState.inputUnit = unit || "GB";
   if (!el.usageUnitToggleGroup) return;
   el.usageUnitToggleGroup.querySelectorAll(".unit-pill").forEach((btn) => {
-    const isActive = btn.dataset.unit === unit;
+    const isActive = btn.dataset.unit === vizState.inputUnit;
     btn.classList.toggle("active", isActive);
     btn.style.background = isActive ? "#2563eb" : "transparent";
     btn.style.color = isActive ? "#ffffff" : "#64748b";
   });
 }
+
+function selectUsageUnit(newUnit) {
+  const oldUnit = vizState.inputUnit || "GB";
+  if (newUnit !== oldUnit) {
+    const val = parseFloat(el.usageDailyInput?.value);
+    if (!isNaN(val) && val > 0 && el.usageDailyInput) {
+      el.usageDailyInput.value = newUnit === "TB" ? parseFloat((val / 1000).toFixed(4)) : parseFloat((val * 1000).toFixed(2));
+    }
+  }
+  setUsageModalUnit(newUnit);
+}
+window.selectUsageUnit = selectUsageUnit;
 
 function applyUsagePreset(val) {
   const current = Number(el.usageDailyInput?.value || 0);
@@ -2398,15 +2390,10 @@ el.usageDateInput.addEventListener("change", () => {
 
 if (el.usageUnitToggleGroup) {
   el.usageUnitToggleGroup.querySelectorAll(".unit-pill").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const newUnit = btn.dataset.unit;
-      const oldUnit = vizState.inputUnit;
-      if (newUnit === oldUnit) return;
-      const val = Number(el.usageDailyInput.value);
-      if (val > 0 && Number.isFinite(val)) {
-        el.usageDailyInput.value = newUnit === "TB" ? Number((val / 1000).toFixed(4)) : Number((val * 1000).toFixed(2));
-      }
-      setUsageModalUnit(newUnit);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      selectUsageUnit(btn.dataset.unit);
     });
   });
 }
