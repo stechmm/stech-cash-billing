@@ -1623,6 +1623,38 @@ function resetDefaultColors() {
   applyBillColors(DEFAULT_BILL_COLORS);
 }
 
+function openEntryDialog() {
+  resetEntryForm();
+  if (el.entryDialog) setDialogOpen(el.entryDialog, true);
+}
+function openBillDialog() {
+  resetBillForm();
+  if (el.billDialog) setDialogOpen(el.billDialog, true);
+}
+function openDeviceDialog() {
+  resetDeviceForm();
+  if (el.deviceDialog) setDialogOpen(el.deviceDialog, true);
+}
+function openUserDialog() {
+  resetUserForm();
+  if (el.userDialog) setDialogOpen(el.userDialog, true);
+}
+function openCustomerAccountDialog() {
+  resetCustomerAccountForm();
+  if (el.customerAccountDialog) setDialogOpen(el.customerAccountDialog, true);
+}
+function openAnnouncementDialog() {
+  resetAnnouncementForm();
+  if (el.announcementDialog) setDialogOpen(el.announcementDialog, true);
+}
+
+window.openEntryDialog = openEntryDialog;
+window.openBillDialog = openBillDialog;
+window.openDeviceDialog = openDeviceDialog;
+window.openUserDialog = openUserDialog;
+window.openCustomerAccountDialog = openCustomerAccountDialog;
+window.openAnnouncementDialog = openAnnouncementDialog;
+
 window.closeEntryDialog = closeEntryDialog;
 window.closeBillDialog = closeBillDialog;
 window.closeDeviceDialog = closeDeviceDialog;

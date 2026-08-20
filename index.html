@@ -195,7 +195,7 @@
                 <span class="summary-kicker">Transaction Ledger</span>
                 <strong>Cash In / Cash Out</strong>
               </div>
-              <button id="openEntryDialogBtn" class="entry-toggle" type="button">Add Record</button>
+              <button id="openEntryDialogBtn" class="entry-toggle" type="button" onclick="openEntryDialog()">Add Record</button>
             </div>
             <table class="ledger-table">
               <thead>
@@ -280,7 +280,7 @@
                 <span class="summary-kicker">Bill Status</span>
                 <strong>Machine Bill Tracker</strong>
               </div>
-              <button id="openBillDialogBtn" class="entry-toggle" type="button">Add Machine</button>
+              <button id="openBillDialogBtn" class="entry-toggle" type="button" onclick="openBillDialog()">Add Machine</button>
             </div>
             <div class="bill-legend">
               <span class="legend-dot green"></span> Bill sent / unpaid
@@ -342,7 +342,7 @@
             </div>
             <div class="header-tools">
               <button id="exportDevicesBtn" class="secondary-btn" type="button">Export Devices</button>
-              <button id="openDeviceDialogBtn" class="entry-toggle" type="button">Add Device</button>
+              <button id="openDeviceDialogBtn" class="entry-toggle" type="button" onclick="openDeviceDialog()">Add Device</button>
             </div>
           </div>
           <table class="device-table">
@@ -465,7 +465,7 @@
         <section class="device-panel announcement-admin-panel">
           <div class="ledger-topline">
             <div><span class="summary-kicker">Customer App</span><strong>Announcements</strong></div>
-            <button id="openAnnouncementDialogBtn" class="entry-toggle" type="button">New Announcement</button>
+            <button id="openAnnouncementDialogBtn" class="entry-toggle" type="button" onclick="openAnnouncementDialog()">New Announcement</button>
           </div>
           <div id="adminAnnouncementList" class="admin-announcement-list"></div>
         </section>
@@ -501,7 +501,7 @@
               <span class="summary-kicker">Admin Panel</span>
               <strong>User Accounts and Permissions</strong>
             </div>
-            <button id="openUserDialogBtn" class="entry-toggle" type="button">Create User</button>
+            <button id="openUserDialogBtn" class="entry-toggle" type="button" onclick="openUserDialog()">Create User</button>
           </div>
           <table class="device-table user-table">
             <thead>
@@ -523,7 +523,7 @@
               <span class="summary-kicker">Customer App</span>
               <strong>Customer Login Accounts</strong>
             </div>
-            <button id="openCustomerAccountDialogBtn" class="entry-toggle" type="button">Create Customer</button>
+            <button id="openCustomerAccountDialogBtn" class="entry-toggle" type="button" onclick="openCustomerAccountDialog()">Create Customer</button>
           </div>
           <table class="device-table customer-account-table">
             <thead><tr><th>Name</th><th>Username</th><th>User ID</th><th>Status</th><th>Customer App</th><th class="admin-action-col">Action</th></tr></thead>
