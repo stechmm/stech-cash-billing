@@ -651,7 +651,7 @@ function makeVoucherElement(v) {
       </div>
     </div>
     <button type="button" class="voucher-action-btn">
-      Save Receipt
+      📄 View & Print Invoice
     </button>
   `;
   const printBtn = card.querySelector(".voucher-action-btn");
