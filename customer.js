@@ -9,7 +9,7 @@ const customerState = {
   announcements: [],
   messages: [],
   activeMonth: "",
-  activePage: "customerSupportPage"
+  activePage: "customerHomePage"
 };
 
 const customerEl = {
