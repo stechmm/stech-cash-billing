@@ -69,7 +69,13 @@ const customerEl = {
   customerVizSubTotal: document.querySelector("#customerVizSubTotal"),
   customerVizLimitLabel: document.querySelector("#customerVizLimitLabel"),
   customerChartSvg: document.querySelector("#customerChartSvg"),
-  customerChartTooltip: document.querySelector("#customerChartTooltip")
+  customerChartTooltip: document.querySelector("#customerChartTooltip"),
+
+  updateModal: document.querySelector("#customerUpdateModal"),
+  updateTitle: document.querySelector("#updateModalTitle"),
+  updateDesc: document.querySelector("#updateModalDesc"),
+  updateNowBtn: document.querySelector("#customerUpdateNowBtn"),
+  dismissUpdateBtn: document.querySelector("#customerDismissUpdateBtn")
 };
 
 const customerVizState = {
@@ -116,6 +122,54 @@ function connectCustomerRealtime() {
   };
   customerRealtimeSocket.onerror = () => customerRealtimeSocket?.close();
 }
+
+// --- In-App Update Notification ---
+const UPDATE_DISMISSED_KEY = "spacelink_update_dismissed_v";
+
+function showCustomerUpdatePrompt({ version, title, description, url }) {
+  const modal = customerEl.updateModal;
+  if (!modal) return;
+  const dismissedAt = localStorage.getItem(UPDATE_DISMISSED_KEY + version);
+  if (dismissedAt) return; // already dismissed for this version
+
+  if (customerEl.updateTitle) customerEl.updateTitle.textContent = title || "App Update Available";
+  if (customerEl.updateDesc) customerEl.updateDesc.textContent = description || "A new version is ready. Update for the latest features.";
+
+  modal.classList.remove("hidden");
+
+  if (customerEl.updateNowBtn) {
+    customerEl.updateNowBtn.onclick = () => {
+      modal.classList.add("hidden");
+      if (url) window.open(url, "_blank");
+      else window.location.reload(true);
+    };
+  }
+  if (customerEl.dismissUpdateBtn) {
+    customerEl.dismissUpdateBtn.onclick = () => {
+      modal.classList.add("hidden");
+      localStorage.setItem(UPDATE_DISMISSED_KEY + version, Date.now());
+    };
+  }
+}
+window.showCustomerUpdatePrompt = showCustomerUpdatePrompt;
+
+// Check for in-app update from server settings
+async function checkCustomerUpdate() {
+  try {
+    const data = await customerApi("/api/customer/bootstrap").catch(() => null);
+    if (!data) return;
+    const updateInfo = data.appSettings?.customerAppUpdate;
+    if (updateInfo && updateInfo.enabled && updateInfo.version) {
+      showCustomerUpdatePrompt({
+        version: updateInfo.version,
+        title: updateInfo.title || "New App Update Available",
+        description: updateInfo.description || "Please update your SpaceLink App to enjoy the latest features and improvements.",
+        url: updateInfo.url || null
+      });
+    }
+  } catch (_) {}
+}
+
 
 function customerMonthLabel(monthKey) {
   if (!/^\d{4}-\d{2}$/.test(monthKey || "")) return "This month";
@@ -1483,6 +1537,8 @@ async function initCustomerApp() {
   customerEl.login.classList.add("hidden");
   customerEl.app.classList.remove("hidden");
   await refreshCustomer();
+  // Check for in-app update notification after login
+  checkCustomerUpdate();
 }
 
 if ("serviceWorker" in navigator) {

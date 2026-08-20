@@ -194,7 +194,23 @@ function ensureAppSettings(db) {
         announcements: true,
         supportChat: true,
         deviceSpecs: true
+      },
+      customerAppUpdate: {
+        enabled: false,
+        version: "",
+        title: "New Update Available",
+        description: "Please update your SpaceLink App to continue.",
+        url: ""
       }
+    };
+  }
+  if (!db.appSettings.customerAppUpdate) {
+    db.appSettings.customerAppUpdate = {
+      enabled: false,
+      version: "",
+      title: "New Update Available",
+      description: "Please update your SpaceLink App to continue.",
+      url: ""
     };
   }
 }

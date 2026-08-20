@@ -228,7 +228,23 @@
         <span>Notices</span>
       </button>
     </nav>
+
+    <!-- In-App Customer Update Notification Modal -->
+    <div id="customerUpdateModal" class="customer-update-backdrop hidden">
+      <div class="customer-update-card">
+        <div class="update-card-icon">🚀</div>
+        <div class="update-card-body">
+          <span class="update-tag">NEW UPDATE AVAILABLE</span>
+          <h3 id="updateModalTitle">App Update Available</h3>
+          <p id="updateModalDesc">A new version of SpaceLink App is ready with latest features and improvements. Please update now to continue.</p>
+        </div>
+        <div class="update-card-actions">
+          <button id="customerUpdateNowBtn" type="button" class="btn-update-action primary">Update &amp; Install</button>
+          <button id="customerDismissUpdateBtn" type="button" class="btn-update-action secondary">Later</button>
+        </div>
+      </div>
+    </div>
   </div>
-  <script src="/customer.js?v=7.8"></script>
+  <script src="/customer.js?v=7.9"></script>
 </body>
 </html>

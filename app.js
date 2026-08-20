@@ -1836,53 +1836,7 @@ function renderAdminPage() {
 }
 
 function renderCustomerDeviceChips(selectedIds = []) {
-  if (!el.customerDeviceChips) return;
-  el.customerDeviceChips.innerHTML = "";
-  const allDevices = Array.from(new Set([
-    ...state.deviceRecords.map((d) => d.deviceId),
-    ...state.billRecords.map((b) => b.machine)
-  ].filter(Boolean))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-  const currentSelected = new Set((selectedIds || []).map((s) => String(s).trim().toUpperCase()));
-
-  if (allDevices.length === 0) {
-    const empty = document.createElement("span");
-    empty.style.cssText = "color: #64748b; font-size: 11px; padding: 4px;";
-    empty.textContent = "No registered devices found. You can type machine IDs separated by comma.";
-    el.customerDeviceChips.append(empty);
-    return;
-  }
-
-  allDevices.forEach((devId) => {
-    const isSelected = currentSelected.has(devId.toUpperCase());
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = `device-chip-select ${isSelected ? "selected" : ""}`;
-    chip.style.cssText = `
-      border: 1px solid ${isSelected ? "#38bdf8" : "rgba(255,255,255,0.15)"};
-      background: ${isSelected ? "rgba(56, 189, 248, 0.25)" : "rgba(255,255,255,0.05)"};
-      color: ${isSelected ? "#ffffff" : "#94a3b8"};
-      font-size: 11.5px;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    `;
-    chip.textContent = `${isSelected ? "✓ " : ""}${devId}`;
-    chip.onclick = () => {
-      let currentVal = el.customerAccountDeviceId.value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
-      const idx = currentVal.indexOf(devId.toUpperCase());
-      if (idx >= 0) {
-        currentVal.splice(idx, 1);
-      } else {
-        currentVal.push(devId.toUpperCase());
-      }
-      el.customerAccountDeviceId.value = currentVal.join(", ");
-      renderCustomerDeviceChips(currentVal);
-    };
-    el.customerDeviceChips.append(chip);
-  });
+  // chips removed per user request for direct text input
 }
 
 function updateCalculator() {
@@ -3157,6 +3111,15 @@ async function openSystemSettingsModal(event) {
     
     document.getElementById("settingsCompanyName").value = sys.companyName || "S-Tech Telecommunication Services";
     document.getElementById("settingsCompanyPhone").value = sys.companyPhone || "+95 9 777 888 999";
+
+    // Customer App Update fields (stored in appSettings)
+    const appData = await api("/api/settings").catch(() => ({}));
+    const upd = appData?.customerAppUpdate || {};
+    document.getElementById("settingsCustomerUpdateEnabled").checked = !!upd.enabled;
+    document.getElementById("settingsCustomerUpdateVersion").value = upd.version || "";
+    document.getElementById("settingsCustomerUpdateTitle").value = upd.title || "";
+    document.getElementById("settingsCustomerUpdateDesc").value = upd.description || "";
+    document.getElementById("settingsCustomerUpdateUrl").value = upd.url || "";
     
     setDialogOpen(document.getElementById("systemSettingsDialog"), true);
   } catch (err) {
@@ -3182,10 +3145,22 @@ async function saveSystemSettings(event) {
     companyPhone: document.getElementById("settingsCompanyPhone").value.trim()
   };
 
+  const updPayload = {
+    enabled: document.getElementById("settingsCustomerUpdateEnabled").checked,
+    version: document.getElementById("settingsCustomerUpdateVersion").value.trim(),
+    title: document.getElementById("settingsCustomerUpdateTitle").value.trim(),
+    description: document.getElementById("settingsCustomerUpdateDesc").value.trim(),
+    url: document.getElementById("settingsCustomerUpdateUrl").value.trim()
+  };
+
   try {
     await api("/api/admin/settings", {
       method: "POST",
       body: JSON.stringify({ systemSettings: sysPayload })
+    });
+    await api("/api/settings", {
+      method: "POST",
+      body: JSON.stringify({ customerAppUpdate: updPayload })
     });
     alert("System & Integration Settings saved successfully!");
     closeSystemSettingsDialog();
