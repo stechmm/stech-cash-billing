@@ -1661,7 +1661,11 @@ async function handleApi(req, res, pathname) {
     if (!snapshot.months || !Array.isArray(snapshot.billRecords) || !Array.isArray(snapshot.deviceRecords)) {
       return json(res, 400, { error: "Invalid backup payload" });
     }
-    snapshot.users = db.users;
+    if (Array.isArray(snapshot.users) && snapshot.users.length > 0) {
+      // keep imported users
+    } else {
+      snapshot.users = db.users;
+    }
     snapshot.nextDeviceNumber = Number(snapshot.nextDeviceNumber || (snapshot.deviceRecords.length + 1));
     if (!Array.isArray(snapshot.usageRecords)) snapshot.usageRecords = [];
     if (!Array.isArray(snapshot.customerAccounts)) snapshot.customerAccounts = [];
@@ -1669,7 +1673,17 @@ async function handleApi(req, res, pathname) {
     if (!Array.isArray(snapshot.supportMessages)) snapshot.supportMessages = [];
     if (!snapshot.appSettings) ensureAppSettings(snapshot);
     if (!snapshot.systemSettings) ensureSystemSettings(snapshot);
-    await writeDb(snapshot);
+    ensureActiveMonth(snapshot);
+    ensureUsageRecords(snapshot);
+    ensureCustomerFeatures(snapshot);
+    ensureUserPermissions(snapshot);
+
+    for (const key of Object.keys(db)) {
+      delete db[key];
+    }
+    Object.assign(db, snapshot);
+
+    await writeDb(db);
     return json(res, 200, { ok: true });
   }
 

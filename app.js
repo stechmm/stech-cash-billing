@@ -2532,15 +2532,24 @@ window.doLogout = doLogout;
 async function importBackup(event) {
   const file = event.target.files[0];
   if (!file) return;
-  const text = await file.text();
-  const snapshot = JSON.parse(text);
-  closeUtilityMenu();
-  await api("/api/import/backup", {
-    method: "POST",
-    body: JSON.stringify({ snapshot })
-  });
-  event.target.value = "";
-  await refreshState();
+  try {
+    const text = await file.text();
+    const snapshot = JSON.parse(text);
+    closeUtilityMenu();
+    const res = await api("/api/import/backup", {
+      method: "POST",
+      body: JSON.stringify({ snapshot })
+    });
+    if (res && res.error) {
+      alert("Restore Error: " + res.error);
+      return;
+    }
+    event.target.value = "";
+    alert("Data restored successfully!");
+    window.location.reload();
+  } catch (err) {
+    alert("Restore failed: " + err.message);
+  }
 }
 
 function exportBackup(event) {
