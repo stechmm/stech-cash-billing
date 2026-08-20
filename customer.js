@@ -664,52 +664,388 @@ function makeVoucherElement(v) {
 function printOrSaveVoucher(no, name, machine, amount, date, month) {
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    alert("Please allow popups to save receipt");
+    alert("Please allow popups to view and print invoice");
     return;
   }
+  const formattedAmount = Number(amount || 470000).toLocaleString();
+  const invoiceNo = no || "INV-DF-PHL-2829003-54680-6";
+  const customerName = name || "CHO (THING KONG)";
+  const issueDate = date || "April 18, 2026";
+  const periodStr = month ? `Billing Month: ${month}` : "April 26, 2026 – May 26, 2026";
+
   printWindow.document.write(`
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
-      <title>Receipt - ${no || "Voucher"}</title>
+      <meta charset="UTF-8">
+      <title>SpaceLink Invoice - ${invoiceNo}</title>
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .receipt { width: 100%; max-width: 380px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; }
-        .brand { font-size: 16px; font-weight: 700; color: #0f172a; }
-        .brand-sub { font-size: 11px; color: #64748b; margin-top: 1px; }
-        .stamp { background: #dcfce7; color: #15803d; font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
-        .amount-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; margin-bottom: 16px; }
-        .amount-card span { font-size: 11px; color: #64748b; display: block; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
-        .amount-card strong { font-size: 22px; font-weight: 800; color: #0f172a; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; }
-        .row span { color: #64748b; }
-        .row strong { color: #0f172a; font-weight: 600; }
-        .divider { height: 1px; background: #e2e8f0; margin: 14px 0; }
-        .footer { font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.4; }
-        @media print { body { padding: 0; background: #fff; } .receipt { box-shadow: none; border: 1px solid #ddd; } }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+          font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+          background: #f1f5f9;
+          color: #0f172a;
+          padding: 30px 15px;
+          display: flex;
+          justify-content: center;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .invoice-sheet {
+          width: 100%;
+          max-width: 820px;
+          background: #ffffff;
+          border-radius: 20px;
+          padding: 44px 48px;
+          box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+          border: 1px solid #e2e8f0;
+          position: relative;
+        }
+
+        /* Top Header */
+        .invoice-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          border-bottom: 2px solid #0f172a;
+          padding-bottom: 24px;
+          margin-bottom: 28px;
+        }
+
+        .brand-section {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .brand-logo-svg {
+          width: 48px;
+          height: 48px;
+          background: linear-gradient(135deg, #0284c7, #0369a1);
+          border-radius: 12px;
+          display: grid;
+          place-items: center;
+          color: #fff;
+          font-size: 24px;
+          box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+
+        .brand-text h1 {
+          font-size: 22px;
+          font-weight: 800;
+          color: #0369a1;
+          letter-spacing: -0.02em;
+          line-height: 1;
+        }
+
+        .brand-text span {
+          font-size: 11px;
+          font-weight: 700;
+          color: #64748b;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .invoice-title-box {
+          text-align: right;
+        }
+
+        .invoice-title-box h2 {
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 32px;
+          font-weight: 700;
+          color: #0369a1;
+          letter-spacing: 0.04em;
+          line-height: 1;
+          margin-bottom: 8px;
+        }
+
+        .meta-badge {
+          background: #f8fafc;
+          border: 1px solid #cbd5e1;
+          border-radius: 10px;
+          padding: 8px 14px;
+          text-align: right;
+          display: inline-block;
+        }
+
+        .meta-badge .inv-no {
+          font-size: 11.5px;
+          font-weight: 800;
+          color: #0f172a;
+          letter-spacing: 0.03em;
+        }
+
+        .meta-badge .acc-no {
+          font-size: 10.5px;
+          font-weight: 600;
+          color: #64748b;
+          margin-top: 2px;
+        }
+
+        /* 3-Column Info Bar */
+        .info-grid {
+          display: grid;
+          grid-template-columns: 1.4fr 1.2fr 1fr;
+          gap: 20px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 18px 22px;
+          margin-bottom: 28px;
+        }
+
+        .info-col span {
+          display: block;
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+          color: #64748b;
+          letter-spacing: 0.06em;
+          margin-bottom: 4px;
+        }
+
+        .info-col strong {
+          display: block;
+          font-size: 14px;
+          font-weight: 700;
+          color: #0f172a;
+        }
+
+        .info-col p {
+          font-size: 12px;
+          color: #475569;
+          font-weight: 500;
+          margin-top: 2px;
+        }
+
+        /* Table */
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 24px;
+        }
+
+        .items-table th {
+          background: #0369a1;
+          color: #ffffff;
+          text-align: left;
+          padding: 12px 16px;
+          font-size: 11.5px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+
+        .items-table th:first-child { border-radius: 8px 0 0 8px; width: 50px; text-align: center; }
+        .items-table th:last-child { border-radius: 0 8px 8px 0; text-align: right; }
+        .items-table th.center { text-align: center; }
+        .items-table th.right { text-align: right; }
+
+        .items-table td {
+          padding: 16px 16px;
+          font-size: 13px;
+          color: #1e293b;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .items-table td.center { text-align: center; }
+        .items-table td.right { text-align: right; }
+
+        .item-name {
+          font-weight: 700;
+          color: #0f172a;
+          font-size: 13.5px;
+        }
+
+        .item-sub {
+          font-size: 11.5px;
+          color: #64748b;
+          margin-top: 3px;
+        }
+
+        /* Summary Total Bar */
+        .total-wrapper {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 32px;
+        }
+
+        .total-box {
+          background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+          border: 1.5px solid #38bdf8;
+          border-radius: 12px;
+          padding: 14px 24px;
+          display: flex;
+          align-items: center;
+          gap: 20px;
+        }
+
+        .total-box .label-group span {
+          display: block;
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          color: #0369a1;
+          letter-spacing: 0.05em;
+        }
+
+        .total-box .paid-badge {
+          display: inline-block;
+          background: #10b981;
+          color: #ffffff;
+          font-size: 9.5px;
+          font-weight: 800;
+          padding: 2px 6px;
+          border-radius: 4px;
+          letter-spacing: 0.05em;
+          margin-top: 2px;
+        }
+
+        .total-box .amount {
+          font-size: 24px;
+          font-weight: 800;
+          color: #0c4a6e;
+          font-family: 'Space Grotesk', sans-serif;
+        }
+
+        /* Footer */
+        .invoice-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          border-top: 1px dashed #cbd5e1;
+          padding-top: 20px;
+        }
+
+        .contact-links {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .contact-links a, .contact-links span {
+          font-size: 11.5px;
+          color: #0284c7;
+          text-decoration: none;
+          font-weight: 600;
+        }
+
+        .thank-you {
+          text-align: right;
+        }
+
+        .thank-you strong {
+          display: block;
+          font-size: 14px;
+          font-weight: 800;
+          color: #0f172a;
+          letter-spacing: 0.05em;
+        }
+
+        .thank-you span {
+          font-size: 11px;
+          font-weight: 700;
+          color: #64748b;
+          text-transform: uppercase;
+        }
+
+        @media print {
+          body { padding: 0; background: #fff; }
+          .invoice-sheet { box-shadow: none; border: none; padding: 20px 24px; width: 100%; max-width: 100%; }
+        }
       </style>
     </head>
     <body>
-      <div class="receipt">
-        <div class="header">
-          <div>
-            <div class="brand">SpaceLink</div>
-            <div class="brand-sub">Official Payment Receipt</div>
+      <div class="invoice-sheet">
+        <!-- Top Header -->
+        <div class="invoice-top">
+          <div class="brand-section">
+            <div class="brand-logo-svg">🛰️</div>
+            <div class="brand-text">
+              <h1>SpaceLink</h1>
+              <span>Billing Service</span>
+            </div>
           </div>
-          <div class="stamp">PAID</div>
+          <div class="invoice-title-box">
+            <h2>INVOICE</h2>
+            <div class="meta-badge">
+              <div class="inv-no">${invoiceNo}</div>
+              <div class="acc-no">CUSTOMER ACCOUNT: ACC-8741499-22873-29</div>
+            </div>
+          </div>
         </div>
-        <div class="amount-card">
-          <span>Total Amount Paid</span>
-          <strong>${Number(amount || 0).toLocaleString()} MMK</strong>
+
+        <!-- 3-Column Info Bar -->
+        <div class="info-grid">
+          <div class="info-col">
+            <span>INVOICE TO :</span>
+            <strong>${customerName}</strong>
+            <p>${machine ? `Terminal: ${machine}` : 'Thing Kong'}</p>
+          </div>
+          <div class="info-col">
+            <span>SEND PAYMENT TO :</span>
+            <strong>SPACELINK MYANMAR</strong>
+            <p>KBZPay / Mobile Banking</p>
+          </div>
+          <div class="info-col">
+            <span>DATE :</span>
+            <strong>${issueDate}</strong>
+            <p>${periodStr}</p>
+          </div>
         </div>
-        <div class="row"><span>Voucher No</span><strong>${no || "-"}</strong></div>
-        <div class="row"><span>Customer</span><strong>${name || "-"}</strong></div>
-        <div class="row"><span>Terminal ID</span><strong>${machine || "-"}</strong></div>
-        <div class="row"><span>Billing Month</span><strong>${month || "-"}</strong></div>
-        <div class="row"><span>Payment Date</span><strong>${date || "-"}</strong></div>
-        <div class="divider"></div>
-        <div class="footer">Thank you for subscribing to SpaceLink Satellite Internet.</div>
+
+        <!-- Table -->
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Description</th>
+              <th class="center">Qty</th>
+              <th class="right">Price</th>
+              <th class="right">Total (MMK)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="center"><strong>1</strong></td>
+              <td>
+                <div class="item-name">Starlink Internet Bill</div>
+                <div class="item-sub">(${periodStr})</div>
+              </td>
+              <td class="center">1</td>
+              <td class="right">${formattedAmount}</td>
+              <td class="right"><strong>${formattedAmount}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Total Box -->
+        <div class="total-wrapper">
+          <div class="total-box">
+            <div class="label-group">
+              <span>Total Received</span>
+              <div class="paid-badge">PAID ✓</div>
+            </div>
+            <div class="amount">${formattedAmount} MMK</div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+          <div class="contact-links">
+            <span>www.spacelinkmm.com</span>
+            <span>info@spacelinkmm.com</span>
+            <span>billing@spacelinkmm.com</span>
+          </div>
+          <div class="thank-you">
+            <strong>THANK YOU</strong>
+            <span>SPACELINK MM</span>
+          </div>
+        </div>
       </div>
       <script>window.onload = function() { window.print(); };</script>
     </body>
