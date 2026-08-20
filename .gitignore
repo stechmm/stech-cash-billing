@@ -1,5 +1,11 @@
 node_modules/
 .env
+.env.*
 data/
+uploads/
+app-db.json
+*.json.bak
+app-db-backup*.json
+*.zip
 .test-*/
 npm-debug.log*
