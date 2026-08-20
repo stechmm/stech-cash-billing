@@ -275,6 +275,7 @@ const el = {
   customerAccountName: document.querySelector("#customerAccountName"),
   customerAccountUsername: document.querySelector("#customerAccountUsername"),
   customerAccountDeviceId: document.querySelector("#customerAccountDeviceId"),
+  customerDeviceChips: document.querySelector("#customerDeviceChips"),
   customerAccountPassword: document.querySelector("#customerAccountPassword"),
   customerAccountStatus: document.querySelector("#customerAccountStatus"),
   resetCustomerAccountBtn: document.querySelector("#resetCustomerAccountBtn"),
@@ -1512,13 +1513,81 @@ function renderAdminPage() {
       const row = el.customerAccountRowTemplate.content.firstElementChild.cloneNode(true);
       row.querySelector(".customer-account-name").textContent = customer.fullName || "";
       row.querySelector(".customer-account-username").textContent = customer.username || "";
-      row.querySelector(".customer-account-device").textContent = customer.linkedDeviceId || "";
+      
+      const devices = Array.isArray(customer.linkedDeviceIds) && customer.linkedDeviceIds.length > 0
+        ? customer.linkedDeviceIds
+        : (customer.linkedDeviceId ? String(customer.linkedDeviceId).split(",").map(s => s.trim()).filter(Boolean) : []);
+      
+      const devCell = row.querySelector(".customer-account-device");
+      devCell.innerHTML = "";
+      if (devices.length === 0) {
+        devCell.textContent = "-";
+      } else {
+        devices.forEach((d) => {
+          const badge = document.createElement("span");
+          badge.className = "device-chip-badge";
+          badge.style.cssText = "display: inline-block; padding: 2px 7px; margin: 2px; font-size: 11px; font-weight: 700; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); border-radius: 6px;";
+          badge.textContent = d;
+          devCell.append(badge);
+        });
+      }
+
       row.querySelector(".customer-account-status").textContent = customer.active === false ? "Inactive" : "Active";
       row.querySelector(".edit-customer-account").onclick = () => editCustomerAccount(customer.id);
       row.querySelector(".delete-customer-account").onclick = () => deleteCustomerAccount(customer.id);
       el.customerAccountBody.append(row);
     });
   }
+}
+
+function renderCustomerDeviceChips(selectedIds = []) {
+  if (!el.customerDeviceChips) return;
+  el.customerDeviceChips.innerHTML = "";
+  const allDevices = Array.from(new Set([
+    ...state.deviceRecords.map((d) => d.deviceId),
+    ...state.billRecords.map((b) => b.machine)
+  ].filter(Boolean))).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  const currentSelected = new Set((selectedIds || []).map((s) => String(s).trim().toUpperCase()));
+
+  if (allDevices.length === 0) {
+    const empty = document.createElement("span");
+    empty.style.cssText = "color: #64748b; font-size: 11px; padding: 4px;";
+    empty.textContent = "No registered devices found. You can type machine IDs separated by comma.";
+    el.customerDeviceChips.append(empty);
+    return;
+  }
+
+  allDevices.forEach((devId) => {
+    const isSelected = currentSelected.has(devId.toUpperCase());
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = `device-chip-select ${isSelected ? "selected" : ""}`;
+    chip.style.cssText = `
+      border: 1px solid ${isSelected ? "#38bdf8" : "rgba(255,255,255,0.15)"};
+      background: ${isSelected ? "rgba(56, 189, 248, 0.25)" : "rgba(255,255,255,0.05)"};
+      color: ${isSelected ? "#ffffff" : "#94a3b8"};
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    `;
+    chip.textContent = `${isSelected ? "✓ " : ""}${devId}`;
+    chip.onclick = () => {
+      let currentVal = el.customerAccountDeviceId.value.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+      const idx = currentVal.indexOf(devId.toUpperCase());
+      if (idx >= 0) {
+        currentVal.splice(idx, 1);
+      } else {
+        currentVal.push(devId.toUpperCase());
+      }
+      el.customerAccountDeviceId.value = currentVal.join(", ");
+      renderCustomerDeviceChips(currentVal);
+    };
+    el.customerDeviceChips.append(chip);
+  });
 }
 
 function updateCalculator() {
@@ -1729,6 +1798,7 @@ function resetCustomerAccountForm() {
   el.customerAccountStatus.value = "active";
   el.customerAccountDialogTitle.textContent = "Create Customer Account";
   el.customerAccountPassword.required = true;
+  renderCustomerDeviceChips([]);
 }
 
 function resetAnnouncementForm() {
@@ -2181,11 +2251,13 @@ async function deleteUserRecord(id) {
 
 async function saveCustomerAccount(event) {
   event.preventDefault();
+  const linkedDeviceIds = el.customerAccountDeviceId.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
   const payload = {
     id: el.customerAccountId.value || undefined,
     fullName: el.customerAccountName.value.trim(),
     username: el.customerAccountUsername.value.trim(),
-    linkedDeviceId: el.customerAccountDeviceId.value.trim(),
+    linkedDeviceId: linkedDeviceIds[0] || "",
+    linkedDeviceIds,
     password: el.customerAccountPassword.value,
     active: el.customerAccountStatus.value === "active"
   };
@@ -2201,7 +2273,14 @@ function editCustomerAccount(id) {
   el.customerAccountId.value = customer.id;
   el.customerAccountName.value = customer.fullName || "";
   el.customerAccountUsername.value = customer.username || "";
-  el.customerAccountDeviceId.value = customer.linkedDeviceId || "";
+  
+  const devices = Array.isArray(customer.linkedDeviceIds) && customer.linkedDeviceIds.length > 0
+    ? customer.linkedDeviceIds
+    : (customer.linkedDeviceId ? String(customer.linkedDeviceId).split(",").map(s => s.trim()).filter(Boolean) : []);
+  
+  el.customerAccountDeviceId.value = devices.join(", ");
+  renderCustomerDeviceChips(devices);
+  
   el.customerAccountPassword.value = "";
   el.customerAccountPassword.required = false;
   el.customerAccountStatus.value = customer.active === false ? "inactive" : "active";

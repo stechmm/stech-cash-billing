@@ -63,6 +63,18 @@
       <button id="customerLogoutBtn" class="customer-header-action" type="button">Sign Out</button>
     </header>
 
+    <div id="customerDeviceBar" class="customer-device-bar hidden">
+      <div class="device-bar-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span>Machines:</span>
+      </div>
+      <div id="customerDeviceChipsContainer" class="device-chips-scroll"></div>
+    </div>
+
     <main class="customer-main">
       <section id="customerHomePage" class="customer-page">
         <div class="customer-welcome">
@@ -74,7 +86,13 @@
           <article class="customer-stat usage"><span>Data Used</span><strong id="customerUsageTotal">0 TB</strong><small id="customerUsageLimit">of 5 TB</small></article>
           <article class="customer-stat remaining"><span>Remaining</span><strong id="customerUsageRemaining">5 TB</strong><small id="customerUsageState">Safe usage</small></article>
         </section>
-        <section class="customer-section">
+
+        <section id="customerFleetSection" class="customer-section hidden">
+          <div class="customer-section-head"><span>Fleet Machines</span><strong id="customerFleetCount">0 Devices</strong></div>
+          <div id="customerFleetGrid" class="fleet-machine-grid"></div>
+        </section>
+
+        <section id="customerSingleDeviceSection" class="customer-section">
           <div class="customer-section-head"><span>Device Information</span><strong id="customerDeviceId">-</strong></div>
           <dl class="device-info-grid">
             <div><dt>Region</dt><dd id="customerDeviceRegion">-</dd></div>
@@ -210,6 +228,6 @@
       </button>
     </nav>
   </div>
-  <script src="/customer.js?v=7.1"></script>
+  <script src="/customer.js?v=7.6"></script>
 </body>
 </html>

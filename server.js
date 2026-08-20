@@ -258,12 +258,25 @@ function safeUser(user) {
   };
 }
 
+function getCustomerLinkedDeviceIds(customer) {
+  if (!customer) return [];
+  if (Array.isArray(customer.linkedDeviceIds) && customer.linkedDeviceIds.length > 0) {
+    return customer.linkedDeviceIds.map((id) => String(id || "").trim().toUpperCase()).filter(Boolean);
+  }
+  if (customer.linkedDeviceId) {
+    return String(customer.linkedDeviceId).split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+  }
+  return [];
+}
+
 function safeCustomerAccount(customer) {
+  const linkedDeviceIds = getCustomerLinkedDeviceIds(customer);
   return {
     id: customer.id,
     fullName: customer.fullName || "",
     username: customer.username || "",
-    linkedDeviceId: customer.linkedDeviceId || "",
+    linkedDeviceId: linkedDeviceIds[0] || "",
+    linkedDeviceIds,
     active: customer.active !== false,
     createdAt: customer.createdAt || ""
   };
@@ -537,13 +550,82 @@ function buildCustomerBootstrap(db, customer) {
   ensureUsageRecords(db);
   ensureCustomerFeatures(db);
   ensureAppSettings(db);
-  const linkedDeviceId = String(customer.linkedDeviceId || "").trim().toUpperCase();
-  const device = db.deviceRecords.find((item) => String(item.deviceId || "").trim().toUpperCase() === linkedDeviceId) || null;
-  const usage = db.usageRecords.find((item) => (
-    String(item.monthKey || "") === db.activeMonth &&
-    String(item.machine || "").trim().toUpperCase() === linkedDeviceId
-  )) || null;
-  const bill = db.billRecords.find((item) => String(item.machine || "").trim().toUpperCase() === linkedDeviceId) || null;
+  
+  const linkedDeviceIds = getCustomerLinkedDeviceIds(customer);
+  
+  // Find all devices linked to this customer (by linkedDeviceIds, or matching email/username, or name)
+  const matchedDevices = db.deviceRecords.filter((item) => {
+    const devId = String(item.deviceId || "").trim().toUpperCase();
+    if (linkedDeviceIds.includes(devId)) return true;
+    if (customer.username && item.email && String(item.email).trim().toLowerCase() === String(customer.username).trim().toLowerCase()) return true;
+    if (customer.fullName && item.name && String(item.name).trim().toLowerCase() === String(customer.fullName).trim().toLowerCase()) return true;
+    return false;
+  });
+
+  // If no devices matched in deviceRecords but linkedDeviceIds exist, create placeholder items
+  if (matchedDevices.length === 0 && linkedDeviceIds.length > 0) {
+    linkedDeviceIds.forEach((id) => {
+      matchedDevices.push({
+        deviceId: id,
+        name: customer.fullName || id,
+        email: customer.username || "",
+        serialNumber: "-",
+        kitNumber: "-",
+        serviceAddress: "-",
+        region: "Myanmar",
+        planStatus: "normal"
+      });
+    });
+  }
+
+  // Build device list with their respective usage & bill
+  const devicesList = matchedDevices.map((device) => {
+    const devId = String(device.deviceId || "").trim().toUpperCase();
+    const usage = db.usageRecords.find((item) => (
+      String(item.monthKey || "") === db.activeMonth &&
+      String(item.machine || "").trim().toUpperCase() === devId
+    )) || null;
+    const bill = db.billRecords.find((item) => String(item.machine || "").trim().toUpperCase() === devId) || null;
+    return {
+      deviceId: device.deviceId || "",
+      name: device.name || "",
+      email: device.email || "",
+      serialNumber: device.serialNumber || "",
+      kitNumber: device.kitNumber || "",
+      serviceAddress: device.serviceAddress || "",
+      region: device.region || "",
+      planStatus: device.planStatus || "normal",
+      usage,
+      bill: bill ? {
+        machine: bill.machine || "",
+        billDate: bill.billDate || "",
+        cutOffDate: bill.cutOffDate || "",
+        billType: bill.billType || "",
+        status: bill.status || "",
+        money: bill.money || ""
+      } : null
+    };
+  });
+
+  // Calculate fleet combined usage
+  let totalUsageTB = 0;
+  let totalLimitTB = 0;
+  let unpaidCount = 0;
+  let activeCount = 0;
+
+  devicesList.forEach((d) => {
+    const daily = d.usage?.dailyUsage || {};
+    const sumDaily = Object.values(daily).reduce((a, b) => a + Number(b || 0), 0);
+    const legacy = Number(d.usage?.legacyUsageTB || 0);
+    totalUsageTB += (sumDaily + legacy);
+    
+    const limit = d.planStatus === "discount" ? 2 : 5;
+    totalLimitTB += limit;
+    
+    if (d.bill?.status === "unpaid") unpaidCount++;
+    if (d.bill?.status !== "inactive" && d.bill?.status !== "suspended") activeCount++;
+  });
+
   const staffNames = new Map(db.users.map((item) => [item.id, item.fullName || item.username || "Support"]));
   const messages = db.supportMessages
     .filter((item) => item.customerId === customer.id)
@@ -552,31 +634,28 @@ function buildCustomerBootstrap(db, customer) {
       ...item,
       senderName: item.senderType === "customer" ? customer.fullName : (staffNames.get(item.senderId) || "SpaceLink Support")
     }));
+
+  const primaryDevice = devicesList[0] || null;
+
   return {
     customer: safeCustomerAccount(customer),
     activeMonth: db.activeMonth,
-    device: device ? {
-      name: device.name || "",
-      email: device.email || "",
-      deviceId: device.deviceId || "",
-      serialNumber: device.serialNumber || "",
-      kitNumber: device.kitNumber || "",
-      serviceAddress: device.serviceAddress || "",
-      region: device.region || "",
-      planStatus: device.planStatus || "normal"
-    } : null,
-    usage,
-    usageRecords: db.usageRecords.filter((item) => (
-      String(item.machine || "").trim().toUpperCase() === linkedDeviceId
-    )),
-    bill: bill ? {
-      machine: bill.machine || "",
-      billDate: bill.billDate || "",
-      cutOffDate: bill.cutOffDate || "",
-      billType: bill.billType || "",
-      status: bill.status || "",
-      money: bill.money || ""
-    } : null,
+    devices: devicesList,
+    device: primaryDevice,
+    usage: primaryDevice?.usage || null,
+    bill: primaryDevice?.bill || null,
+    fleetSummary: {
+      totalDevices: devicesList.length,
+      totalUsageTB: Number(totalUsageTB.toFixed(2)),
+      totalLimitTB: totalLimitTB || 5,
+      remainingTB: Number(Math.max(0, totalLimitTB - totalUsageTB).toFixed(2)),
+      unpaidCount,
+      activeCount
+    },
+    usageRecords: db.usageRecords.filter((item) => {
+      const m = String(item.machine || "").trim().toUpperCase();
+      return linkedDeviceIds.includes(m) || devicesList.some((d) => d.deviceId.toUpperCase() === m);
+    }),
     announcements: db.announcements
       .filter((item) => item.active !== false)
       .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || ""))),
@@ -932,8 +1011,17 @@ async function handleApi(req, res, pathname) {
     const body = await readBody(req);
     const record = body.record || {};
     const username = String(record.username || "").trim();
-    const linkedDeviceId = String(record.linkedDeviceId || "").trim();
-    if (!username || !linkedDeviceId) return json(res, 400, { error: "Username and User ID are required" });
+    
+    let linkedDeviceIds = [];
+    if (Array.isArray(record.linkedDeviceIds) && record.linkedDeviceIds.length > 0) {
+      linkedDeviceIds = record.linkedDeviceIds.map((s) => String(s).trim().toUpperCase()).filter(Boolean);
+    } else if (record.linkedDeviceId) {
+      linkedDeviceIds = String(record.linkedDeviceId).split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+    }
+    
+    if (!username || linkedDeviceIds.length === 0) {
+      return json(res, 400, { error: "Username and at least one linked Machine/Device ID are required" });
+    }
     const duplicate = db.customerAccounts.find((item) => (
       item.id !== record.id && String(item.username || "").trim().toLowerCase() === username.toLowerCase()
     ));
@@ -945,14 +1033,15 @@ async function handleApi(req, res, pathname) {
       id: existing?.id || makeId(),
       fullName: String(record.fullName || "").trim(),
       username,
-      linkedDeviceId,
+      linkedDeviceId: linkedDeviceIds[0] || "",
+      linkedDeviceIds,
       active: record.active !== false,
       createdAt: existing?.createdAt || new Date().toISOString(),
       passwordHash: record.password ? hashPassword(String(record.password)) : existing.passwordHash
     };
     if (index >= 0) db.customerAccounts.splice(index, 1, payload);
     else db.customerAccounts.push(payload);
-    db.customerAccounts.sort((a, b) => String(a.linkedDeviceId || "").localeCompare(String(b.linkedDeviceId || ""), undefined, { numeric: true }));
+    db.customerAccounts.sort((a, b) => String(a.fullName || a.username || "").localeCompare(String(b.fullName || b.username || "")));
     await writeDb(db);
     return json(res, 200, { ok: true });
   }

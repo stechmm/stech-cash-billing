@@ -1,5 +1,8 @@
 const customerState = {
   customer: null,
+  devices: [],
+  fleetSummary: null,
+  selectedDeviceId: "ALL",
   device: null,
   usage: null,
   bill: null,
@@ -27,6 +30,14 @@ const customerEl = {
   usageLimit: document.querySelector("#customerUsageLimit"),
   usageRemaining: document.querySelector("#customerUsageRemaining"),
   usageState: document.querySelector("#customerUsageState"),
+
+  deviceBar: document.querySelector("#customerDeviceBar"),
+  deviceChipsContainer: document.querySelector("#customerDeviceChipsContainer"),
+  fleetSection: document.querySelector("#customerFleetSection"),
+  fleetCount: document.querySelector("#customerFleetCount"),
+  fleetGrid: document.querySelector("#customerFleetGrid"),
+  singleDeviceSection: document.querySelector("#customerSingleDeviceSection"),
+
   deviceId: document.querySelector("#customerDeviceId"),
   deviceRegion: document.querySelector("#customerDeviceRegion"),
   deviceSerial: document.querySelector("#customerDeviceSerial"),
@@ -337,12 +348,133 @@ function renderCustomerVisualizer() {
   });
 }
 
+function syncActiveDeviceSelection() {
+  if (!customerState.devices || customerState.devices.length === 0) {
+    customerState.device = null;
+    customerState.usage = null;
+    customerState.bill = null;
+    return;
+  }
+  if (customerState.devices.length === 1) {
+    customerState.selectedDeviceId = customerState.devices[0].deviceId;
+  }
+  if (customerState.selectedDeviceId === "ALL" && customerState.devices.length > 1) {
+    customerState.device = null;
+    customerState.usage = null;
+    customerState.bill = null;
+  } else {
+    const d = customerState.devices.find((item) => item.deviceId === customerState.selectedDeviceId) || customerState.devices[0];
+    customerState.device = d || null;
+    customerState.usage = d?.usage || null;
+    customerState.bill = d?.bill || null;
+  }
+}
+
+function renderCustomerDeviceBar() {
+  if (!customerEl.deviceBar || !customerEl.deviceChipsContainer) return;
+  const devices = customerState.devices || [];
+  if (devices.length <= 1) {
+    customerEl.deviceBar.classList.add("hidden");
+    return;
+  }
+  customerEl.deviceBar.classList.remove("hidden");
+  customerEl.deviceChipsContainer.innerHTML = "";
+
+  // "All Devices" Chip
+  const allChip = document.createElement("button");
+  allChip.type = "button";
+  allChip.className = `customer-device-chip ${customerState.selectedDeviceId === "ALL" ? "active" : ""}`;
+  allChip.innerHTML = `🌐 All Devices (${devices.length})`;
+  allChip.onclick = () => {
+    customerState.selectedDeviceId = "ALL";
+    syncActiveDeviceSelection();
+    renderCustomerApp();
+  };
+  customerEl.deviceChipsContainer.append(allChip);
+
+  // Individual Device Chips
+  devices.forEach((d) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = `customer-device-chip ${customerState.selectedDeviceId === d.deviceId ? "active" : ""}`;
+    chip.innerHTML = `📟 ${d.deviceId}`;
+    chip.onclick = () => {
+      customerState.selectedDeviceId = d.deviceId;
+      syncActiveDeviceSelection();
+      renderCustomerApp();
+    };
+    customerEl.deviceChipsContainer.append(chip);
+  });
+}
+
+function renderCustomerFleetOverview() {
+  const devices = customerState.devices || [];
+  if (!customerEl.fleetSection || !customerEl.fleetGrid) return;
+  if (customerState.selectedDeviceId !== "ALL" || devices.length <= 1) {
+    customerEl.fleetSection.classList.add("hidden");
+    customerEl.singleDeviceSection?.classList.remove("hidden");
+    return;
+  }
+  customerEl.fleetSection.classList.remove("hidden");
+  customerEl.singleDeviceSection?.classList.add("hidden");
+  customerEl.fleetCount.textContent = `${devices.length} Machines`;
+  customerEl.fleetGrid.innerHTML = "";
+
+  devices.forEach((d) => {
+    const daily = d.usage?.dailyUsage || {};
+    const sumDaily = Object.values(daily).reduce((a, b) => a + Number(b || 0), 0);
+    const legacy = Number(d.usage?.legacyUsageTB || 0);
+    const usedTB = sumDaily + legacy;
+    const limitTB = d.planStatus === "discount" ? 2 : 5;
+    const percent = Math.min(100, Math.round((usedTB / limitTB) * 100));
+
+    const card = document.createElement("div");
+    card.className = "fleet-machine-card";
+    card.innerHTML = `
+      <div class="fleet-card-top">
+        <span class="fleet-card-id">📟 ${d.deviceId}</span>
+        <span class="fleet-card-badge ${d.planStatus === "discount" ? "discount" : "normal"}">${d.planStatus || "Normal"}</span>
+      </div>
+      <div class="fleet-card-usage">
+        <span>Data Usage</span>
+        <strong>${usedTB.toFixed(2)} / ${limitTB} TB</strong>
+      </div>
+      <div class="fleet-progress-bar">
+        <div class="fleet-progress-fill" style="width: ${percent}%;"></div>
+      </div>
+      <div class="fleet-card-meta">
+        <span>${d.region || "Myanmar"}</span>
+        <span style="color: #38bdf8; font-weight: 700;">View Details →</span>
+      </div>
+    `;
+    card.onclick = () => {
+      customerState.selectedDeviceId = d.deviceId;
+      syncActiveDeviceSelection();
+      renderCustomerApp();
+    };
+    customerEl.fleetGrid.append(card);
+  });
+}
+
 function renderCustomerApp() {
   const customer = customerState.customer || {};
-  const device = customerState.device;
-  const total = customerUsageTotal();
-  const limit = Number(customerState.usage?.usageLimitTB || 5);
-  const remaining = Math.max(0, limit - total);
+  const devices = customerState.devices || [];
+  const isFleetAll = customerState.selectedDeviceId === "ALL" && devices.length > 1;
+
+  let total = 0;
+  let limit = 5;
+  let remaining = 5;
+
+  if (isFleetAll) {
+    total = customerState.fleetSummary?.totalUsageTB || 0;
+    limit = customerState.fleetSummary?.totalLimitTB || (devices.length * 5);
+    remaining = customerState.fleetSummary?.remainingTB || Math.max(0, limit - total);
+  } else {
+    total = customerUsageTotal();
+    limit = Number(customerState.usage?.usageLimitTB || (customerState.device?.planStatus === "discount" ? 2 : 5));
+    remaining = Math.max(0, limit - total);
+  }
+
   const level = customerUsageLevel(total, limit);
   const entries = customerUsageEntries();
   const unread = customerState.messages.filter((item) => item.senderType === "staff" && !item.readByCustomer).length;
@@ -350,19 +482,29 @@ function renderCustomerApp() {
   customerEl.headerName.textContent = customer.fullName || customer.username || "Customer";
   customerEl.welcomeName.textContent = `Hello, ${customer.fullName || customer.username || "Customer"}`;
   customerEl.monthLabel.textContent = customerMonthLabel(customerState.activeMonth);
-  customerEl.deviceSummary.textContent = device
-    ? `${device.deviceId} | ${device.region || "Service active"}`
-    : `${customer.linkedDeviceId || "User ID not linked"} | Device record pending`;
+
+  if (isFleetAll) {
+    customerEl.deviceSummary.textContent = `Fleet of ${devices.length} Starlink Machines | Combined Overview`;
+  } else {
+    customerEl.deviceSummary.textContent = customerState.device
+      ? `${customerState.device.deviceId} | ${customerState.device.region || "Service active"}`
+      : `${customer.linkedDeviceId || "Device not linked"}`;
+  }
+
   customerEl.usageTotal.textContent = `${total.toFixed(3)} TB`;
   customerEl.usageLimit.textContent = `of ${limit.toFixed(1)} TB`;
   customerEl.usageRemaining.textContent = `${remaining.toFixed(3)} TB`;
   customerEl.usageState.textContent = level === "critical" ? "Limit reached" : level === "warning" ? "Near limit" : "Safe usage";
-  customerEl.deviceId.textContent = device?.deviceId || customer.linkedDeviceId || "-";
-  customerEl.deviceRegion.textContent = device?.region || "-";
-  customerEl.deviceSerial.textContent = device?.serialNumber || "-";
-  customerEl.deviceKit.textContent = device?.kitNumber || "-";
-  customerEl.devicePlan.textContent = String(device?.planStatus || "-").replaceAll("_", " ");
-  customerEl.deviceAddress.textContent = device?.serviceAddress || "-";
+
+  if (customerState.device) {
+    customerEl.deviceId.textContent = customerState.device.deviceId || "-";
+    customerEl.deviceRegion.textContent = customerState.device.region || "-";
+    customerEl.deviceSerial.textContent = customerState.device.serialNumber || "-";
+    customerEl.deviceKit.textContent = customerState.device.kitNumber || "-";
+    customerEl.devicePlan.textContent = String(customerState.device.planStatus || "-").replaceAll("_", " ");
+    customerEl.deviceAddress.textContent = customerState.device.serviceAddress || "-";
+  }
+
   customerEl.navUnread.textContent = unread;
   customerEl.navUnread.classList.toggle("hidden", unread === 0);
 
@@ -372,10 +514,12 @@ function renderCustomerApp() {
     ? makeAnnouncementCard(customerState.announcements[0])
     : document.createTextNode("No announcements yet."));
 
+  renderCustomerDeviceBar();
+  renderCustomerFleetOverview();
   renderCustomerVisualizer();
 
   customerEl.dailyUsageList.innerHTML = "";
-  if (!entries.length) customerEl.dailyUsageList.append(makeCustomerEmpty("No daily usage has been recorded yet."));
+  if (!entries.length) customerEl.dailyUsageList.append(makeCustomerEmpty(isFleetAll ? "Select an individual machine above to view its daily breakdown." : "No daily usage has been recorded yet."));
   entries.forEach((item) => {
     const row = document.createElement("div");
     row.className = "daily-row";
@@ -520,6 +664,16 @@ async function refreshCustomer() {
   try {
     const snapshot = await customerApi("/api/customer/bootstrap");
     Object.assign(customerState, snapshot);
+    customerState.devices = snapshot.devices || (snapshot.device ? [snapshot.device] : []);
+    customerState.fleetSummary = snapshot.fleetSummary || null;
+    
+    if (customerState.devices.length <= 1 && customerState.devices.length > 0) {
+      customerState.selectedDeviceId = customerState.devices[0].deviceId;
+    } else if (!customerState.selectedDeviceId) {
+      customerState.selectedDeviceId = "ALL";
+    }
+    syncActiveDeviceSelection();
+    
     renderCustomerApp();
     connectCustomerRealtime();
     if (customerState.activePage === "customerSupportPage" && customerState.messages.some((item) => item.senderType === "staff" && !item.readByCustomer)) {

@@ -577,7 +577,7 @@
             <button id="openCustomerAccountDialogBtn" class="entry-toggle" type="button" onclick="openCustomerAccountDialog()">Create Customer</button>
           </div>
           <table class="device-table customer-account-table">
-            <thead><tr><th>Name</th><th>Username</th><th>User ID</th><th>Status</th><th>Customer App</th><th class="admin-action-col">Action</th></tr></thead>
+            <thead><tr><th>Name</th><th>Username</th><th>Linked Machines</th><th>Status</th><th>Customer App</th><th class="admin-action-col">Action</th></tr></thead>
             <tbody id="customerAccountBody"></tbody>
           </table>
         </section>
@@ -975,9 +975,16 @@
         </div>
         <form id="customerAccountForm" class="dialog-form customer-account-form">
           <input type="hidden" id="customerAccountId">
-          <label>Name<input id="customerAccountName" type="text" placeholder="Customer name" required></label>
+          <label>Name<input id="customerAccountName" type="text" placeholder="Customer or Company Name" required></label>
           <label>Username<input id="customerAccountUsername" type="text" placeholder="customer01" required></label>
-          <label>User ID<input id="customerAccountDeviceId" type="text" placeholder="F05" required></label>
+          <label class="wide">
+            Linked Machines / Devices (Multi-Select)
+            <input id="customerAccountDeviceId" type="text" placeholder="e.g. MC-01, MC-02, MC-05" required>
+            <div id="customerDeviceChips" class="device-chips-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-height: 120px; overflow-y: auto; padding: 8px; background: rgba(0,0,0,0.35); border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);">
+              <!-- dynamic device chips rendered by app.js -->
+            </div>
+            <small style="color: #94a3b8; font-size: 11px; margin-top: 4px; display: block;">Click machines above to link/unlink multiple Starlink dishes to this customer account.</small>
+          </label>
           <label>Password<input id="customerAccountPassword" type="password" placeholder="Required for new account"></label>
           <label>Status<select id="customerAccountStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
           <div class="customer-app-link"><span>Customer App</span><strong>/customer/</strong></div>
@@ -1147,6 +1154,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=7.5"></script>
+    <script src="app.js?v=7.6"></script>
   </body>
 </html>
