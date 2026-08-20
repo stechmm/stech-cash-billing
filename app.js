@@ -56,7 +56,6 @@ const el = {
   pageViews: document.querySelectorAll(".page-view"),
   currentUserName: document.querySelector("#currentUserName"),
   currentUserRole: document.querySelector("#currentUserRole"),
-  themeToggleBtn: document.querySelector("#themeToggleBtn"),
   utilityMenu: document.querySelector("#utilityMenu") || document.querySelector(".utility-menu"),
   adminPanelBtn: document.querySelector("#adminPanelBtn"),
   exportJsonBtn: document.querySelector("#exportJsonBtn"),
@@ -375,42 +374,11 @@ function canAccess(tab) {
   return state.user?.role === "admin" || (state.user?.allowedTabs || []).includes(tab);
 }
 
-const THEME_STORAGE_KEY = "spacelink_theme";
-
-function applyTheme(theme) {
-  const isLight = theme === "light";
-  if (isLight) {
-    document.documentElement.setAttribute("data-theme", "light");
-    if (document.body) document.body.setAttribute("data-theme", "light");
-  } else {
-    document.documentElement.removeAttribute("data-theme");
-    if (document.body) document.body.removeAttribute("data-theme");
-  }
-  try {
-    localStorage.setItem(THEME_STORAGE_KEY, isLight ? "light" : "dark");
-  } catch (e) {}
-}
-
-function initTheme() {
-  try {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY) || "dark";
-    applyTheme(saved);
-  } catch (e) {
-    applyTheme("dark");
-  }
-}
-
-function toggleTheme(event) {
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  const current = document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
-  const next = current === "light" ? "dark" : "light";
-  applyTheme(next);
-}
-window.applyTheme = applyTheme;
-window.toggleTheme = toggleTheme;
+try {
+  localStorage.removeItem("spacelink_theme");
+  document.documentElement.removeAttribute("data-theme");
+  if (document.body) document.body.removeAttribute("data-theme");
+} catch (e) {}
 
 function loadBillColors() {
   try {
@@ -2731,11 +2699,6 @@ document.addEventListener("click", (event) => {
   }
 });
 
-if (el.themeToggleBtn) {
-  el.themeToggleBtn.addEventListener("click", toggleTheme);
-}
-
-initTheme();
 resetEntryForm();
 resetBillForm();
 resetDeviceForm();
