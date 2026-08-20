@@ -615,36 +615,44 @@ function makeVoucherElement(v) {
   card.innerHTML = `
     <div class="voucher-top-brand">
       <div class="voucher-brand-title">
-        <span>🛰️</span>
-        <div>
-          <strong>${v.companyName || "S-Tech Telecommunication"}</strong>
-          <small>OFFICIAL PAYMENT RECEIPT</small>
-        </div>
+        <strong>${v.companyName || "SpaceLink"}</strong>
+        <small>Payment Receipt</small>
       </div>
-      <span class="voucher-stamp-paid">PAID ✓</span>
+      <span class="voucher-stamp-paid">PAID</span>
     </div>
-    <div class="voucher-no-row">
-      <span>Voucher No:</span>
-      <strong>${v.voucherNumber || "VCH-2026-001"}</strong>
-    </div>
-    <div class="voucher-details-grid">
-      <div><span>Customer:</span><strong>${v.customerName || "-"}</strong></div>
-      <div><span>Machine ID:</span><strong>${v.machineId || "-"}</strong></div>
-      <div><span>Billing Period:</span><strong>${v.monthKey || "-"}</strong></div>
-      <div><span>Payment Date:</span><strong>${v.date || "-"}</strong></div>
-      <div><span>Payment Method:</span><strong>${v.paymentMethod || "Bank Transfer"}</strong></div>
-      <div><span>Service:</span><strong>${v.notes || "Starlink Internet"}</strong></div>
-    </div>
-    <div class="voucher-total-banner">
-      <span>AMOUNT RECEIVED</span>
+    <div class="voucher-amount-box">
+      <span>Amount Paid</span>
       <strong>${numAmount.toLocaleString()} MMK</strong>
     </div>
-    <div class="voucher-footer-row">
-      <small>Thank you for subscribing to S-Tech Starlink Service.</small>
-      <button type="button" class="voucher-action-btn">
-        🖨️ Save Receipt
-      </button>
+    <div class="voucher-details-list">
+      <div class="voucher-detail-row">
+        <span>Voucher No</span>
+        <strong>${v.voucherNumber || "-"}</strong>
+      </div>
+      <div class="voucher-detail-row">
+        <span>Customer</span>
+        <strong>${v.customerName || "-"}</strong>
+      </div>
+      <div class="voucher-detail-row">
+        <span>Terminal ID</span>
+        <strong>${v.machineId || "-"}</strong>
+      </div>
+      <div class="voucher-detail-row">
+        <span>Billing Month</span>
+        <strong>${v.monthKey || "-"}</strong>
+      </div>
+      <div class="voucher-detail-row">
+        <span>Date</span>
+        <strong>${v.date || "-"}</strong>
+      </div>
+      <div class="voucher-detail-row">
+        <span>Method</span>
+        <strong>${v.paymentMethod || "Bank Transfer"}</strong>
+      </div>
     </div>
+    <button type="button" class="voucher-action-btn">
+      Save Receipt
+    </button>
   `;
   const printBtn = card.querySelector(".voucher-action-btn");
   if (printBtn) {
@@ -663,38 +671,45 @@ function printOrSaveVoucher(no, name, machine, amount, date, month) {
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Payment Receipt - ${no || "Voucher"}</title>
+      <title>Receipt - ${no || "Voucher"}</title>
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; padding: 30px; display: flex; justify-content: center; }
-        .receipt { width: 100%; max-width: 460px; background: #fff; border: 2px solid #0f766e; border-radius: 12px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 14px; margin-bottom: 16px; }
-        .stamp { background: #dcfce7; color: #15803d; border: 2px solid #16a34a; font-weight: 900; font-size: 14px; padding: 4px 12px; border-radius: 6px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
-        .total { background: #f0fdfa; border: 1px solid #99f6e4; padding: 12px; border-radius: 8px; margin: 16px 0; text-align: center; }
-        .total strong { font-size: 24px; color: #0f766e; }
-        .footer { font-size: 11.5px; color: #64748b; text-align: center; margin-top: 14px; line-height: 1.4; }
-        @media print { body { padding: 0; background: #fff; } .receipt { box-shadow: none; border: 1px solid #000; } }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .receipt { width: 100%; max-width: 380px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; }
+        .brand { font-size: 16px; font-weight: 700; color: #0f172a; }
+        .brand-sub { font-size: 11px; color: #64748b; margin-top: 1px; }
+        .stamp { background: #dcfce7; color: #15803d; font-weight: 700; font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+        .amount-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; margin-bottom: 16px; }
+        .amount-card span { font-size: 11px; color: #64748b; display: block; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+        .amount-card strong { font-size: 22px; font-weight: 800; color: #0f172a; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; }
+        .row span { color: #64748b; }
+        .row strong { color: #0f172a; font-weight: 600; }
+        .divider { height: 1px; background: #e2e8f0; margin: 14px 0; }
+        .footer { font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.4; }
+        @media print { body { padding: 0; background: #fff; } .receipt { box-shadow: none; border: 1px solid #ddd; } }
       </style>
     </head>
     <body>
       <div class="receipt">
         <div class="header">
           <div>
-            <h2 style="margin:0; font-size:18px; color:#0f766e;">🛰️ S-Tech Telecommunication</h2>
-            <small style="color:#64748b;">Official Service Payment Receipt</small>
+            <div class="brand">SpaceLink</div>
+            <div class="brand-sub">Official Payment Receipt</div>
           </div>
-          <div class="stamp">PAID ✓</div>
+          <div class="stamp">PAID</div>
         </div>
-        <div class="row"><span>Voucher No:</span><strong>${no || "-"}</strong></div>
-        <div class="row"><span>Customer:</span><strong>${name || "-"}</strong></div>
-        <div class="row"><span>Terminal ID:</span><strong>${machine || "-"}</strong></div>
-        <div class="row"><span>Billing Month:</span><strong>${month || "-"}</strong></div>
-        <div class="row"><span>Date:</span><strong>${date || "-"}</strong></div>
-        <div class="total">
-          <div style="font-size:11px; color:#0f766e; font-weight:700; margin-bottom:4px; letter-spacing:0.5px;">TOTAL AMOUNT RECEIVED</div>
+        <div class="amount-card">
+          <span>Total Amount Paid</span>
           <strong>${Number(amount || 0).toLocaleString()} MMK</strong>
         </div>
-        <div class="footer">Thank you for subscribing to S-Tech Starlink High-Speed Satellite Internet.</div>
+        <div class="row"><span>Voucher No</span><strong>${no || "-"}</strong></div>
+        <div class="row"><span>Customer</span><strong>${name || "-"}</strong></div>
+        <div class="row"><span>Terminal ID</span><strong>${machine || "-"}</strong></div>
+        <div class="row"><span>Billing Month</span><strong>${month || "-"}</strong></div>
+        <div class="row"><span>Payment Date</span><strong>${date || "-"}</strong></div>
+        <div class="divider"></div>
+        <div class="footer">Thank you for subscribing to SpaceLink Satellite Internet.</div>
       </div>
       <script>window.onload = function() { window.print(); };</script>
     </body>
