@@ -1640,6 +1640,29 @@ function setDialogOpen(node, open) {
     }, 180);
   }
 }
+window.setDialogOpen = setDialogOpen;
+
+function closeEntryDialog() { setDialogOpen(el.entryDialog, false); }
+function closeBillDialog() { setDialogOpen(el.billDialog, false); }
+function closeDeviceDialog() { setDialogOpen(el.deviceDialog, false); }
+function closeUserDialog() { setDialogOpen(el.userDialog, false); }
+function closeCustomerAccountDialog() { setDialogOpen(el.customerAccountDialog, false); }
+function closeAnnouncementDialog() { setDialogOpen(el.announcementDialog, false); }
+function closeColorDialog() { setDialogOpen(el.colorDialog, false); }
+function resetDefaultColors() {
+  localStorage.removeItem(BILL_COLOR_STORAGE_KEY);
+  resetColorForm();
+  applyBillColors(DEFAULT_BILL_COLORS);
+}
+
+window.closeEntryDialog = closeEntryDialog;
+window.closeBillDialog = closeBillDialog;
+window.closeDeviceDialog = closeDeviceDialog;
+window.closeUserDialog = closeUserDialog;
+window.closeCustomerAccountDialog = closeCustomerAccountDialog;
+window.closeAnnouncementDialog = closeAnnouncementDialog;
+window.closeColorDialog = closeColorDialog;
+window.resetDefaultColors = resetDefaultColors;
 
 function resetEntryForm() {
   el.entryForm.reset();
@@ -1720,6 +1743,13 @@ function resetColorForm() {
   applyBillColors(DEFAULT_BILL_COLORS);
   syncColorInputs();
 }
+window.resetEntryForm = resetEntryForm;
+window.resetBillForm = resetBillForm;
+window.resetDeviceForm = resetDeviceForm;
+window.resetUserForm = resetUserForm;
+window.resetCustomerAccountForm = resetCustomerAccountForm;
+window.resetAnnouncementForm = resetAnnouncementForm;
+window.resetColorForm = resetColorForm;
 
 function getSelectedTabs() {
   return [...el.permissionChecks].filter((item) => item.checked).map((item) => item.value);

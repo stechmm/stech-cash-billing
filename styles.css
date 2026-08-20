@@ -1843,6 +1843,9 @@ input:disabled {
 }
 
 .modal-close {
+  position: relative !important;
+  z-index: 1000 !important;
+  pointer-events: auto !important;
   display: grid;
   place-items: center;
   width: 34px;
@@ -1853,14 +1856,14 @@ input:disabled {
   color: #cbd5e1;
   font-size: 14px;
   font-weight: 800;
-  cursor: pointer;
+  cursor: pointer !important;
   transition: all 0.15s ease;
 }
 
 .modal-close:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
+  background: rgba(239, 68, 68, 0.2) !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #f87171 !important;
   transform: scale(1.05);
 }
 
