@@ -76,8 +76,88 @@ button { cursor: pointer; }
   width: 100%; min-height: 42px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 10px; padding: 10px 14px; background: #131a29; color: #fff; outline: none; transition: all 0.15s ease;
 }
 .customer-login-card input:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25); }
-.customer-login-card button { width: 100%; min-height: 44px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #38bdf8); color: #fff; font-weight: 800; font-size: 14px; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); transition: all 0.2s ease; margin-top: 6px; }
-.customer-login-card button:hover { transform: translateY(-1px); box-shadow: 0 12px 25px rgba(37, 99, 235, 0.45); }
+.customer-login-card button[type="submit"] {
+  width: 100%; min-height: 44px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #2563eb, #38bdf8); color: #fff; font-weight: 800; font-size: 14px; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); transition: all 0.2s ease; margin-top: 8px; cursor: pointer;
+}
+.customer-login-card button[type="submit"]:hover { transform: translateY(-1px); box-shadow: 0 12px 25px rgba(37, 99, 235, 0.45); }
+.password-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.password-field-wrapper input {
+  width: 100%;
+  padding-right: 42px !important;
+}
+.pwd-toggle-btn {
+  position: absolute;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+.pwd-toggle-btn:hover {
+  color: #38bdf8;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.customer-login-divider {
+  position: relative;
+  text-align: center;
+  margin: 20px 0 14px;
+}
+.customer-login-divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.customer-login-divider span {
+  position: relative;
+  background: #0d121f;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.customer-download-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  color: #38bdf8;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.customer-download-card:hover {
+  background: rgba(37, 99, 235, 0.22);
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
 .customer-error { min-height: 18px; margin-top: 10px; color: #f87171; font-size: 11.5px; text-align: center; }
 
 /* ==========================================================================

@@ -2330,6 +2330,22 @@ function saveColorSettings(event) {
   setDialogOpen(el.colorDialog, false);
 }
 
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const isPwd = input.type === "password";
+  input.type = isPwd ? "text" : "password";
+  if (btn) {
+    const openIcon = btn.querySelector(".eye-open");
+    const closedIcon = btn.querySelector(".eye-closed");
+    if (openIcon && closedIcon) {
+      openIcon.classList.toggle("hidden", isPwd);
+      closedIcon.classList.toggle("hidden", !isPwd);
+    }
+  }
+}
+window.togglePasswordVisibility = togglePasswordVisibility;
+
 async function doLogin(event) {
   event.preventDefault();
   el.loginMessage.textContent = "";

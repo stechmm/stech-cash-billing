@@ -278,7 +278,9 @@ function parseCookies(req) {
   }, {});
 }
 
-function cookieOptions(req, maxAge = null) {
+const THIRTY_DAYS_SEC = 30 * 24 * 60 * 60; // 30 days = 2,592,000 seconds
+
+function cookieOptions(req, maxAge = THIRTY_DAYS_SEC) {
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "").toLowerCase();
   const isSecureRequest = req.socket.encrypted || forwardedProto.includes("https");
   const parts = ["HttpOnly", "Path=/", "SameSite=Lax"];
@@ -391,41 +393,81 @@ function broadcastRealtime(event, predicate = () => true) {
   });
 }
 
-function createSession(userId) {
+function createSession(userId, db) {
   const sid = crypto.randomBytes(24).toString("hex");
-  sessions.set(sid, { userId, createdAt: Date.now() });
+  const expiresAt = Date.now() + (THIRTY_DAYS_SEC * 1000);
+  sessions.set(sid, { userId, createdAt: Date.now(), expiresAt });
+  if (db) {
+    if (!db.sessions) db.sessions = {};
+    db.sessions[sid] = { userId, createdAt: Date.now(), expiresAt };
+  }
   return sid;
 }
 
 function getCurrentUser(req, db) {
   const cookies = parseCookies(req);
-  const session = sessions.get(cookies[SESSION_COOKIE]);
+  const sid = cookies[SESSION_COOKIE];
+  if (!sid) return null;
+  let session = sessions.get(sid);
+  if (!session && db?.sessions?.[sid]) {
+    session = db.sessions[sid];
+    sessions.set(sid, session);
+  }
   if (!session) return null;
+  if (session.expiresAt && session.expiresAt < Date.now()) {
+    sessions.delete(sid);
+    if (db?.sessions) delete db.sessions[sid];
+    return null;
+  }
   return db.users.find((user) => user.id === session.userId) || null;
 }
 
-function clearSession(req, res) {
+function clearSession(req, res, db) {
   const cookies = parseCookies(req);
-  if (cookies[SESSION_COOKIE]) sessions.delete(cookies[SESSION_COOKIE]);
+  const sid = cookies[SESSION_COOKIE];
+  if (sid) {
+    sessions.delete(sid);
+    if (db?.sessions) delete db.sessions[sid];
+  }
   res.setHeader("Set-Cookie", `${SESSION_COOKIE}=; ${cookieOptions(req, 0)}`);
 }
 
-function createCustomerSession(customerId) {
+function createCustomerSession(customerId, db) {
   const sid = crypto.randomBytes(24).toString("hex");
-  customerSessions.set(sid, { customerId, createdAt: Date.now() });
+  const expiresAt = Date.now() + (THIRTY_DAYS_SEC * 1000);
+  customerSessions.set(sid, { customerId, createdAt: Date.now(), expiresAt });
+  if (db) {
+    if (!db.customerSessions) db.customerSessions = {};
+    db.customerSessions[sid] = { customerId, createdAt: Date.now(), expiresAt };
+  }
   return sid;
 }
 
 function getCurrentCustomer(req, db) {
   const cookies = parseCookies(req);
-  const session = customerSessions.get(cookies[CUSTOMER_SESSION_COOKIE]);
+  const sid = cookies[CUSTOMER_SESSION_COOKIE];
+  if (!sid) return null;
+  let session = customerSessions.get(sid);
+  if (!session && db?.customerSessions?.[sid]) {
+    session = db.customerSessions[sid];
+    customerSessions.set(sid, session);
+  }
   if (!session) return null;
+  if (session.expiresAt && session.expiresAt < Date.now()) {
+    customerSessions.delete(sid);
+    if (db?.customerSessions) delete db.customerSessions[sid];
+    return null;
+  }
   return db.customerAccounts.find((customer) => customer.id === session.customerId && customer.active !== false) || null;
 }
 
-function clearCustomerSession(req, res) {
+function clearCustomerSession(req, res, db) {
   const cookies = parseCookies(req);
-  if (cookies[CUSTOMER_SESSION_COOKIE]) customerSessions.delete(cookies[CUSTOMER_SESSION_COOKIE]);
+  const sid = cookies[CUSTOMER_SESSION_COOKIE];
+  if (sid) {
+    customerSessions.delete(sid);
+    if (db?.customerSessions) delete db.customerSessions[sid];
+  }
   res.setHeader("Set-Cookie", `${CUSTOMER_SESSION_COOKIE}=; ${cookieOptions(req, 0)}`);
 }
 
@@ -791,7 +833,8 @@ async function handleApi(req, res, pathname) {
     if (!user || !verifyPassword(String(body.password || ""), user.passwordHash)) {
       return json(res, 401, { error: "Invalid username or password" });
     }
-    const sid = createSession(user.id);
+    const sid = createSession(user.id, db);
+    await writeDatabase(db);
     return json(
       res,
       200,
@@ -801,7 +844,8 @@ async function handleApi(req, res, pathname) {
   }
 
   if (pathname === "/api/logout" && req.method === "POST") {
-    clearSession(req, res);
+    clearSession(req, res, db);
+    await writeDatabase(db);
     return json(res, 200, { ok: true });
   }
 
@@ -817,14 +861,16 @@ async function handleApi(req, res, pathname) {
     if (!customer || customer.active === false || !verifyPassword(String(body.password || ""), customer.passwordHash)) {
       return json(res, 401, { error: "Invalid username or password" });
     }
-    const sid = createCustomerSession(customer.id);
+    const sid = createCustomerSession(customer.id, db);
+    await writeDatabase(db);
     return json(res, 200, { customer: safeCustomerAccount(customer) }, {
       "Set-Cookie": `${CUSTOMER_SESSION_COOKIE}=${sid}; ${cookieOptions(req)}`
     });
   }
 
   if (pathname === "/api/customer/logout" && req.method === "POST") {
-    clearCustomerSession(req, res);
+    clearCustomerSession(req, res, db);
+    await writeDatabase(db);
     return json(res, 200, { ok: true });
   }
 
