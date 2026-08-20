@@ -834,7 +834,7 @@ async function handleApi(req, res, pathname) {
       return json(res, 401, { error: "Invalid username or password" });
     }
     const sid = createSession(user.id, db);
-    await writeDatabase(db);
+    await writeDb(db);
     return json(
       res,
       200,
@@ -845,7 +845,7 @@ async function handleApi(req, res, pathname) {
 
   if (pathname === "/api/logout" && req.method === "POST") {
     clearSession(req, res, db);
-    await writeDatabase(db);
+    await writeDb(db);
     return json(res, 200, { ok: true });
   }
 
@@ -862,7 +862,7 @@ async function handleApi(req, res, pathname) {
       return json(res, 401, { error: "Invalid username or password" });
     }
     const sid = createCustomerSession(customer.id, db);
-    await writeDatabase(db);
+    await writeDb(db);
     return json(res, 200, { customer: safeCustomerAccount(customer) }, {
       "Set-Cookie": `${CUSTOMER_SESSION_COOKIE}=${sid}; ${cookieOptions(req)}`
     });
@@ -870,7 +870,7 @@ async function handleApi(req, res, pathname) {
 
   if (pathname === "/api/customer/logout" && req.method === "POST") {
     clearCustomerSession(req, res, db);
-    await writeDatabase(db);
+    await writeDb(db);
     return json(res, 200, { ok: true });
   }
 
