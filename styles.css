@@ -442,6 +442,8 @@ button:hover,
 }
 
 .app-header {
+  position: relative;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -512,6 +514,8 @@ h1 {
 }
 
 .header-actions {
+  position: relative;
+  z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -808,6 +812,7 @@ h1 {
 
 .utility-menu {
   position: relative;
+  z-index: 10001;
   flex-shrink: 0;
   margin-left: 6px;
 }
@@ -855,17 +860,17 @@ h1 {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  z-index: 99999 !important;
+  z-index: 999999 !important;
   pointer-events: auto !important;
   display: flex;
   flex-direction: column;
   gap: 1px;
   min-width: 145px;
   padding: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   background: #0b101b;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(56, 189, 248, 0.15);
   animation: fadeIn 0.12s ease-out;
 }
 
