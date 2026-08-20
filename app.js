@@ -154,6 +154,7 @@ const el = {
   serviceAddressInput: document.querySelector("#serviceAddressInput"),
   regionInput: document.querySelector("#regionInput"),
   planStatusInput: document.querySelector("#planStatusInput"),
+  deviceActiveInput: document.querySelector("#deviceActiveInput"),
   saveDeviceBtn: document.querySelector("#saveDeviceBtn"),
 
   usageNearCount: document.querySelector("#usageNearCount"),
@@ -959,18 +960,62 @@ function deriveBillDisplay(record) {
   return { status: "sent_unpaid", alertState };
 }
 
+let billActiveFilter = "active";
+let deviceActiveFilter = "active";
+let usageActiveFilter = "active";
+
+window.setBillActiveFilter = function(filter) {
+  billActiveFilter = filter;
+  document.querySelectorAll("#billFilterGroup .filter-chip").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+  renderBillPage();
+};
+
+window.setDeviceActiveFilter = function(filter) {
+  deviceActiveFilter = filter;
+  document.querySelectorAll("#deviceFilterGroup .filter-chip").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+  renderDevicePage();
+};
+
+window.setUsageActiveFilter = function(filter) {
+  usageActiveFilter = filter;
+  document.querySelectorAll("#usageFilterGroup .filter-chip").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === filter);
+  });
+  renderUsagePage();
+};
+
 function renderBillPage() {
   const counts = { sent_unpaid: 0, paid_done: 0, paid_pending: 0, inactive: 0, suspended: 0 };
   const alerts = { due_7_days: 0, due_1_day: 0, suspended: 0 };
   const attention = [];
 
   el.billBody.innerHTML = "";
+  
+  const filteredBills = state.billRecords.filter((record) => {
+    const linkedDev = state.deviceRecords.find(d => String(d.deviceId || "").toUpperCase() === String(record.machine || "").toUpperCase());
+    const isDevActive = linkedDev ? linkedDev.active !== false : true;
+    if (billActiveFilter === "active") {
+      if (!isDevActive) return false;
+      if (record.status === "inactive") return false;
+    }
+    return true;
+  });
+
   state.billRecords.forEach((record) => {
     const display = deriveBillDisplay(record);
     counts[display.status] = (counts[display.status] || 0) + 1;
     const alertState = display.alertState;
     if (alerts[alertState] != null) alerts[alertState] += 1;
     if (alertState !== "none") attention.push({ record, alertState });
+  });
+
+  filteredBills.forEach((record) => {
+    const display = deriveBillDisplay(record);
+    const alertState = display.alertState;
 
     const row = el.billRowTemplate.content.firstElementChild.cloneNode(true);
     row.dataset.id = record.id;
@@ -1045,7 +1090,15 @@ function renderDevicePage() {
     if (record.region) regions.add(record.region.trim().toLowerCase());
     if (record.planStatus === "discount") discount += 1;
     else normal += 1;
+  });
 
+  const filteredDevices = state.deviceRecords.filter((record) => {
+    if (deviceActiveFilter === "active") return record.active !== false;
+    return true;
+  });
+
+  filteredDevices.forEach((record) => {
+    const active = record.active !== false;
     const row = el.deviceRowTemplate.content.firstElementChild.cloneNode(true);
     row.dataset.id = record.id;
     row.querySelector(".device-no-cell").textContent = record.no || "";
@@ -1057,6 +1110,12 @@ function renderDevicePage() {
     row.querySelector(".device-address-cell").textContent = record.serviceAddress || "";
     row.querySelector(".device-region-cell").textContent = record.region || "";
     row.querySelector(".device-plan-cell").textContent = record.planStatus || "";
+    
+    const statusCell = row.querySelector(".device-status-cell");
+    if (statusCell) {
+      statusCell.innerHTML = `<span class="device-status-badge ${active ? 'active' : 'inactive'}">${active ? 'Active' : 'Inactive'}</span>`;
+    }
+
     const actions = row.querySelector(".row-actions");
     if (isAdmin()) {
       row.querySelector(".edit-device").onclick = () => editDeviceRecord(record.id);
@@ -1085,7 +1144,15 @@ function renderUsagePage() {
 
   if (el.usageBody) el.usageBody.innerHTML = "";
 
-  allMachineIds.forEach((machineId) => {
+  const activeMachineIds = allMachineIds.filter((machineId) => {
+    if (usageActiveFilter === "active") {
+      const linkedDevice = state.deviceRecords.find((d) => String(d.deviceId || "").toUpperCase() === machineId.toUpperCase());
+      if (linkedDevice && linkedDevice.active === false) return false;
+    }
+    return true;
+  });
+
+  activeMachineIds.forEach((machineId) => {
     const linkedDevice = state.deviceRecords.find((d) => String(d.deviceId || "").toUpperCase() === machineId.toUpperCase());
     const linkedBill = state.billRecords.find((b) => String(b.machine || "").toUpperCase() === machineId.toUpperCase());
     const usageRec = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === machineId.toUpperCase() && r.monthKey === currentMonth);
@@ -1146,7 +1213,6 @@ function renderUsagePage() {
     } else {
       tdToday.innerHTML = `<span class="today-status-badge pending">⏳ Pending</span>`;
     }
-
     // Month Total (Accumulated)
     const tdTotal = document.createElement("td");
     tdTotal.className = "money";
@@ -1760,6 +1826,7 @@ function resetDeviceForm() {
   el.deviceDialogTitle.textContent = "Add Device";
   el.saveDeviceBtn.textContent = "Save Device";
   el.planStatusInput.value = "normal";
+  if (el.deviceActiveInput) el.deviceActiveInput.value = "true";
 }
 
 function openUsageDialog(recordId = null, machineId = "") {
@@ -1961,7 +2028,8 @@ async function saveDeviceRecord(event) {
     kitNumber: el.kitNumberInput.value.trim(),
     serviceAddress: el.serviceAddressInput.value.trim(),
     region: el.regionInput.value.trim(),
-    planStatus: el.planStatusInput.value
+    planStatus: el.planStatusInput.value,
+    active: el.deviceActiveInput ? el.deviceActiveInput.value === "true" : true
   };
   await api("/api/devices/record", { method: "POST", body: JSON.stringify({ record: payload }) });
   resetDeviceForm();
@@ -1982,6 +2050,9 @@ function editDeviceRecord(id) {
   el.serviceAddressInput.value = record.serviceAddress || "";
   el.regionInput.value = record.region || "";
   el.planStatusInput.value = record.planStatus || "normal";
+  if (el.deviceActiveInput) {
+    el.deviceActiveInput.value = record.active !== false ? "true" : "false";
+  }
   el.deviceDialogTitle.textContent = "Update Device";
   el.saveDeviceBtn.textContent = "Update Device";
   setDialogOpen(el.deviceDialog, true);

@@ -576,9 +576,7 @@ function buildCustomerBootstrap(db, customer) {
         planStatus: "normal"
       });
     });
-  }
-
-  // Build device list with their respective usage & bill
+  }  // Build device list with their respective usage & bill
   const devicesList = matchedDevices.map((device) => {
     const devId = String(device.deviceId || "").trim().toUpperCase();
     const usage = db.usageRecords.find((item) => (
@@ -595,6 +593,7 @@ function buildCustomerBootstrap(db, customer) {
       serviceAddress: device.serviceAddress || "",
       region: device.region || "",
       planStatus: device.planStatus || "normal",
+      active: device.active !== false,
       usage,
       bill: bill ? {
         machine: bill.machine || "",
@@ -607,29 +606,39 @@ function buildCustomerBootstrap(db, customer) {
     };
   });
 
-  // Calculate fleet combined usage
+  // Calculate fleet combined usage & detect near-limit devices (>= 4.8 TB for 5TB plan, or >= 1.9 TB for 2TB plan)
   let totalUsageTB = 0;
-  let totalLimitTB = 0;
   let unpaidCount = 0;
   let activeCount = 0;
+  const nearLimitDevices = [];
 
   devicesList.forEach((d) => {
     const daily = d.usage?.dailyUsage || {};
     const sumDaily = Object.values(daily).reduce((a, b) => a + Number(b || 0), 0);
     const legacy = Number(d.usage?.legacyUsageTB || 0);
-    totalUsageTB += (sumDaily + legacy);
+    const usedTB = sumDaily + legacy;
+    totalUsageTB += usedTB;
     
-    const limit = d.planStatus === "discount" ? 2 : 5;
-    totalLimitTB += limit;
+    const limitTB = d.planStatus === "discount" ? 2.0 : 5.0;
+    const thresholdTB = d.planStatus === "discount" ? 1.9 : 4.8;
     
+    if (usedTB >= thresholdTB) {
+      nearLimitDevices.push({
+        deviceId: d.deviceId,
+        usedTB: Number(usedTB.toFixed(2)),
+        limitTB,
+        percent: Math.min(100, Math.round((usedTB / limitTB) * 100))
+      });
+    }
+
     if (d.bill?.status === "unpaid") unpaidCount++;
-    if (d.bill?.status !== "inactive" && d.bill?.status !== "suspended") activeCount++;
+    if (d.active !== false && d.bill?.status !== "inactive" && d.bill?.status !== "suspended") activeCount++;
   });
 
   const staffNames = new Map(db.users.map((item) => [item.id, item.fullName || item.username || "Support"]));
   const messages = db.supportMessages
     .filter((item) => item.customerId === customer.id)
-    .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")))
+    .sort((a, b) => String(a.createdAt || "").localeCompare(String(a.createdAt || "")))
     .map((item) => ({
       ...item,
       senderName: item.senderType === "customer" ? customer.fullName : (staffNames.get(item.senderId) || "SpaceLink Support")
@@ -646,11 +655,11 @@ function buildCustomerBootstrap(db, customer) {
     bill: primaryDevice?.bill || null,
     fleetSummary: {
       totalDevices: devicesList.length,
-      totalUsageTB: Number(totalUsageTB.toFixed(2)),
-      totalLimitTB: totalLimitTB || 5,
-      remainingTB: Number(Math.max(0, totalLimitTB - totalUsageTB).toFixed(2)),
+      activeCount,
       unpaidCount,
-      activeCount
+      totalUsageTB: Number(totalUsageTB.toFixed(2)),
+      nearLimitCount: nearLimitDevices.length,
+      nearLimitDevices
     },
     usageRecords: db.usageRecords.filter((item) => {
       const m = String(item.machine || "").trim().toUpperCase();
@@ -1242,7 +1251,8 @@ async function handleApi(req, res, pathname) {
       kitNumber: record.kitNumber || "",
       serviceAddress: record.serviceAddress || "",
       region: record.region || "",
-      planStatus: record.planStatus || "normal"
+      planStatus: record.planStatus || "normal",
+      active: record.active !== false
     };
     if (index >= 0) db.deviceRecords.splice(index, 1, payload);
     else db.deviceRecords.push(payload);

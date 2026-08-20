@@ -331,7 +331,13 @@
                 <span class="summary-kicker">Bill Status</span>
                 <strong>Machine Bill Tracker</strong>
               </div>
-              <button id="openBillDialogBtn" class="entry-toggle" type="button" onclick="openBillDialog()">Add Machine</button>
+              <div class="header-tools">
+                <div class="sheet-filter-group" id="billFilterGroup">
+                  <button type="button" class="filter-chip active" data-filter="active" onclick="setBillActiveFilter('active')">Active Only</button>
+                  <button type="button" class="filter-chip" data-filter="all" onclick="setBillActiveFilter('all')">All Machines</button>
+                </div>
+                <button id="openBillDialogBtn" class="entry-toggle" type="button" onclick="openBillDialog()">Add Machine</button>
+              </div>
             </div>
             <div class="bill-legend">
               <span class="legend-dot green"></span> Bill sent / unpaid
@@ -392,6 +398,10 @@
               <strong>Registered Device Records</strong>
             </div>
             <div class="header-tools">
+              <div class="sheet-filter-group" id="deviceFilterGroup">
+                <button type="button" class="filter-chip active" data-filter="active" onclick="setDeviceActiveFilter('active')">Active Only</button>
+                <button type="button" class="filter-chip" data-filter="all" onclick="setDeviceActiveFilter('all')">All Devices</button>
+              </div>
               <button id="exportDevicesBtn" class="secondary-btn" type="button">Export Devices</button>
               <button id="openDeviceDialogBtn" class="entry-toggle" type="button" onclick="openDeviceDialog()">Add Device</button>
             </div>
@@ -408,6 +418,7 @@
                 <th>Service Address</th>
                 <th>Region</th>
                 <th>Plan</th>
+                <th>Status</th>
                 <th class="admin-action-col">Action</th>
               </tr>
             </thead>
@@ -454,7 +465,11 @@
               <strong>Machine Usage Ledger (Click machine to view Chart)</strong>
             </div>
             <div class="header-tools">
-              <input id="usageSearchInput" type="search" placeholder="Search machine or customer..." style="min-height:34px; width:220px; font-size:12px;">
+              <div class="sheet-filter-group" id="usageFilterGroup">
+                <button type="button" class="filter-chip active" data-filter="active" onclick="setUsageActiveFilter('active')">Active Only</button>
+                <button type="button" class="filter-chip" data-filter="all" onclick="setUsageActiveFilter('all')">All Machines</button>
+              </div>
+              <input id="usageSearchInput" type="search" placeholder="Search machine or customer..." style="min-height:34px; width:200px; font-size:12px;">
               <button id="openUsageDialogBtn" class="entry-toggle" type="button" onclick="openUsageDialog()">+ Add Daily Usage</button>
             </div>
           </div>
@@ -752,6 +767,13 @@
             <select id="planStatusInput">
               <option value="normal">Normal</option>
               <option value="discount">Discount</option>
+            </select>
+          </label>
+          <label>
+            Active Status
+            <select id="deviceActiveInput">
+              <option value="true">Active (In Service)</option>
+              <option value="false">Inactive / Suspended</option>
             </select>
           </label>
           <label class="wide">
@@ -1109,6 +1131,7 @@
         <td class="device-address-cell"></td>
         <td class="device-region-cell"></td>
         <td class="device-plan-cell"></td>
+        <td class="device-status-cell"></td>
         <td class="row-actions">
           <button type="button" class="edit-device" title="Edit device">Edit</button>
           <button type="button" class="delete-device danger" title="Delete device">Delete</button>
@@ -1154,6 +1177,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=7.6"></script>
+    <script src="app.js?v=7.7"></script>
   </body>
 </html>
