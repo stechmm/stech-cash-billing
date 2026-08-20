@@ -2249,7 +2249,44 @@ async function sendSupportMessage(event) {
 
 function closeUtilityMenu() {
   if (el.utilityMenu) el.utilityMenu.removeAttribute("open");
+  const um = document.querySelector("#utilityMenu") || document.querySelector(".utility-menu");
+  if (um) um.removeAttribute("open");
 }
+window.closeUtilityMenu = closeUtilityMenu;
+
+function openAdminPanel(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (!canAccess("adminPage")) return;
+  state.activePage = "adminPage";
+  closeUtilityMenu();
+  renderPage();
+  renderHeader();
+}
+window.openAdminPanel = openAdminPanel;
+
+function openColorSettings(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeUtilityMenu();
+  syncColorInputs();
+  setDialogOpen(el.colorDialog, true);
+}
+window.openColorSettings = openColorSettings;
+
+function triggerRestoreBackup(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeUtilityMenu();
+  if (el.importJsonInput) el.importJsonInput.click();
+}
+window.triggerRestoreBackup = triggerRestoreBackup;
 
 function closeActionMenus() {
   document.querySelectorAll(".action-menu[open]").forEach((menu) => menu.removeAttribute("open"));
@@ -2281,13 +2318,19 @@ async function doLogin(event) {
   }
 }
 
-async function doLogout() {
+async function doLogout(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeUtilityMenu();
   await api("/api/logout", { method: "POST" });
   state.user = null;
   appRealtimeSocket?.close();
   appRealtimeSocket = null;
   showLogin();
 }
+window.doLogout = doLogout;
 
 async function importBackup(event) {
   const file = event.target.files[0];
@@ -2303,10 +2346,15 @@ async function importBackup(event) {
   await refreshState();
 }
 
-function exportBackup() {
+function exportBackup(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   closeUtilityMenu();
   window.location.href = "/api/export/backup.json";
 }
+window.exportBackup = exportBackup;
 
 function exportDevices() {
   window.location.href = "/api/export/devices.csv";

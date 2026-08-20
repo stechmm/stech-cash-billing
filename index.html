@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=6.2">
+    <link rel="stylesheet" href="styles.css?v=6.3">
     <script>
       (function(){
         try {
@@ -83,12 +83,12 @@
               <span></span>
             </summary>
             <div class="utility-panel">
-              <button id="adminPanelBtn" class="utility-item" type="button">⚙️ Admin Panel</button>
-              <button id="exportJsonBtn" class="utility-item" type="button">💾 Export Backup</button>
-              <button id="openColorSettingsBtn" class="utility-item" type="button">🎨 Color Settings</button>
-              <button id="restoreBackupBtn" class="utility-item" type="button">📥 Restore Backup</button>
+              <button id="adminPanelBtn" class="utility-item" type="button" onclick="openAdminPanel(event)">⚙️ Admin Panel</button>
+              <button id="exportJsonBtn" class="utility-item" type="button" onclick="exportBackup(event)">💾 Export Backup</button>
+              <button id="openColorSettingsBtn" class="utility-item" type="button" onclick="openColorSettings(event)">🎨 Color Settings</button>
+              <button id="restoreBackupBtn" class="utility-item" type="button" onclick="triggerRestoreBackup(event)">📥 Restore Backup</button>
               <input id="importJsonInput" type="file" accept="application/json" class="hidden">
-              <button id="logoutBtn" class="utility-item danger-item" type="button">🚪 Logout</button>
+              <button id="logoutBtn" class="utility-item danger-item" type="button" onclick="doLogout(event)">🚪 Logout</button>
             </div>
           </details>
         </div>
@@ -1112,6 +1112,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=6.2"></script>
+    <script src="app.js?v=6.3"></script>
   </body>
 </html>
