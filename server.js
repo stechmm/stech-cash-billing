@@ -1153,8 +1153,11 @@ async function handleApi(req, res, pathname) {
     const storage = await storageInfo();
     return json(res, 200, {
       ok: true,
-      app: "S-Tech Billing",
+      app: "SpaceLink S-Tech Billing",
+      version: "7.8.2-live",
       environment: process.env.NODE_ENV || "development",
+      usersCount: (db.users || []).length,
+      customersCount: (db.customerAccounts || []).length,
       storage
     });
   }
