@@ -59,10 +59,22 @@ function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
 }
 
 function verifyPassword(password, stored) {
-  const [salt, expected] = String(stored || "").split(":");
+  if (!stored || !password) return false;
+  const strStored = String(stored || "").trim();
+  if (!strStored.includes(":")) {
+    return String(password) === strStored;
+  }
+  const [salt, expected] = strStored.split(":");
   if (!salt || !expected) return false;
-  const actual = crypto.pbkdf2Sync(password, salt, 120000, 32, "sha256").toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected));
+  try {
+    const actual = crypto.pbkdf2Sync(String(password), salt, 120000, 32, "sha256").toString("hex");
+    const actualBuf = Buffer.from(actual);
+    const expectedBuf = Buffer.from(expected);
+    if (actualBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(actualBuf, expectedBuf);
+  } catch {
+    return false;
+  }
 }
 
 function currentMonthKey() {
@@ -1154,8 +1166,9 @@ async function handleApi(req, res, pathname) {
 
   if (pathname === "/api/login" && req.method === "POST") {
     const body = await readBody(req);
-    const user = db.users.find((item) => item.username === String(body.username || "").trim());
-    if (!user || !verifyPassword(String(body.password || ""), user.passwordHash)) {
+    const username = String(body.username || "").trim().toLowerCase();
+    const user = db.users.find((item) => String(item.username || "").trim().toLowerCase() === username);
+    if (!user || !verifyPassword(String(body.password || ""), user.passwordHash || user.password)) {
       return json(res, 401, { error: "Invalid username or password" });
     }
     const sid = createSession(user.id, db);
@@ -1183,7 +1196,7 @@ async function handleApi(req, res, pathname) {
     const body = await readBody(req);
     const username = String(body.username || "").trim().toLowerCase();
     const customer = db.customerAccounts.find((item) => String(item.username || "").trim().toLowerCase() === username);
-    if (!customer || customer.active === false || !verifyPassword(String(body.password || ""), customer.passwordHash)) {
+    if (!customer || customer.active === false || !verifyPassword(String(body.password || ""), customer.passwordHash || customer.password)) {
       return json(res, 401, { error: "Invalid username or password" });
     }
     const sid = createCustomerSession(customer.id, db);
@@ -1796,22 +1809,32 @@ async function handleApi(req, res, pathname) {
     if (!requireAdmin(user, res)) return;
     const body = await readBody(req);
     const record = body.record || {};
+    const username = String(record.username || "").trim();
+    if (!username) {
+      return json(res, 400, { error: "Username is required" });
+    }
+    const targetId = record.id || makeId();
+    const duplicate = db.users.find((item) => item.id !== targetId && String(item.username || "").trim().toLowerCase() === username.toLowerCase());
+    if (duplicate) {
+      return json(res, 409, { error: "Username already exists" });
+    }
+    const index = db.users.findIndex((item) => item.id === targetId);
+    const existing = index >= 0 ? db.users[index] : null;
+    if (!existing && !record.password) {
+      return json(res, 400, { error: "Password is required for new user" });
+    }
     const payload = {
-      id: record.id || makeId(),
-      fullName: record.fullName || "",
-      username: record.username || "",
+      id: targetId,
+      fullName: String(record.fullName || "").trim(),
+      username,
       role: record.role === "admin" ? "admin" : "user",
       allowedTabs: Array.isArray(record.allowedTabs)
         ? record.allowedTabs.filter((tab) => USER_TABS.includes(tab))
-        : USER_TABS
+        : USER_TABS,
+      passwordHash: record.password
+        ? hashPassword(String(record.password))
+        : (existing ? (existing.passwordHash || existing.password) : "")
     };
-    if (record.password) {
-      payload.passwordHash = hashPassword(record.password);
-    } else if (record.id) {
-      const existing = db.users.find((item) => item.id === record.id);
-      if (existing) payload.passwordHash = existing.passwordHash || existing.password;
-    }
-    const index = db.users.findIndex((item) => item.id === payload.id);
     if (index >= 0) db.users.splice(index, 1, payload);
     else db.users.push(payload);
     await writeDb(db);
