@@ -790,13 +790,22 @@ function updateState(snapshot) {
 
 async function refreshState() {
   const currentPage = state.activePage;
-  const snapshot = await api("/api/bootstrap");
-  updateState(snapshot);
-  if (currentPage && canAccess(currentPage)) {
-    state.activePage = currentPage;
+  try {
+    const snapshot = await api("/api/bootstrap");
+    updateState(snapshot);
+    if (currentPage && canAccess(currentPage)) {
+      state.activePage = currentPage;
+    }
+    render();
+    connectAppRealtime();
+  } catch (err) {
+    // Only redirect to login on actual auth failures (session expired)
+    if (err.message === "Unauthorized" || err.message === "Forbidden" || err.message === "Request failed") {
+      showLogin();
+    }
+    // For other errors (server crash, network error) - keep current UI intact
+    // just silently ignore so user doesn't get logged out accidentally
   }
-  render();
-  connectAppRealtime();
 }
 
 function showLogin(message = "") {
@@ -2476,10 +2485,14 @@ async function saveUserRecord(event) {
     role: el.userRoleInput.value,
     allowedTabs: getSelectedTabs()
   };
-  await api("/api/users/record", { method: "POST", body: JSON.stringify({ record: payload }) });
-  resetUserForm();
-  setDialogOpen(el.userDialog, false);
-  await refreshState();
+  try {
+    await api("/api/users/record", { method: "POST", body: JSON.stringify({ record: payload }) });
+    resetUserForm();
+    setDialogOpen(el.userDialog, false);
+    await refreshState();
+  } catch (err) {
+    alert("❌ Failed to save user: " + (err.message || "Unknown error"));
+  }
 }
 
 function editUserRecord(id) {
@@ -2500,8 +2513,12 @@ function editUserRecord(id) {
 async function deleteUserRecord(id) {
   const ok = confirm("Delete this user?");
   if (!ok) return;
-  await api(`/api/users/record?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-  await refreshState();
+  try {
+    await api(`/api/users/record?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    await refreshState();
+  } catch (err) {
+    alert("❌ Failed to delete user: " + (err.message || "Unknown error"));
+  }
 }
 
 async function saveCustomerAccount(event) {
@@ -2516,10 +2533,14 @@ async function saveCustomerAccount(event) {
     password: el.customerAccountPassword.value,
     active: el.customerAccountStatus.value === "active"
   };
-  await api("/api/customer-accounts/record", { method: "POST", body: JSON.stringify({ record: payload }) });
-  resetCustomerAccountForm();
-  setDialogOpen(el.customerAccountDialog, false);
-  await refreshState();
+  try {
+    await api("/api/customer-accounts/record", { method: "POST", body: JSON.stringify({ record: payload }) });
+    resetCustomerAccountForm();
+    setDialogOpen(el.customerAccountDialog, false);
+    await refreshState();
+  } catch (err) {
+    alert("❌ Failed to save customer account: " + (err.message || "Unknown error"));
+  }
 }
 
 function editCustomerAccount(id) {
