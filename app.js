@@ -312,7 +312,9 @@ async function api(path, options = {}) {
   const payload = contentType.includes("application/json") ? await response.json() : await response.text();
   if (!response.ok) {
     const message = typeof payload === "object" && payload?.error ? payload.error : "Request failed";
-    throw new Error(message);
+    const err = new Error(message);
+    err.status = response.status;
+    throw err;
   }
   return payload;
 }
@@ -799,12 +801,11 @@ async function refreshState() {
     render();
     connectAppRealtime();
   } catch (err) {
-    // Only redirect to login on actual auth failures (session expired)
-    if (err.message === "Unauthorized" || err.message === "Forbidden" || err.message === "Request failed") {
+    // Only redirect to login on actual 401 Unauthorized (session expired or invalidated)
+    if (err.status === 401 || err.message === "Unauthorized") {
       showLogin();
     }
-    // For other errors (server crash, network error) - keep current UI intact
-    // just silently ignore so user doesn't get logged out accidentally
+    // Network errors or temporary hiccups will NOT log the user out
   }
 }
 

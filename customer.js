@@ -96,7 +96,11 @@ async function customerApi(path, options = {}) {
     ...options
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
+  if (!response.ok) {
+    const err = new Error(data.error || "Request failed");
+    err.status = response.status;
+    throw err;
+  }
   return data;
 }
 

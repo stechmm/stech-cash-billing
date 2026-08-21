@@ -1806,10 +1806,10 @@ async function handleApi(req, res, pathname) {
         : USER_TABS
     };
     if (record.password) {
-      payload.password = hashPassword(record.password);
+      payload.passwordHash = hashPassword(record.password);
     } else if (record.id) {
       const existing = db.users.find((item) => item.id === record.id);
-      if (existing) payload.password = existing.password;
+      if (existing) payload.passwordHash = existing.passwordHash || existing.password;
     }
     const index = db.users.findIndex((item) => item.id === payload.id);
     if (index >= 0) db.users.splice(index, 1, payload);
