@@ -2491,6 +2491,7 @@ async function saveUserRecord(event) {
     resetUserForm();
     setDialogOpen(el.userDialog, false);
     await refreshState();
+    alert("✅ User saved successfully!");
   } catch (err) {
     alert("❌ Failed to save user: " + (err.message || "Unknown error"));
   }
@@ -2517,6 +2518,7 @@ async function deleteUserRecord(id) {
   try {
     await api(`/api/users/record?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     await refreshState();
+    alert("✅ User deleted successfully!");
   } catch (err) {
     alert("❌ Failed to delete user: " + (err.message || "Unknown error"));
   }
@@ -2539,6 +2541,7 @@ async function saveCustomerAccount(event) {
     resetCustomerAccountForm();
     setDialogOpen(el.customerAccountDialog, false);
     await refreshState();
+    alert("✅ Customer account saved successfully!");
   } catch (err) {
     alert("❌ Failed to save customer account: " + (err.message || "Unknown error"));
   }
