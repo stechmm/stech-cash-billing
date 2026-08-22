@@ -2514,8 +2514,8 @@ input:disabled {
 .device-dashboard {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .bill-panel {
@@ -2524,6 +2524,7 @@ input:disabled {
   border-radius: 18px;
   background: #0d121f;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  margin-bottom: 24px;
 }
 
 .device-panel {
@@ -2532,6 +2533,7 @@ input:disabled {
   border-radius: 18px;
   background: #0d121f;
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  margin-bottom: 28px;
 }
 
 .usage-alert-panel {
