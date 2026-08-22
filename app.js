@@ -2764,21 +2764,68 @@ function togglePasswordVisibility(inputId, btn) {
 }
 window.togglePasswordVisibility = togglePasswordVisibility;
 
+let currentLoginRole = "staff";
+
+function setLoginRole(role) {
+  currentLoginRole = role === "customer" ? "customer" : "staff";
+  const tabs = document.querySelectorAll(".login-role-tab");
+  tabs.forEach(t => {
+    const isAct = t.dataset.role === currentLoginRole;
+    t.classList.toggle("active", isAct);
+    t.setAttribute("aria-selected", isAct ? "true" : "false");
+  });
+  
+  const kicker = document.getElementById("loginKicker");
+  const title = document.getElementById("loginTitle");
+  const subtext = document.getElementById("loginSubtext");
+  const submitBtn = document.getElementById("loginSubmitBtn");
+  const userPlaceholder = document.getElementById("loginUsername");
+  if (el.loginMessage) el.loginMessage.textContent = "";
+
+  if (currentLoginRole === "customer") {
+    if (kicker) kicker.textContent = "SpaceLink Customer Portal";
+    if (title) title.textContent = "Customer Sign In";
+    if (subtext) subtext.textContent = "View live satellite usage, billing invoices, announcements & customer support.";
+    if (submitBtn) submitBtn.textContent = "Sign In as Customer";
+    if (userPlaceholder) userPlaceholder.placeholder = "Enter customer username";
+  } else {
+    if (kicker) kicker.textContent = "SpaceLink Satellite Operations";
+    if (title) title.textContent = "Sign in to SpaceLink";
+    if (subtext) subtext.textContent = "Satellite billing management, cash ledger, and operations portal.";
+    if (submitBtn) submitBtn.textContent = "Sign In to Dashboard";
+    if (userPlaceholder) userPlaceholder.placeholder = "Enter username";
+  }
+}
+window.setLoginRole = setLoginRole;
+
 async function doLogin(event) {
   event.preventDefault();
   el.loginMessage.textContent = "";
+  const username = el.loginUsername.value.trim();
+  const password = el.loginPassword.value;
+  if (!username || !password) {
+    el.loginMessage.textContent = "Please enter both username and password.";
+    return;
+  }
+
   try {
-    await api("/api/login", {
-      method: "POST",
-      body: JSON.stringify({
-        username: el.loginUsername.value.trim(),
-        password: el.loginPassword.value
-      })
-    });
-    el.loginForm.reset();
-    await refreshState();
+    if (currentLoginRole === "customer") {
+      await api("/api/customer/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password })
+      });
+      // Redirect to Customer Portal
+      window.location.href = "/customer/";
+    } else {
+      await api("/api/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password })
+      });
+      el.loginForm.reset();
+      await refreshState();
+    }
   } catch (error) {
-    el.loginMessage.textContent = error.message;
+    el.loginMessage.textContent = error.message || "Invalid username or password";
   }
 }
 

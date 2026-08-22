@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=8.5">
+    <link rel="stylesheet" href="styles.css?v=8.6">
     <script>
       (function(){
         try {
@@ -24,11 +24,23 @@
         <div class="login-brand-header">
           <span class="brand-mark">S</span>
           <div>
-            <span class="summary-kicker">SpaceLink Satellite Network</span>
-            <h2>Sign in to SpaceLink</h2>
+            <span id="loginKicker" class="summary-kicker">SpaceLink Satellite Network</span>
+            <h2 id="loginTitle">Sign in to SpaceLink</h2>
           </div>
         </div>
-        <p class="login-subtext">Satellite billing management, cash ledger, and operations portal.</p>
+        <p id="loginSubtext" class="login-subtext">Satellite billing management, cash ledger, and operations portal.</p>
+
+        <!-- Role Selector Tab: Admin/Staff vs Customer -->
+        <div class="login-role-tabs" role="tablist">
+          <button type="button" class="login-role-tab active" data-role="staff" onclick="setLoginRole('staff')" role="tab" aria-selected="true">
+            <span class="role-icon">🛡️</span>
+            <span>Admin / Staff</span>
+          </button>
+          <button type="button" class="login-role-tab" data-role="customer" onclick="setLoginRole('customer')" role="tab" aria-selected="false">
+            <span class="role-icon">👤</span>
+            <span>Customer</span>
+          </button>
+        </div>
         
         <form id="loginForm" class="login-form">
           <label>
@@ -59,7 +71,7 @@
             </label>
           </div>
 
-          <button type="submit" class="primary login-btn">Sign In to Dashboard</button>
+          <button type="submit" id="loginSubmitBtn" class="primary login-btn">Sign In to Dashboard</button>
           <p id="loginMessage" class="login-message"></p>
         </form>
 
@@ -1361,6 +1373,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=8.5"></script>
+    <script src="app.js?v=8.6"></script>
   </body>
 </html>
