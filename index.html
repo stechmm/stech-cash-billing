@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=8.6">
+    <link rel="stylesheet" href="styles.css?v=8.7">
     <script>
       (function(){
         try {
@@ -25,27 +25,15 @@
           <span class="brand-mark">S</span>
           <div>
             <span id="loginKicker" class="summary-kicker">SpaceLink Satellite Network</span>
-            <h2 id="loginTitle">Sign in to SpaceLink</h2>
+            <h2 id="loginTitle">Customer Sign In</h2>
           </div>
         </div>
-        <p id="loginSubtext" class="login-subtext">Satellite billing management, cash ledger, and operations portal.</p>
-
-        <!-- Role Selector Tab: Admin/Staff vs Customer -->
-        <div class="login-role-tabs" role="tablist">
-          <button type="button" class="login-role-tab active" data-role="staff" onclick="setLoginRole('staff')" role="tab" aria-selected="true">
-            <span class="role-icon">🛡️</span>
-            <span>Admin / Staff</span>
-          </button>
-          <button type="button" class="login-role-tab" data-role="customer" onclick="setLoginRole('customer')" role="tab" aria-selected="false">
-            <span class="role-icon">👤</span>
-            <span>Customer</span>
-          </button>
-        </div>
+        <p id="loginSubtext" class="login-subtext">View live satellite usage, billing invoices, announcements &amp; 24/7 technical support.</p>
         
         <form id="loginForm" class="login-form">
           <label>
             Username
-            <input id="loginUsername" type="text" placeholder="Enter username" autocomplete="username" required>
+            <input id="loginUsername" type="text" placeholder="Enter customer username" autocomplete="username" required>
           </label>
           <label>
             Password
@@ -71,33 +59,72 @@
             </label>
           </div>
 
-          <button type="submit" id="loginSubmitBtn" class="primary login-btn">Sign In to Dashboard</button>
+          <button type="submit" id="loginSubmitBtn" class="primary login-btn">Sign In to Customer Portal</button>
           <p id="loginMessage" class="login-message"></p>
         </form>
 
-        <div class="login-divider">
-          <span>Customer Mobile App</span>
+        <!-- Admin / Staff Login Switch Link at bottom -->
+        <div class="login-role-footer">
+          <span id="loginRoleHintText">Are you an Admin or Staff member?</span>
+          <button type="button" id="loginRoleToggleBtn" class="staff-link-btn" onclick="toggleLoginRole()">
+            <span id="loginRoleBtnText">Sign in to Staff Console &rarr;</span>
+          </button>
         </div>
 
-        <a href="/SpaceLinkCustomer.apk" class="login-download-card" download="SpaceLinkCustomer.apk" title="Download SpaceLink Customer Android App">
-          <div class="download-icon-box">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-              <line x1="12" y1="18" x2="12.01" y2="18"></line>
-            </svg>
-          </div>
-          <div class="download-info">
-            <strong>Download for Android (.apk)</strong>
-            <span>100% Native Jetpack Compose • Real-time Noti</span>
-          </div>
-          <div class="download-badge">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-          </div>
-        </a>
+        <div class="login-divider">
+          <span>Download Client Apps</span>
+        </div>
+
+        <div class="login-download-grid">
+          <!-- Android APK Card -->
+          <a href="/SpaceLinkCustomer.apk" class="login-download-card android-card" download="SpaceLinkCustomer.apk" title="Download SpaceLink Customer Android App">
+            <div class="download-icon-box android-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+              </svg>
+            </div>
+            <div class="download-info">
+              <div class="download-title-row">
+                <strong>Android App (.apk)</strong>
+                <span class="platform-badge green">Mobile</span>
+              </div>
+              <span>Native Compose &bull; Live Usage &bull; Push Noti</span>
+            </div>
+            <div class="download-badge">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </div>
+          </a>
+
+          <!-- Windows Desktop Client Card -->
+          <a href="/SpaceLinkWindows.exe" class="login-download-card windows-card" download="SpaceLinkWindows.exe" title="Download SpaceLink Desktop Client for Windows">
+            <div class="download-icon-box windows-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+            </div>
+            <div class="download-info">
+              <div class="download-title-row">
+                <strong>Windows Client (.exe)</strong>
+                <span class="platform-badge blue">Desktop</span>
+              </div>
+              <span>64-bit Windows 10/11 &bull; Direct Link</span>
+            </div>
+            <div class="download-badge">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </div>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -1373,6 +1400,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=8.6"></script>
+    <script src="app.js?v=8.7"></script>
   </body>
 </html>

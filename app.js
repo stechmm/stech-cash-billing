@@ -2764,39 +2764,44 @@ function togglePasswordVisibility(inputId, btn) {
 }
 window.togglePasswordVisibility = togglePasswordVisibility;
 
-let currentLoginRole = "staff";
+let currentLoginRole = "customer";
 
 function setLoginRole(role) {
-  currentLoginRole = role === "customer" ? "customer" : "staff";
-  const tabs = document.querySelectorAll(".login-role-tab");
-  tabs.forEach(t => {
-    const isAct = t.dataset.role === currentLoginRole;
-    t.classList.toggle("active", isAct);
-    t.setAttribute("aria-selected", isAct ? "true" : "false");
-  });
+  currentLoginRole = role === "staff" ? "staff" : "customer";
   
   const kicker = document.getElementById("loginKicker");
   const title = document.getElementById("loginTitle");
   const subtext = document.getElementById("loginSubtext");
   const submitBtn = document.getElementById("loginSubmitBtn");
   const userPlaceholder = document.getElementById("loginUsername");
+  const roleHintText = document.getElementById("loginRoleHintText");
+  const roleBtnText = document.getElementById("loginRoleBtnText");
   if (el.loginMessage) el.loginMessage.textContent = "";
 
   if (currentLoginRole === "customer") {
-    if (kicker) kicker.textContent = "SpaceLink Customer Portal";
+    if (kicker) kicker.textContent = "SpaceLink Satellite Network";
     if (title) title.textContent = "Customer Sign In";
-    if (subtext) subtext.textContent = "View live satellite usage, billing invoices, announcements & customer support.";
-    if (submitBtn) submitBtn.textContent = "Sign In as Customer";
+    if (subtext) subtext.textContent = "View live satellite usage, billing invoices, announcements & 24/7 technical support.";
+    if (submitBtn) submitBtn.textContent = "Sign In to Customer Portal";
     if (userPlaceholder) userPlaceholder.placeholder = "Enter customer username";
+    if (roleHintText) roleHintText.textContent = "Are you an Admin or Staff member?";
+    if (roleBtnText) roleBtnText.textContent = "Sign in to Staff Console →";
   } else {
-    if (kicker) kicker.textContent = "SpaceLink Satellite Operations";
-    if (title) title.textContent = "Sign in to SpaceLink";
-    if (subtext) subtext.textContent = "Satellite billing management, cash ledger, and operations portal.";
-    if (submitBtn) submitBtn.textContent = "Sign In to Dashboard";
-    if (userPlaceholder) userPlaceholder.placeholder = "Enter username";
+    if (kicker) kicker.textContent = "SpaceLink Operations Console";
+    if (title) title.textContent = "Staff & Admin Sign In";
+    if (subtext) subtext.textContent = "Satellite billing operations, cash ledger, usage monitoring, and system control.";
+    if (submitBtn) submitBtn.textContent = "Sign In to Staff Dashboard";
+    if (userPlaceholder) userPlaceholder.placeholder = "Enter staff / admin username";
+    if (roleHintText) roleHintText.textContent = "Are you a customer?";
+    if (roleBtnText) roleBtnText.textContent = "← Switch to Customer Portal";
   }
 }
 window.setLoginRole = setLoginRole;
+
+function toggleLoginRole() {
+  setLoginRole(currentLoginRole === "customer" ? "staff" : "customer");
+}
+window.toggleLoginRole = toggleLoginRole;
 
 async function doLogin(event) {
   event.preventDefault();
