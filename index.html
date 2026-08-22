@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=8.3">
+    <link rel="stylesheet" href="styles.css?v=8.5">
     <script>
       (function(){
         try {
@@ -587,7 +587,31 @@
           </table>
         </section>
 
-        <section class="device-panel">
+        <!-- Customer Portal Stats Row (Spacer Row) -->
+        <section class="device-dashboard customer-portal-dashboard" style="margin-top: 36px; margin-bottom: 20px;">
+          <div class="bill-card bill-blue">
+            <span>Customer Accounts</span>
+            <strong id="customerAccountCount">0</strong>
+            <small>Active portal logins</small>
+          </div>
+          <div class="bill-card bill-green">
+            <span>Active Logins</span>
+            <strong id="customerActiveCount">0</strong>
+            <small>Service enabled</small>
+          </div>
+          <div class="bill-card bill-amber">
+            <span>Linked Devices</span>
+            <strong id="customerLinkedDeviceCount">0</strong>
+            <small>Connected terminals</small>
+          </div>
+          <div class="bill-card bill-gray">
+            <span>Customer Portal</span>
+            <strong>/customer/</strong>
+            <small>Self-service URL</small>
+          </div>
+        </section>
+
+        <section class="device-panel admin-customer-panel" style="margin-top: 12px; margin-bottom: 36px;">
           <div class="ledger-topline">
             <div>
               <span class="summary-kicker">Customer App</span>
@@ -1337,6 +1361,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=8.4"></script>
+    <script src="app.js?v=8.5"></script>
   </body>
 </html>

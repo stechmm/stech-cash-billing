@@ -1796,6 +1796,22 @@ function renderAdminPage() {
   if (el.userCount) el.userCount.textContent = state.users.length;
   if (el.adminCount) el.adminCount.textContent = admins;
   if (el.standardUserCount) el.standardUserCount.textContent = Math.max(0, state.users.length - admins);
+
+  // Update Customer Portal Stats
+  const elCustomerAccountCount = document.getElementById("customerAccountCount");
+  const elCustomerActiveCount = document.getElementById("customerActiveCount");
+  const elCustomerLinkedDeviceCount = document.getElementById("customerLinkedDeviceCount");
+  if (elCustomerAccountCount) elCustomerAccountCount.textContent = state.customerAccounts.length;
+  if (elCustomerActiveCount) elCustomerActiveCount.textContent = state.customerAccounts.filter(c => c.active !== false).length;
+  if (elCustomerLinkedDeviceCount) {
+    const devSet = new Set();
+    state.customerAccounts.forEach(c => {
+      const list = Array.isArray(c.linkedDeviceIds) && c.linkedDeviceIds.length > 0 ? c.linkedDeviceIds : (c.linkedDeviceId ? String(c.linkedDeviceId).split(",").map(s => s.trim().toUpperCase()).filter(Boolean) : []);
+      list.forEach(d => devSet.add(d));
+    });
+    elCustomerLinkedDeviceCount.textContent = devSet.size;
+  }
+
   if (el.userBody) el.userBody.innerHTML = "";
 
   state.users.forEach((user) => {
