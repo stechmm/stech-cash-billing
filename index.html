@@ -958,7 +958,7 @@
           </div>
           <button id="closeUserDialogBtn" class="modal-close" type="button" aria-label="Close dialog" onclick="closeUserDialog()">x</button>
         </div>
-        <form id="userForm" class="dialog-form user-form">
+        <form id="userForm" class="dialog-form user-form" onsubmit="event.preventDefault(); return false;">
           <input type="hidden" id="userRecordId">
           <label>
             Full Name
@@ -991,7 +991,7 @@
             </div>
           </div>
           <div class="form-actions">
-            <button type="submit" id="saveUserBtn" class="primary">Save User</button>
+            <button type="button" id="saveUserBtn" class="primary" onclick="saveUserRecord(event)">Save User</button>
             <button type="button" id="resetUserBtn" onclick="resetUserForm()">Clear</button>
             <button type="button" id="cancelUserBtn" onclick="closeUserDialog()">Cancel</button>
           </div>
@@ -1009,17 +1009,17 @@
           <input type="hidden" id="customerAccountId">
           <label>Name<input id="customerAccountName" type="text" placeholder="Customer or Company Name" required></label>
           <label>Username<input id="customerAccountUsername" type="text" placeholder="customer01" required></label>
-          <label class="wide">
-            Linked Device
-            <input id="customerAccountDeviceId" type="text" placeholder="F04 (or F04, F05, F08)" required>
+          <label>
+            Linked Machine / Device ID (Comma separated if multiple)
+            <input id="customerAccountDeviceId" type="text" placeholder="MM-ST-001, MM-ST-002" required>
           </label>
-          <label>Password<input id="customerAccountPassword" type="password" placeholder="Required for new account"></label>
+          <div id="customerDeviceChips" class="customer-device-chips hidden"></div>
+          <label>Password<input id="customerAccountPassword" type="password" placeholder="Leave blank to keep current password"></label>
           <label>Status<select id="customerAccountStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-          <div class="customer-app-link"><span>Customer App</span><strong>/customer/</strong></div>
           <div class="form-actions">
-            <button id="saveCustomerAccountBtn" type="submit" class="primary">Save Customer</button>
-            <button id="resetCustomerAccountBtn" type="button" onclick="resetCustomerAccountForm()">Clear</button>
-            <button id="cancelCustomerAccountBtn" type="button" onclick="closeCustomerAccountDialog()">Cancel</button>
+            <button type="button" id="saveCustomerAccountBtn" class="primary" onclick="saveCustomerAccount(event)">Save Account</button>
+            <button type="button" id="resetCustomerAccountBtn" onclick="resetCustomerAccountForm()">Clear</button>
+            <button type="button" id="cancelCustomerAccountBtn" onclick="closeCustomerAccountDialog()">Cancel</button>
           </div>
         </form>
       </div>
@@ -1310,6 +1310,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=8.0"></script>
+    <script src="app.js?v=8.2"></script>
   </body>
 </html>

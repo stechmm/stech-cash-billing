@@ -2477,15 +2477,31 @@ async function deleteUsageRecord(id) {
 }
 
 async function saveUserRecord(event) {
-  event.preventDefault();
+  if (event && event.preventDefault) event.preventDefault();
+  const username = el.userUsernameInput.value.trim();
+  const password = el.userPasswordInput.value;
+  const isEditing = Boolean(el.userRecordId.value);
+
+  if (!username) {
+    alert("⚠️ Please enter a Username.");
+    el.userUsernameInput.focus();
+    return;
+  }
+  if (!isEditing && !password) {
+    alert("⚠️ Please enter a Password for the new user.");
+    el.userPasswordInput.focus();
+    return;
+  }
+
   const payload = {
     id: el.userRecordId.value || undefined,
     fullName: el.userFullNameInput.value.trim(),
-    username: el.userUsernameInput.value.trim(),
-    password: el.userPasswordInput.value,
+    username,
+    password: password || undefined,
     role: el.userRoleInput.value,
     allowedTabs: getSelectedTabs()
   };
+
   try {
     await api("/api/users/record", { method: "POST", body: JSON.stringify({ record: payload }) });
     resetUserForm();
@@ -2496,6 +2512,7 @@ async function saveUserRecord(event) {
     alert("❌ Failed to save user: " + (err.message || "Unknown error"));
   }
 }
+window.saveUserRecord = saveUserRecord;
 
 function editUserRecord(id) {
   const user = state.users.find((item) => item.id === id);
@@ -2511,6 +2528,7 @@ function editUserRecord(id) {
   el.saveUserBtn.textContent = "Update User";
   setDialogOpen(el.userDialog, true);
 }
+window.editUserRecord = editUserRecord;
 
 async function deleteUserRecord(id) {
   const ok = confirm("Delete this user?");
@@ -2523,19 +2541,41 @@ async function deleteUserRecord(id) {
     alert("❌ Failed to delete user: " + (err.message || "Unknown error"));
   }
 }
+window.deleteUserRecord = deleteUserRecord;
 
 async function saveCustomerAccount(event) {
-  event.preventDefault();
+  if (event && event.preventDefault) event.preventDefault();
+  const username = el.customerAccountUsername.value.trim();
+  const password = el.customerAccountPassword.value;
+  const isEditing = Boolean(el.customerAccountId.value);
   const linkedDeviceIds = el.customerAccountDeviceId.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+
+  if (!username) {
+    alert("⚠️ Please enter a Customer Username.");
+    el.customerAccountUsername.focus();
+    return;
+  }
+  if (linkedDeviceIds.length === 0) {
+    alert("⚠️ Please enter at least one Linked Device ID (e.g. MM-ST-001).");
+    el.customerAccountDeviceId.focus();
+    return;
+  }
+  if (!isEditing && !password) {
+    alert("⚠️ Please enter a Password for the new customer account.");
+    el.customerAccountPassword.focus();
+    return;
+  }
+
   const payload = {
     id: el.customerAccountId.value || undefined,
     fullName: el.customerAccountName.value.trim(),
-    username: el.customerAccountUsername.value.trim(),
+    username,
     linkedDeviceId: linkedDeviceIds[0] || "",
     linkedDeviceIds,
-    password: el.customerAccountPassword.value,
+    password: password || undefined,
     active: el.customerAccountStatus.value === "active"
   };
+
   try {
     await api("/api/customer-accounts/record", { method: "POST", body: JSON.stringify({ record: payload }) });
     resetCustomerAccountForm();
@@ -2546,6 +2586,7 @@ async function saveCustomerAccount(event) {
     alert("❌ Failed to save customer account: " + (err.message || "Unknown error"));
   }
 }
+window.saveCustomerAccount = saveCustomerAccount;
 
 function editCustomerAccount(id) {
   const customer = state.customerAccounts.find((item) => item.id === id);
