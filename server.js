@@ -16,20 +16,29 @@ const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3030);
 const APP_DIR = __dirname;
 function resolveDbFile() {
-  const rootDb = path.join(APP_DIR, "app-db.json");
-  const dataDir = path.resolve(process.env.DATA_DIR || path.join(APP_DIR, "data"));
+  const homeMatch = APP_DIR.match(/^(\/home\/[^/]+)/);
+  const defaultExtDir = homeMatch ? path.join(homeMatch[1], "stech_data") : path.join(APP_DIR, "data");
+  const dataDir = path.resolve(process.env.DATA_DIR || defaultExtDir);
   const dataDb = path.join(dataDir, "app-db.json");
-  if (process.env.DATA_DIR) {
-    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  const repoDataDb = path.join(APP_DIR, "data", "app-db.json");
+  const rootDb = path.join(APP_DIR, "app-db.json");
+
+  if (!fs.existsSync(dataDir)) {
+    try { fs.mkdirSync(dataDir, { recursive: true }); } catch (e) {}
+  }
+
+  // If external dataDb doesn't exist yet, automatically copy existing DB so data is preserved
+  if (!fs.existsSync(dataDb)) {
+    if (fs.existsSync(repoDataDb)) {
+      try { fs.copyFileSync(repoDataDb, dataDb); } catch(e){}
+    } else if (fs.existsSync(rootDb)) {
+      try { fs.copyFileSync(rootDb, dataDb); } catch(e){}
+    }
+  }
+
+  if (fs.existsSync(dataDb) || !fs.existsSync(repoDataDb)) {
     return { dataDir, dbFile: dataDb };
   }
-  if (fs.existsSync(rootDb)) {
-    return { dataDir: APP_DIR, dbFile: rootDb };
-  }
-  if (fs.existsSync(dataDb)) {
-    return { dataDir, dbFile: dataDb };
-  }
-  // Default to root app-db.json for maximum simplicity and accessibility
   return { dataDir: APP_DIR, dbFile: rootDb };
 }
 const { dataDir: DATA_DIR, dbFile: DB_FILE } = resolveDbFile();
