@@ -90,9 +90,14 @@ let customerRecorder = null;
 let customerRecordingStream = null;
 
 async function customerApi(path, options = {}) {
+  const token = localStorage.getItem("stech_customer_session_token");
   const response = await fetch(path, {
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+      ...(options.headers || {})
+    },
     ...options
   });
   const data = await response.json().catch(() => ({}));
@@ -1468,6 +1473,7 @@ function showCustomerLogin() {
   customerState.customer = null;
   customerRealtimeSocket?.close();
   customerRealtimeSocket = null;
+  localStorage.removeItem("stech_customer_session_token");
   customerEl.app.classList.add("hidden");
   customerEl.login.classList.remove("hidden");
 }
@@ -1476,10 +1482,13 @@ async function submitCustomerLogin(event) {
   event.preventDefault();
   customerEl.loginError.textContent = "";
   try {
-    await customerApi("/api/customer/login", {
+    const res = await customerApi("/api/customer/login", {
       method: "POST",
       body: JSON.stringify({ username: customerEl.username.value.trim(), password: customerEl.password.value })
     });
+    if (res && (res.token || res.sid)) {
+      localStorage.setItem("stech_customer_session_token", res.token || res.sid);
+    }
     customerEl.loginForm.reset();
     customerEl.login.classList.add("hidden");
     customerEl.app.classList.remove("hidden");

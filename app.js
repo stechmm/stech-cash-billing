@@ -300,10 +300,12 @@ const el = {
 };
 
 async function api(path, options = {}) {
+  const sessionToken = localStorage.getItem("stech_session_token");
   const response = await fetch(path, {
     credentials: "same-origin",
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(sessionToken ? { "Authorization": `Bearer ${sessionToken}` } : {}),
       ...(options.headers || {})
     },
     ...options
@@ -2928,17 +2930,23 @@ async function doLogin(event) {
 
   try {
     if (currentLoginRole === "customer") {
-      await api("/api/customer/login", {
+      const res = await api("/api/customer/login", {
         method: "POST",
         body: JSON.stringify({ username, password })
       });
+      if (res && (res.token || res.sid)) {
+        localStorage.setItem("stech_customer_session_token", res.token || res.sid);
+      }
       // Redirect to Customer Portal
       window.location.href = "/customer/";
     } else {
-      await api("/api/login", {
+      const res = await api("/api/login", {
         method: "POST",
         body: JSON.stringify({ username, password })
       });
+      if (res && (res.token || res.sid)) {
+        localStorage.setItem("stech_session_token", res.token || res.sid);
+      }
       el.loginForm.reset();
       await refreshState();
     }
@@ -2952,8 +2960,11 @@ async function doLogout(event) {
     event.preventDefault();
     event.stopPropagation();
   }
+  localStorage.removeItem("stech_session_token");
   closeUtilityMenu();
-  await api("/api/logout", { method: "POST" });
+  try {
+    await api("/api/logout", { method: "POST" });
+  } catch {}
   state.user = null;
   appRealtimeSocket?.close();
   appRealtimeSocket = null;
@@ -3002,14 +3013,25 @@ async function boot() {
   try {
     applyBillColors(loadBillColors());
     syncColorInputs();
-    const session = await api("/api/session");
-    if (!session || !session.user) {
-      showLogin();
+    
+    // 1. Check for active staff / admin session
+    const session = await api("/api/session").catch(() => ({ user: null }));
+    if (session && session.user) {
+      state.user = session.user;
+      await refreshState();
+      showApp();
       return;
     }
-    state.user = session.user;
-    await refreshState();
-    showApp();
+
+    // 2. If no staff session, check if active customer session exists (seamlessly route to /customer/)
+    const custSession = await api("/api/customer/session").catch(() => ({ customer: null }));
+    if (custSession && custSession.customer) {
+      window.location.href = "/customer/";
+      return;
+    }
+
+    // 3. Otherwise show Login screen
+    showLogin();
   } catch (err) {
     console.error("Boot session error:", err);
     showLogin();

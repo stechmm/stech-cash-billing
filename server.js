@@ -557,14 +557,14 @@ const THIRTY_DAYS_SEC = 30 * 24 * 60 * 60; // 30 days = 2,592,000 seconds
 
 function cookieOptions(req, maxAge = THIRTY_DAYS_SEC) {
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "").toLowerCase();
-  const isSecureRequest = req.socket.encrypted || forwardedProto.includes("https");
+  const isSecureRequest = req.socket.encrypted || forwardedProto.includes("https") || String(req.headers.host || "").includes("billing.stechmm.com");
   const parts = ["HttpOnly", "Path=/", "SameSite=Lax"];
   if (typeof maxAge === "number") {
     parts.push(`Max-Age=${maxAge}`);
     const expiresDate = new Date(Date.now() + maxAge * 1000).toUTCString();
     parts.push(`Expires=${expiresDate}`);
   }
-  if (IS_PRODUCTION && isSecureRequest) parts.push("Secure");
+  if (isSecureRequest) parts.push("Secure");
   return parts.join("; ");
 }
 
@@ -685,7 +685,9 @@ function createSession(userId, db) {
 
 function getCurrentUser(req, db) {
   const cookies = parseCookies(req);
-  const sid = cookies[SESSION_COOKIE];
+  const authHeader = String(req.headers.authorization || "").trim();
+  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  const sid = cookies[SESSION_COOKIE] || bearerToken;
   if (!sid) return null;
   let session = sessions.get(sid);
   if (!session && db?.sessions?.[sid]) {
@@ -703,7 +705,9 @@ function getCurrentUser(req, db) {
 
 function clearSession(req, res, db) {
   const cookies = parseCookies(req);
-  const sid = cookies[SESSION_COOKIE];
+  const authHeader = String(req.headers.authorization || "").trim();
+  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  const sid = cookies[SESSION_COOKIE] || bearerToken;
   if (sid) {
     sessions.delete(sid);
     if (db?.sessions) delete db.sessions[sid];
@@ -724,7 +728,9 @@ function createCustomerSession(customerId, db) {
 
 function getCurrentCustomer(req, db) {
   const cookies = parseCookies(req);
-  const sid = cookies[CUSTOMER_SESSION_COOKIE];
+  const authHeader = String(req.headers.authorization || "").trim();
+  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+  const sid = cookies[CUSTOMER_SESSION_COOKIE] || bearerToken;
   if (!sid) return null;
   let session = customerSessions.get(sid);
   if (!session && db?.customerSessions?.[sid]) {
@@ -1196,7 +1202,7 @@ async function handleApi(req, res, pathname) {
     return json(
       res,
       200,
-      { user: safeUser(user) },
+      { user: safeUser(user), sid, token: sid },
       { "Set-Cookie": `${SESSION_COOKIE}=${sid}; ${cookieOptions(req)}` }
     );
   }
@@ -1221,7 +1227,7 @@ async function handleApi(req, res, pathname) {
     }
     const sid = createCustomerSession(customer.id, db);
     await writeDb(db);
-    return json(res, 200, { customer: safeCustomerAccount(customer) }, {
+    return json(res, 200, { customer: safeCustomerAccount(customer), sid, token: sid }, {
       "Set-Cookie": `${CUSTOMER_SESSION_COOKIE}=${sid}; ${cookieOptions(req)}`
     });
   }
