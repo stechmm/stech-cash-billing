@@ -55,7 +55,11 @@ const STATIC_TYPES = {
   ".css": "text/css; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml"
+  ".svg": "image/svg+xml",
+  ".apk": "application/vnd.android.package-archive",
+  ".exe": "application/vnd.microsoft.portable-executable",
+  ".ico": "image/x-icon",
+  ".png": "image/png"
 };
 
 function makeId() {
@@ -555,7 +559,11 @@ function cookieOptions(req, maxAge = THIRTY_DAYS_SEC) {
   const forwardedProto = String(req.headers["x-forwarded-proto"] || "").toLowerCase();
   const isSecureRequest = req.socket.encrypted || forwardedProto.includes("https");
   const parts = ["HttpOnly", "Path=/", "SameSite=Lax"];
-  if (typeof maxAge === "number") parts.push(`Max-Age=${maxAge}`);
+  if (typeof maxAge === "number") {
+    parts.push(`Max-Age=${maxAge}`);
+    const expiresDate = new Date(Date.now() + maxAge * 1000).toUTCString();
+    parts.push(`Expires=${expiresDate}`);
+  }
   if (IS_PRODUCTION && isSecureRequest) parts.push("Secure");
   return parts.join("; ");
 }

@@ -2964,13 +2964,16 @@ async function boot() {
     applyBillColors(loadBillColors());
     syncColorInputs();
     const session = await api("/api/session");
-    if (!session.user) {
+    if (!session || !session.user) {
       showLogin();
       return;
     }
+    state.user = session.user;
     await refreshState();
-  } catch {
-    showLogin("Server connection failed.");
+    showApp();
+  } catch (err) {
+    console.error("Boot session error:", err);
+    showLogin();
   }
 }
 
