@@ -555,7 +555,7 @@ function renderCustomerApp() {
 
   if (isFleetAll) {
     const nearLimitList = customerState.fleetSummary?.nearLimitDevices || [];
-    customerEl.deviceSummary.textContent = `Fleet of ${devices.length} Starlink Machines | Individual 5.0 TB Limits`;
+    customerEl.deviceSummary.textContent = `Fleet of ${devices.length} Satellite Machines | Individual 5.0 TB Limits`;
     
     // Left Card: Total Fleet Machines
     if (customerEl.usageTotal.previousElementSibling) {
@@ -1311,7 +1311,7 @@ function printOrSaveVoucher(no, name, machine, amount, date, month) {
             <tr>
               <td class="center"><strong>1</strong></td>
               <td>
-                <div class="item-name">Starlink Internet Bill</div>
+                <div class="item-name">SpaceLink Internet Bill</div>
                 <div class="item-sub">(${periodStr})</div>
               </td>
               <td class="center">1</td>

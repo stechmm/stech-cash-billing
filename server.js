@@ -134,7 +134,7 @@ function defaultSnapshot() {
       heroGreeting: "Welcome back",
       heroSubtitle: "Satellite connectivity, usage tracking, and billing operations.",
       bannerEnabled: true,
-      bannerText: "⚡ Starlink Priority & Roam services active and operational.",
+      bannerText: "⚡ SpaceLink Priority & Roam services active and operational.",
       enabledModules: {
         usageChart: true,
         dailyHistory: true,
@@ -155,7 +155,7 @@ function defaultSnapshot() {
       autoVouchersEnabled: true,
       companyName: "S-Tech Telecommunication Services",
       companyPhone: "+95 9 777 888 999",
-      companyVoucherFooter: "Thank you for subscribing to S-Tech Starlink High-Speed Satellite Internet."
+      companyVoucherFooter: "Thank you for subscribing to S-Tech High-Speed Satellite Internet."
     },
     vouchers: [],
     months: {
@@ -212,7 +212,7 @@ function ensureAppSettings(db) {
       heroGreeting: "Welcome back",
       heroSubtitle: "Satellite connectivity, usage tracking, and billing operations.",
       bannerEnabled: true,
-      bannerText: "⚡ Starlink Priority & Roam services active and operational.",
+      bannerText: "⚡ SpaceLink Priority & Roam services active and operational.",
       enabledModules: {
         usageChart: true,
         dailyHistory: true,
@@ -256,7 +256,7 @@ function ensureSystemSettings(db) {
     autoVouchersEnabled: true,
     companyName: "S-Tech Telecommunication Services",
     companyPhone: "+95 9 777 888 999",
-    companyVoucherFooter: "Thank you for subscribing to S-Tech Starlink High-Speed Satellite Internet."
+    companyVoucherFooter: "Thank you for subscribing to S-Tech High-Speed Satellite Internet."
   };
   for (const [k, v] of Object.entries(defaults)) {
     if (db.systemSettings[k] === undefined) {
@@ -358,7 +358,7 @@ function generateAndSendVoucher(db, { customerId, customerName, machineId, amoun
     monthKey: monthKey || currentMonthKey(),
     paymentMethod: paymentMethod || "Bank Transfer / Cash",
     status: "PAID",
-    notes: notes || "Starlink Monthly Subscription",
+    notes: notes || "SpaceLink Monthly Subscription",
     companyName: db.systemSettings.companyName || "S-Tech Telecommunication Services",
     companyPhone: db.systemSettings.companyPhone || "+95 9 777 888 999",
     createdAt: new Date().toISOString()
