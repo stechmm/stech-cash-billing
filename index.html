@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=9.1">
+    <link rel="stylesheet" href="styles.css?v=9.2">
     <script>
       (function(){
         try {
@@ -487,15 +487,15 @@
           </div>
 
           <div class="metric income">
-            <span>Recorded Today</span>
+            <span>Recorded Machines</span>
             <strong id="usageRecordedTodayCount">0</strong>
-            <small id="usageRecordedTodaySub">0 completed</small>
+            <small id="usageRecordedTodaySub">0 with records</small>
           </div>
 
           <div class="metric expense">
-            <span>Pending Today</span>
+            <span>Unrecorded</span>
             <strong id="usagePendingTodayCount">0</strong>
-            <small id="usagePendingTodaySub">0 machines remaining</small>
+            <small id="usagePendingTodaySub">0 without records</small>
           </div>
         </section>
 
@@ -521,7 +521,7 @@
                 <th style="width: 120px;">Machine</th>
                 <th>Customer</th>
                 <th>Plan Status</th>
-                <th style="width: 150px;">Today's Record</th>
+                <th style="width: 170px;">Last Recorded</th>
                 <th style="width: 150px;" class="money">Month Total</th>
                 <th style="width: 120px;">Limit</th>
                 <th style="width: 120px;">Remaining</th>
@@ -1511,6 +1511,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=9.1"></script>
+    <script src="app.js?v=9.2"></script>
   </body>
 </html>

@@ -1144,6 +1144,17 @@ function renderDevicePage() {
   el.deviceRegionCount.textContent = regions.size;
 }
 
+function formatUsageDateBadge(dateStr) {
+  if (!dateStr) return "";
+  const parts = dateStr.split("-");
+  if (parts.length < 3) return dateStr;
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  const mName = monthNames[m] || parts[1];
+  return `${mName} ${d}`;
+}
+
 function renderUsagePage() {
   const currentMonth = state.activeMonth || currentMonthKey();
   const allMachineIds = getAllMachineIds();
@@ -1174,10 +1185,17 @@ function renderUsagePage() {
     const totalTB = usageRec ? usageTotal(usageRec) : 0;
     const limitTB = Number(usageRec?.usageLimitTB || 5);
     const remainingTB = Math.max(limitTB - totalTB, 0);
-    const todayUsageTB = Number(usageRec?.dailyUsage?.[todayStr] || 0);
+
+    // Find latest recorded entry for this machine in current month
+    const recordedEntries = Object.entries(usageRec?.dailyUsage || {})
+      .filter(([dateStr, val]) => Number(val) > 0)
+      .sort(([a], [b]) => b.localeCompare(a));
+    
+    const hasRecorded = recordedEntries.length > 0;
+    const latestEntry = hasRecorded ? recordedEntries[0] : null;
 
     fleetTotalTB += totalTB;
-    if (todayUsageTB > 0) {
+    if (hasRecorded) {
       recordedTodayCount++;
     } else {
       pendingTodayCount++;
@@ -1218,13 +1236,17 @@ function renderUsagePage() {
     const tdPlan = document.createElement("td");
     tdPlan.innerHTML = `<span style="text-transform:uppercase; font-size:11px; font-weight:700; color:#0f766e;">${plan}</span>`;
 
-    // Today Status Pill
+    // Last Recorded Status Pill (Date + Usage)
     const tdToday = document.createElement("td");
-    if (todayUsageTB > 0) {
-      tdToday.innerHTML = `<span class="today-status-badge recorded">✓ ${(todayUsageTB * 1000).toFixed(1)} GB</span>`;
+    if (latestEntry) {
+      const [latestDate, latestValTB] = latestEntry;
+      const latestGB = (Number(latestValTB) * 1000).toFixed(1);
+      const badgeDate = formatUsageDateBadge(latestDate);
+      tdToday.innerHTML = `<span class="today-status-badge recorded" title="Last entry on ${latestDate} (${latestGB} GB)">📅 ${badgeDate} <small style="color:#a7f3d0; margin-left:3px; font-weight:600;">(${latestGB} GB)</small></span>`;
     } else {
-      tdToday.innerHTML = `<span class="today-status-badge pending">⏳ Pending</span>`;
+      tdToday.innerHTML = `<span class="today-status-badge pending">⏳ No records</span>`;
     }
+
     // Month Total (Accumulated)
     const tdTotal = document.createElement("td");
     tdTotal.className = "money";
@@ -1253,7 +1275,7 @@ function renderUsagePage() {
   if (el.usageRecordedTodayCount) el.usageRecordedTodayCount.textContent = recordedTodayCount;
   if (el.usageRecordedTodaySub) el.usageRecordedTodaySub.textContent = `${recordedTodayCount} of ${allMachineIds.length} recorded`;
   if (el.usagePendingTodayCount) el.usagePendingTodayCount.textContent = pendingTodayCount;
-  if (el.usagePendingTodaySub) el.usagePendingTodaySub.textContent = `${pendingTodayCount} machines pending today`;
+  if (el.usagePendingTodaySub) el.usagePendingTodaySub.textContent = `${pendingTodayCount} machines without records`;
 }
 
 function renderUsageAlerts(items) {
