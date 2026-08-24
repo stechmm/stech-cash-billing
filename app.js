@@ -1458,7 +1458,12 @@ function makeSupportMessageRow(item, selected) {
   }
 
   const body = document.createElement("p");
-  body.textContent = item.message || "";
+  if (item.topic === "announcement" || item.announcementId || item.broadcastId || (item.message && item.message.includes("<b>"))) {
+    body.innerHTML = String(item.message || "").replace(/\n/g, "<br>");
+    bubble.classList.add("broadcast-announcement-bubble");
+  } else {
+    body.textContent = item.message || "";
+  }
   if (!item.message) body.classList.add("hidden");
   bubble.append(body);
 
@@ -1992,12 +1997,79 @@ function openAnnouncementDialog() {
   if (el.announcementDialog) setDialogOpen(el.announcementDialog, true);
 }
 
+function openBroadcastDialog() {
+  const form = document.getElementById("broadcastForm");
+  if (form) form.reset();
+  const countLabel = document.getElementById("broadcastCustomerCountLabel");
+  const activeCount = (state.customerAccounts || []).filter(c => c.active !== false).length;
+  if (countLabel) countLabel.textContent = `${activeCount} active customer accounts`;
+  const dialog = document.getElementById("broadcastDialog");
+  if (dialog) setDialogOpen(dialog, true);
+}
+
+function closeBroadcastDialog() {
+  const dialog = document.getElementById("broadcastDialog");
+  if (dialog) setDialogOpen(dialog, false);
+}
+
+async function sendBroadcastMessage(event) {
+  if (event) event.preventDefault();
+  const rawMessage = document.getElementById("broadcastMessage")?.value?.trim();
+  const title = document.getElementById("broadcastTitle")?.value?.trim();
+  const topic = document.getElementById("broadcastTopic")?.value || "announcement";
+  const alsoAnnouncement = document.getElementById("broadcastAlsoAsAnnouncement")?.checked === true;
+
+  if (!rawMessage) {
+    alert("Please write a message to broadcast.");
+    return;
+  }
+
+  const activeCount = (state.customerAccounts || []).filter(c => c.active !== false).length;
+  if (!activeCount) {
+    alert("No active customer accounts found to receive this broadcast.");
+    return;
+  }
+
+  const confirmed = confirm(`📢 Broadcast Message to ${activeCount} Customers?\n\nThis message will be sent directly to all customer support chat threads.`);
+  if (!confirmed) return;
+
+  const btn = document.getElementById("sendBroadcastBtn");
+  const origText = btn ? btn.textContent : "";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Sending to All...";
+  }
+
+  try {
+    const res = await api("/api/support/broadcast", {
+      method: "POST",
+      body: JSON.stringify({
+        message: rawMessage,
+        title,
+        topic,
+        alsoAnnouncement
+      })
+    });
+    alert(`✅ Broadcast message sent successfully to ${res.count || activeCount} customers!`);
+    closeBroadcastDialog();
+    await refreshState();
+  } catch (err) {
+    alert("❌ Failed to broadcast message: " + (err.message || "Unknown error"));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  }
+}
+
 window.openEntryDialog = openEntryDialog;
 window.openBillDialog = openBillDialog;
 window.openDeviceDialog = openDeviceDialog;
 window.openUserDialog = openUserDialog;
 window.openCustomerAccountDialog = openCustomerAccountDialog;
 window.openAnnouncementDialog = openAnnouncementDialog;
+window.openBroadcastDialog = openBroadcastDialog;
 
 window.closeEntryDialog = closeEntryDialog;
 window.closeBillDialog = closeBillDialog;
@@ -2005,8 +2077,10 @@ window.closeDeviceDialog = closeDeviceDialog;
 window.closeUserDialog = closeUserDialog;
 window.closeCustomerAccountDialog = closeCustomerAccountDialog;
 window.closeAnnouncementDialog = closeAnnouncementDialog;
+window.closeBroadcastDialog = closeBroadcastDialog;
 window.closeColorDialog = closeColorDialog;
 window.resetDefaultColors = resetDefaultColors;
+window.sendBroadcastMessage = sendBroadcastMessage;
 
 function resetEntryForm() {
   el.entryForm.reset();

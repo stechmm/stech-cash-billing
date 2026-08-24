@@ -1671,6 +1671,21 @@ textarea:focus {
   color: #94a3b8;
 }
 
+.broadcast-announcement-bubble,
+.staff-message.broadcast-announcement-bubble,
+.message-bubble.broadcast-announcement-bubble {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(13, 148, 136, 0.18)) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.18) !important;
+}
+
+.broadcast-announcement-bubble p b,
+.staff-message.broadcast-announcement-bubble p b,
+.message-bubble.broadcast-announcement-bubble p b {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
 /* Reply Quote Inside Message Bubble */
 .message-reply-quote {
   background: rgba(0, 0, 0, 0.25);

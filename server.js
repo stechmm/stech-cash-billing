@@ -1437,6 +1437,36 @@ async function handleApi(req, res, pathname) {
     };
     if (index >= 0) db.announcements.splice(index, 1, payload);
     else db.announcements.push(payload);
+
+    // Auto-broadcast announcement into all active customers' support chat
+    if (payload.active) {
+      const typeIcons = { general: "📢", billing: "💳", maintenance: "🔧" };
+      const icon = typeIcons[payload.type] || "📢";
+      const formattedAnnouncement = `${icon} <b>[ANNOUNCEMENT] ${title}</b>\n\n${message}`;
+      const nowIso = new Date().toISOString();
+      (db.customerAccounts || []).forEach((cust) => {
+        if (cust.active === false) return;
+        const hasExistingMsg = existing && db.supportMessages.some(m => m.announcementId === payload.id && m.customerId === cust.id);
+        if (!hasExistingMsg) {
+          db.supportMessages.push({
+            id: makeId(),
+            customerId: cust.id,
+            senderType: "staff",
+            senderId: user.id,
+            topic: "announcement",
+            announcementId: payload.id,
+            message: formattedAnnouncement,
+            attachment: null,
+            reactions: {},
+            createdAt: nowIso,
+            readByCustomer: false,
+            readByStaff: true
+          });
+        }
+      });
+      broadcastRealtime({ type: "support_message" });
+    }
+
     await writeDb(db);
     broadcastRealtime({ type: "announcement_updated" });
     return json(res, 200, { ok: true });
@@ -1450,6 +1480,81 @@ async function handleApi(req, res, pathname) {
     await writeDb(db);
     broadcastRealtime({ type: "announcement_updated" });
     return json(res, 200, { ok: true });
+  }
+
+  if (pathname === "/api/support/broadcast" && req.method === "POST") {
+    if (!requireTab(user, "supportPage", res)) return;
+    const body = await readBody(req);
+    const rawMessage = String(body.message || "").trim();
+    const title = String(body.title || "").trim();
+    const topic = String(body.topic || "announcement").trim();
+    const alsoAnnouncement = body.alsoAnnouncement === true;
+    
+    if (!rawMessage) return json(res, 400, { error: "Message is required" });
+    if (rawMessage.length > 3000) return json(res, 400, { error: "Message is too long" });
+
+    let attachment = null;
+    try {
+      attachment = saveChatAttachment(body.attachment);
+    } catch (error) {
+      return json(res, 400, { error: error.message });
+    }
+
+    const topicIcons = {
+      announcement: "📢",
+      maintenance: "🔧",
+      billing: "💳",
+      promotion: "🎁",
+      urgent: "🚨",
+      general: "💬"
+    };
+    const icon = topicIcons[topic] || "📢";
+    const headerPrefix = title ? `${icon} <b>[${title.toUpperCase()}]</b>\n\n` : `${icon} `;
+    const fullMessage = title ? `${headerPrefix}${rawMessage}` : `${icon} ${rawMessage}`;
+
+    const activeCustomers = (db.customerAccounts || []).filter(c => c.active !== false);
+    if (!activeCustomers.length) {
+      return json(res, 400, { error: "No active customer accounts found to broadcast" });
+    }
+
+    const nowIso = new Date().toISOString();
+    const broadcastId = makeId();
+
+    activeCustomers.forEach((cust) => {
+      db.supportMessages.push({
+        id: makeId(),
+        customerId: cust.id,
+        senderType: "staff",
+        senderId: user.id,
+        topic,
+        broadcastId,
+        message: fullMessage,
+        attachment: attachment ? { ...attachment } : null,
+        reactions: {},
+        createdAt: nowIso,
+        readByCustomer: false,
+        readByStaff: true
+      });
+    });
+
+    if (alsoAnnouncement) {
+      const annType = ["billing", "maintenance"].includes(topic) ? topic : "general";
+      db.announcements.push({
+        id: broadcastId,
+        title: title || `${icon} General Notice`,
+        message: rawMessage,
+        type: annType,
+        active: true,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+        authorId: user.id
+      });
+      broadcastRealtime({ type: "announcement_updated" });
+    }
+
+    await writeDb(db);
+    broadcastRealtime({ type: "support_message" });
+    return json(res, 200, { ok: true, count: activeCustomers.length });
   }
 
   if (pathname === "/api/support/message" && req.method === "POST") {

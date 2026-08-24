@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=8.7">
+    <link rel="stylesheet" href="styles.css?v=8.9">
     <script>
       (function(){
         try {
@@ -538,6 +538,12 @@
             <div class="support-panel-head">
               <div><span class="summary-kicker">Inbox</span><strong>Customer Conversations</strong></div>
               <span id="supportUnreadTotal" class="support-count">0</span>
+            </div>
+            <div class="support-broadcast-toolbar" style="padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.4);">
+              <button type="button" class="btn-broadcast-all" onclick="openBroadcastDialog()" style="width: 100%; padding: 8px 12px; border-radius: 10px; background: linear-gradient(135deg, #2563eb, #0284c7); color: #fff; border: 1px solid rgba(56,189,248,0.3); font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 12px rgba(37,99,235,0.3); transition: all 0.15s ease;">
+                <span style="font-size: 14px;">📢</span>
+                <span>Broadcast to All Customers</span>
+              </button>
             </div>
             <div id="supportConversationList" class="support-conversation-list"></div>
           </aside>
@@ -1128,9 +1134,59 @@
           <label class="wide">Message<textarea id="announcementMessage" maxlength="4000" placeholder="Write announcement..." required></textarea></label>
           <label class="check-item wide"><input id="announcementActive" type="checkbox" checked> Visible to customers</label>
           <div class="form-actions">
-            <button id="saveAnnouncementBtn" type="submit" class="primary">Publish</button>
+            <button id="saveAnnouncementBtn" type="submit" class="primary">Publish &amp; Broadcast</button>
             <button id="resetAnnouncementBtn" type="button" onclick="resetAnnouncementForm()">Clear</button>
             <button id="cancelAnnouncementBtn" type="button" onclick="closeAnnouncementDialog()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="broadcastDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="broadcastDialogTitle">
+      <div class="modal-panel wide-modal" style="max-width: 540px !important;">
+        <div class="modal-head">
+          <div>
+            <span class="summary-kicker">Customer Support</span>
+            <strong id="broadcastDialogTitle">📢 Broadcast Message to All Customers</strong>
+          </div>
+          <button id="closeBroadcastDialogBtn" class="modal-close" type="button" aria-label="Close dialog" onclick="closeBroadcastDialog()">x</button>
+        </div>
+        <form id="broadcastForm" class="dialog-form" onsubmit="sendBroadcastMessage(event); return false;">
+          <p style="font-size: 12.5px; color: #94a3b8; margin: 0; line-height: 1.5;">
+            Send a direct notification message to <strong style="color: #38bdf8;" id="broadcastCustomerCountLabel">all active customer accounts</strong>. The message will appear immediately in each customer's support chat.
+          </p>
+
+          <label>
+            Topic / Category
+            <select id="broadcastTopic">
+              <option value="announcement">📢 Announcement / Notice (အထွေထွေ အသိပေးချက်)</option>
+              <option value="maintenance">🔧 Maintenance / Outage (လိုင်းပြင်ဆင်မှု သတိပေးချက်)</option>
+              <option value="billing">💳 Billing &amp; Payment (ဘေလ်ပေးချေရန် သတိပေးချက်)</option>
+              <option value="promotion">🎁 Promotion / Update (အထူးအစီအစဉ်သစ်)</option>
+              <option value="urgent">🚨 Urgent Alert (အရေးပေါ် သတိပေးချက်)</option>
+            </select>
+          </label>
+
+          <label>
+            Heading / Title (Optional)
+            <input id="broadcastTitle" type="text" maxlength="120" placeholder="e.g. Scheduled Network Maintenance">
+          </label>
+
+          <label class="wide">
+            Broadcast Message
+            <textarea id="broadcastMessage" maxlength="3000" rows="4" placeholder="Write message to send to all customers..." required style="resize: vertical; min-height: 90px;"></textarea>
+          </label>
+
+          <label class="check-item wide" style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #cbd5e1; cursor: pointer;">
+            <input type="checkbox" id="broadcastAlsoAsAnnouncement" checked style="accent-color: #0284c7; width: 16px; height: 16px;">
+            <span>Also post as a pinned Announcement banner in Customer App</span>
+          </label>
+
+          <div class="form-actions">
+            <button id="sendBroadcastBtn" type="submit" class="primary" style="background: linear-gradient(135deg, #2563eb, #0284c7);">
+              🚀 Send Broadcast to All
+            </button>
+            <button type="button" onclick="closeBroadcastDialog()">Cancel</button>
           </div>
         </form>
       </div>
@@ -1417,6 +1473,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=8.8"></script>
+    <script src="app.js?v=8.9"></script>
   </body>
 </html>

@@ -697,7 +697,12 @@ function makeCustomerMessageRow(item) {
   }
 
   const body = document.createElement("p");
-  body.textContent = item.message || "";
+  if (item.topic === "announcement" || item.announcementId || item.broadcastId || (item.message && item.message.includes("<b>"))) {
+    body.innerHTML = String(item.message || "").replace(/\n/g, "<br>");
+    bubble.classList.add("broadcast-announcement-bubble");
+  } else {
+    body.textContent = item.message || "";
+  }
   if (!item.message) body.classList.add("hidden");
   bubble.append(body);
 
