@@ -157,6 +157,7 @@ const el = {
   planStatusInput: document.querySelector("#planStatusInput"),
   deviceActiveInput: document.querySelector("#deviceActiveInput"),
   saveDeviceBtn: document.querySelector("#saveDeviceBtn"),
+  deleteDeviceBtn: document.querySelector("#deleteDeviceBtn"),
 
   usageNearCount: document.querySelector("#usageNearCount"),
   usageCriticalCount: document.querySelector("#usageCriticalCount"),
@@ -2130,6 +2131,7 @@ function resetDeviceForm() {
   el.deviceRecordId.value = "";
   el.deviceDialogTitle.textContent = "Add Device";
   el.saveDeviceBtn.textContent = "Save Device";
+  if (el.deleteDeviceBtn) el.deleteDeviceBtn.classList.add("hidden");
   el.planStatusInput.value = "normal";
   if (el.deviceActiveInput) el.deviceActiveInput.value = "true";
 }
@@ -2361,16 +2363,31 @@ function editDeviceRecord(id) {
   }
   el.deviceDialogTitle.textContent = "Update Device";
   el.saveDeviceBtn.textContent = "Update Device";
+  if (el.deleteDeviceBtn) el.deleteDeviceBtn.classList.remove("hidden");
   setDialogOpen(el.deviceDialog, true);
 }
 
 async function deleteDeviceRecord(id) {
   if (!isAdmin()) return;
-  const ok = confirm("Delete this device record?");
+  const record = state.deviceRecords.find((item) => item.id === id);
+  const name = record ? `${record.deviceId || ""} (${record.name || ""})` : "this device";
+  const ok = confirm(`🗑️ Are you sure you want to delete ${name}?\n\nThis will remove the duplicate/obsolete device from the database.`);
   if (!ok) return;
-  await api(`/api/devices/record?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-  await refreshState();
+  try {
+    await api(`/api/devices/record?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    await refreshState();
+  } catch (err) {
+    alert("Failed to delete device: " + (err.message || "Unknown error"));
+  }
 }
+
+async function deleteDeviceRecordFromModal() {
+  const id = el.deviceRecordId.value;
+  if (!id) return;
+  await deleteDeviceRecord(id);
+  closeDeviceDialog();
+}
+window.deleteDeviceRecordFromModal = deleteDeviceRecordFromModal;
 
 function resetUsageForm() {
   if (el.usageForm) el.usageForm.reset();

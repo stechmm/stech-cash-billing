@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=9.2">
+    <link rel="stylesheet" href="styles.css?v=9.3">
     <script>
       (function(){
         try {
@@ -861,6 +861,7 @@
           </label>
           <div class="form-actions">
             <button type="submit" id="saveDeviceBtn" class="primary">Save Device</button>
+            <button type="button" id="deleteDeviceBtn" class="danger hidden" onclick="deleteDeviceRecordFromModal()" style="background: #dc2626; color: #fff; border: 1px solid rgba(255,255,255,0.2);">🗑️ Delete Device</button>
             <button type="button" id="resetDeviceBtn" onclick="resetDeviceForm()">Clear</button>
             <button type="button" id="cancelDeviceBtn" onclick="closeDeviceDialog()">Cancel</button>
           </div>
@@ -1511,6 +1512,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=9.2"></script>
+    <script src="app.js?v=9.3"></script>
   </body>
 </html>
