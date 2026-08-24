@@ -1163,7 +1163,7 @@ async function handleApi(req, res, pathname) {
     return json(res, 200, {
       ok: true,
       app: "SpaceLink S-Tech Billing",
-      version: "8.0.0-live",
+      version: "8.0.1-live",
       environment: process.env.NODE_ENV || "development",
       usersCount: (db.users || []).length,
       customersCount: (db.customerAccounts || []).length,
