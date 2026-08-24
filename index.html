@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=9.7">
+    <link rel="stylesheet" href="styles.css?v=9.8">
     <script>
       (function(){
         try {
@@ -979,9 +979,9 @@
 
             <div class="starlink-controls">
               <div class="starlink-period-tabs" id="modalVizPeriodTabs">
-                <button type="button" class="starlink-tab active" data-period="daily">Daily</button>
-                <button type="button" class="starlink-tab" data-period="monthly">Monthly</button>
-                <button type="button" class="starlink-tab" data-period="yearly">Yearly</button>
+                <button type="button" class="starlink-tab active" data-period="daily" onclick="setModalVizPeriod('daily')">Daily</button>
+                <button type="button" class="starlink-tab" data-period="monthly" onclick="setModalVizPeriod('monthly')">Monthly</button>
+                <button type="button" class="starlink-tab" data-period="yearly" onclick="setModalVizPeriod('yearly')">Yearly</button>
               </div>
             </div>
           </div>
@@ -1005,22 +1005,6 @@
               <div id="modalStarlinkTooltip" class="starlink-tooltip hidden"></div>
             </div>
           </div>
-
-          <!-- Inline Quick Entry for Current Machine -->
-          <form id="modalQuickRecordForm" class="obsidian-quick-bar">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="color: #38bdf8; font-size: 11.5px; font-weight: 800;">Record Daily Usage:</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <input type="date" id="modalQuickDate" style="height: 32px; padding: 0 8px; background: #131a29; border: 1px solid rgba(255,255,255,0.15); color: #ffffff; border-radius: 8px; font-size: 11.5px; font-weight: 600;" required>
-              <input type="number" id="modalQuickAmount" step="any" min="0" placeholder="e.g. 15.5" style="height: 32px; width: 95px; padding: 0 8px; background: #131a29; border: 1px solid rgba(255,255,255,0.15); color: #ffffff; border-radius: 8px; font-size: 11.5px; font-weight: 600;" required>
-              <div class="unit-toggle-pills compact-units" id="modalQuickUnitToggle" style="display: flex; background: #131a29; border: 1px solid rgba(255,255,255,0.12); padding: 2px; border-radius: 8px;">
-                <button type="button" class="unit-pill active" data-unit="GB" style="border: none; background: #2563eb; color: #fff; padding: 3px 8px; font-size: 10.5px; font-weight: 800; border-radius: 6px; cursor: pointer;">GB</button>
-                <button type="button" class="unit-pill" data-unit="TB" style="border: none; background: transparent; color: #64748b; padding: 3px 8px; font-size: 10.5px; font-weight: 800; border-radius: 6px; cursor: pointer;">TB</button>
-              </div>
-              <button type="submit" style="height: 32px; padding: 0 16px; border-radius: 8px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; border: none; font-size: 11.5px; font-weight: 800; cursor: pointer; box-shadow: 0 2px 8px rgba(37,99,235,0.4);">Save Usage</button>
-            </div>
-          </form>
 
           <!-- Bottom Stat Badges -->
           <div class="obsidian-stat-grid">
@@ -1538,6 +1522,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=9.7"></script>
+    <script src="app.js?v=9.8"></script>
   </body>
 </html>

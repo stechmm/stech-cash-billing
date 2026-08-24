@@ -610,25 +610,26 @@ const modalChartState = {
   unit: "GB"
 };
 
+function setModalVizPeriod(period) {
+  modalChartState.period = period || "daily";
+  if (el.modalVizPeriodTabs) {
+    el.modalVizPeriodTabs.querySelectorAll(".starlink-tab").forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.period === modalChartState.period);
+    });
+  }
+  renderModalMachineVisualizer();
+}
+window.setModalVizPeriod = setModalVizPeriod;
+
 function openMachineChartModal(machineId, monthKey = "") {
   if (!machineId) return;
   modalChartState.machineId = machineId;
   modalChartState.activeMonth = monthKey || state.activeMonth || currentMonthKey();
   modalChartState.period = "daily";
-  modalChartState.unit = "GB";
   
-  if (el.modalQuickDate) {
-    el.modalQuickDate.value = localDateKey();
-  }
-  if (el.modalQuickAmount) {
-    el.modalQuickAmount.value = "";
-  }
-  if (el.modalQuickUnitToggle) {
-    el.modalQuickUnitToggle.querySelectorAll(".unit-pill").forEach((btn) => {
-      const isGB = btn.dataset.unit === "GB";
-      btn.classList.toggle("active", isGB);
-      btn.style.background = isGB ? "#2563eb" : "transparent";
-      btn.style.color = isGB ? "#ffffff" : "#64748b";
+  if (el.modalVizPeriodTabs) {
+    el.modalVizPeriodTabs.querySelectorAll(".starlink-tab").forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.period === "daily");
     });
   }
   
@@ -665,23 +666,35 @@ function renderModalMachineVisualizer() {
   if (el.machineChartSubtitle) el.machineChartSubtitle.textContent = `Plan: ${String(planName).toUpperCase()} | Limit: ${limitTB.toFixed(1)} TB | ${monthLabel(currentMonth)}`;
   if (el.modalVizPlanLabel) el.modalVizPlanLabel.textContent = String(planName).toUpperCase();
   if (el.modalVizLimitLabel) el.modalVizLimitLabel.textContent = `${limitTB.toFixed(1)} TB Limit`;
-  if (el.modalVizPeriodBadge) el.modalVizPeriodBadge.textContent = monthLabel(currentMonth);
+
+  if (modalChartState.period === "daily") {
+    if (el.modalVizPeriodBadge) el.modalVizPeriodBadge.textContent = monthLabel(currentMonth);
+  } else if (modalChartState.period === "monthly") {
+    if (el.modalVizPeriodBadge) el.modalVizPeriodBadge.textContent = `Year ${yearNum}`;
+  } else if (modalChartState.period === "yearly") {
+    if (el.modalVizPeriodBadge) el.modalVizPeriodBadge.textContent = "Annual History";
+  }
 
   // Render Cycle Nav in Modal
   if (el.modalVizCycleNav) {
-    el.modalVizCycleNav.innerHTML = "";
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    for (let m = 1; m <= 12; m++) {
-      const mKey = `${yearNum}-${String(m).padStart(2, "0")}`;
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = `cycle-nav-btn ${mKey === currentMonth ? "active" : ""}`;
-      btn.textContent = monthNames[m - 1];
-      btn.onclick = () => {
-        modalChartState.activeMonth = mKey;
-        renderModalMachineVisualizer();
-      };
-      el.modalVizCycleNav.append(btn);
+    if (modalChartState.period === "daily") {
+      el.modalVizCycleNav.style.display = "flex";
+      el.modalVizCycleNav.innerHTML = "";
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      for (let m = 1; m <= 12; m++) {
+        const mKey = `${yearNum}-${String(m).padStart(2, "0")}`;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `cycle-nav-btn ${mKey === currentMonth ? "active" : ""}`;
+        btn.textContent = monthNames[m - 1];
+        btn.onclick = () => {
+          modalChartState.activeMonth = mKey;
+          renderModalMachineVisualizer();
+        };
+        el.modalVizCycleNav.append(btn);
+      }
+    } else {
+      el.modalVizCycleNav.style.display = "none";
     }
   }
 
@@ -3226,49 +3239,6 @@ if (el.modalVizPeriodTabs) {
       el.modalVizPeriodTabs.querySelectorAll(".starlink-tab").forEach((t) => t.classList.toggle("active", t === tab));
       renderModalMachineVisualizer();
     });
-  });
-}
-
-if (el.modalQuickUnitToggle) {
-  el.modalQuickUnitToggle.querySelectorAll(".unit-pill").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      modalChartState.unit = btn.dataset.unit;
-      el.modalQuickUnitToggle.querySelectorAll(".unit-pill").forEach((b) => {
-        const isActive = b === btn;
-        b.classList.toggle("active", isActive);
-        b.style.background = isActive ? "#2563eb" : "transparent";
-        b.style.color = isActive ? "#ffffff" : "#64748b";
-      });
-    });
-  });
-}
-
-if (el.modalQuickRecordForm) {
-  el.modalQuickRecordForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const date = el.modalQuickDate.value;
-    const rawVal = Number(el.modalQuickAmount.value || 0);
-    const unit = modalChartState.unit || "GB";
-    const valTB = unit === "TB" ? rawVal : rawVal / 1000;
-    const machine = modalChartState.machineId;
-    if (!machine || !date || valTB < 0) return;
-
-    try {
-      await api("/api/usage/record", {
-        method: "POST",
-        body: JSON.stringify({
-          machine,
-          date,
-          usageAmountTB: valTB
-        })
-      });
-      el.modalQuickAmount.value = "";
-      await refreshState();
-      renderModalMachineVisualizer();
-      renderUsagePage();
-    } catch (err) {
-      alert(err.message);
-    }
   });
 }
 
