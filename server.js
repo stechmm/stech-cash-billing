@@ -1817,6 +1817,14 @@ async function handleApi(req, res, pathname) {
     return json(res, 200, { ok: true });
   }
 
+  if (pathname === "/api/usage/reset" && req.method === "POST") {
+    if (!requireAdmin(user, res)) return;
+    db.usageRecords = [];
+    await writeDb(db);
+    broadcastRealtime({ type: "usage_updated" });
+    return json(res, 200, { ok: true, message: "All data usage records reset successfully" });
+  }
+
   if (pathname === "/api/users/record" && req.method === "POST") {
     if (!requireAdmin(user, res)) return;
     const body = await readBody(req);

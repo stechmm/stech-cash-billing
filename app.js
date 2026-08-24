@@ -3356,6 +3356,36 @@ function downloadZipBackup(event) {
   window.open("/api/admin/backup/download", "_blank");
 }
 
+async function resetAllDataUsageRecords() {
+  const confirmed = confirm("⚠️ ARE YOU SURE YOU WANT TO RESET ALL DATA USAGE RECORDS?\n\nThis will clear all daily data usage logs and limits across all devices so you can re-enter from scratch.\n\n(Device list, customers, and billing ledger will NOT be deleted).");
+  if (!confirmed) return;
+
+  const doubleConfirm = prompt("Type 'RESET' to confirm deleting all data usage records:");
+  if (!doubleConfirm || (doubleConfirm.trim().toUpperCase() !== "RESET")) {
+    alert("Reset cancelled. (Confirmation text did not match)");
+    return;
+  }
+
+  const btn = document.getElementById("resetAllUsageBtn");
+  const statusEl = document.getElementById("resetUsageStatus");
+  if (btn) btn.disabled = true;
+  if (statusEl) statusEl.textContent = "⏳ Resetting data usage records...";
+
+  try {
+    await api("/api/usage/reset", { method: "POST" });
+    await refreshState();
+    if (statusEl) statusEl.textContent = "✅ Reset complete!";
+    alert("✅ All Data Usage records have been cleared. You can now start entering fresh usage data from scratch.");
+    closeSystemSettingsDialog();
+  } catch (err) {
+    if (statusEl) statusEl.textContent = "";
+    alert("❌ Failed to reset usage records: " + (err.message || "Unknown error"));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+window.resetAllDataUsageRecords = resetAllDataUsageRecords;
+
 document.getElementById("systemSettingsForm")?.addEventListener("submit", saveSystemSettings);
 
 resetEntryForm();
