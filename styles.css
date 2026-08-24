@@ -2826,7 +2826,7 @@ input:disabled {
 
 .device-table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 1220px;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -2835,7 +2835,7 @@ input:disabled {
 
 .usage-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 960px;
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
@@ -2874,6 +2874,62 @@ input:disabled {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Resizable Table Header & Column Resizer */
+.resizable-table th {
+  position: relative;
+  user-select: none;
+}
+
+.column-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9px;
+  bottom: 0;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.column-resizer::after {
+  content: "";
+  display: block;
+  width: 2px;
+  height: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 1px;
+  transition: all 0.15s ease;
+}
+
+.column-resizer:hover::after,
+.column-resizer.resizing::after {
+  background: #38bdf8;
+  height: 100%;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.9);
+}
+
+body.resizing-columns {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* Device Table Column Width Distribution */
+.device-table th:nth-child(1), .device-table td:nth-child(1) { width: 46px; min-width: 36px; text-align: center; } /* No */
+.device-table th:nth-child(2), .device-table td:nth-child(2) { width: 125px; min-width: 80px; } /* Name */
+.device-table th:nth-child(3), .device-table td:nth-child(3) { width: 230px; min-width: 140px; } /* Email - Generous width */
+.device-table th:nth-child(4), .device-table td:nth-child(4) { width: 75px; min-width: 55px; font-weight: 800; color: #38bdf8; } /* Device ID - Compact */
+.device-table th:nth-child(5), .device-table td:nth-child(5) { width: 130px; min-width: 85px; } /* Serial Number */
+.device-table th:nth-child(6), .device-table td:nth-child(6) { width: 130px; min-width: 85px; } /* Kit Number */
+.device-table th:nth-child(7), .device-table td:nth-child(7) { width: 170px; min-width: 100px; } /* Service Address */
+.device-table th:nth-child(8), .device-table td:nth-child(8) { width: 75px; min-width: 50px; } /* Region */
+.device-table th:nth-child(9), .device-table td:nth-child(9) { width: 90px; min-width: 65px; } /* Plan */
+.device-table th:nth-child(10), .device-table td:nth-child(10) { width: 85px; min-width: 65px; } /* Status */
+.device-table th:nth-child(11), .device-table td:nth-child(11) { width: 90px; min-width: 80px; } /* Action */
 
 .bill-alert-cell {
   font-weight: 900;

@@ -1066,6 +1066,7 @@ function renderBillPage() {
   el.alertOneCount.textContent = alerts.due_1_day;
   el.alertSuspendedCount.textContent = alerts.suspended;
   renderAlertList(attention);
+  makeTableResizable(".bill-table", "stech_col_widths_bill");
 }
 
 function renderAlertList(items) {
@@ -1145,7 +1146,86 @@ function renderDevicePage() {
   el.deviceNormalCount.textContent = normal;
   el.deviceDiscountCount.textContent = discount;
   el.deviceRegionCount.textContent = regions.size;
+
+  makeTableResizable(".device-table", "stech_col_widths_device");
 }
+
+function makeTableResizable(tableSelector, storageKey) {
+  const table = typeof tableSelector === "string" ? document.querySelector(tableSelector) : tableSelector;
+  if (!table) return;
+  
+  table.classList.add("resizable-table");
+  const thead = table.querySelector("thead");
+  if (!thead) return;
+  const ths = Array.from(thead.querySelectorAll("th"));
+  if (ths.length === 0) return;
+
+  // Restore saved column widths if available
+  if (storageKey) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+      ths.forEach((th, idx) => {
+        if (saved[idx]) {
+          th.style.width = `${saved[idx]}px`;
+        }
+      });
+    } catch {}
+  }
+
+  ths.forEach((th, idx) => {
+    // Skip the last action column from having a right resizer
+    if (idx === ths.length - 1) return;
+    
+    // Avoid duplicate resizers
+    if (th.querySelector(".column-resizer")) return;
+
+    const resizer = document.createElement("div");
+    resizer.className = "column-resizer";
+    th.appendChild(resizer);
+
+    let startX = 0;
+    let startWidth = 0;
+
+    const onMouseDown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startX = e.pageX;
+      startWidth = th.offsetWidth;
+      resizer.classList.add("resizing");
+      document.body.classList.add("resizing-columns");
+
+      const onMouseMove = (moveEvent) => {
+        const diff = moveEvent.pageX - startX;
+        const newWidth = Math.max(36, startWidth + diff);
+        th.style.width = `${newWidth}px`;
+      };
+
+      const onMouseUp = () => {
+        resizer.classList.remove("resizing");
+        document.body.classList.remove("resizing-columns");
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+
+        // Save widths to localStorage
+        if (storageKey) {
+          try {
+            const widths = {};
+            ths.forEach((h, i) => {
+              widths[i] = h.offsetWidth;
+            });
+            localStorage.setItem(storageKey, JSON.stringify(widths));
+          } catch {}
+        }
+      };
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    };
+
+    resizer.addEventListener("mousedown", onMouseDown);
+  });
+}
+window.makeTableResizable = makeTableResizable;
 
 function formatUsageDateBadge(dateStr) {
   if (!dateStr) return "";
@@ -1279,6 +1359,8 @@ function renderUsagePage() {
   if (el.usageRecordedTodaySub) el.usageRecordedTodaySub.textContent = `${recordedTodayCount} of ${allMachineIds.length} recorded`;
   if (el.usagePendingTodayCount) el.usagePendingTodayCount.textContent = pendingTodayCount;
   if (el.usagePendingTodaySub) el.usagePendingTodaySub.textContent = `${pendingTodayCount} machines without records`;
+
+  makeTableResizable(".usage-table", "stech_col_widths_usage");
 }
 
 function renderUsageAlerts(items) {

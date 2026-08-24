@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=9.6">
+    <link rel="stylesheet" href="styles.css?v=9.7">
     <script>
       (function(){
         try {
@@ -843,29 +843,21 @@
         </div>
         <form id="deviceForm" class="dialog-form device-form">
           <input type="hidden" id="deviceRecordId">
-          <label>
+          <label style="grid-column: span 2;">
             Name
             <input id="deviceNameInput" type="text" placeholder="Aung Min" required>
           </label>
-          <label>
+          <label style="grid-column: span 2;">
             Email
             <input id="deviceEmailInput" type="email" placeholder="example@email.com">
           </label>
           <label>
             Device ID
-            <input id="deviceIdInput" type="text" placeholder="DEV-001" required>
-          </label>
-          <label>
-            Serial Number
-            <input id="serialNumberInput" type="text" placeholder="SN-123456">
-          </label>
-          <label>
-            Kit Number
-            <input id="kitNumberInput" type="text" placeholder="KIT-001">
+            <input id="deviceIdInput" type="text" placeholder="F01" required>
           </label>
           <label>
             Region
-            <input id="regionInput" type="text" placeholder="Yangon">
+            <input id="regionInput" type="text" placeholder="PH (e.g. PH, JP, MY)">
           </label>
           <label>
             Normal / Discount Status
@@ -881,7 +873,15 @@
               <option value="false">Inactive / Suspended</option>
             </select>
           </label>
-          <label class="wide">
+          <label style="grid-column: span 2;">
+            Serial Number
+            <input id="serialNumberInput" type="text" placeholder="SN-123456">
+          </label>
+          <label style="grid-column: span 2;">
+            Kit Number
+            <input id="kitNumberInput" type="text" placeholder="KIT-001">
+          </label>
+          <label class="wide" style="grid-column: 1 / -1;">
             Service Address
             <input id="serviceAddressInput" type="text" placeholder="No. 12, Main Road, Township">
           </label>
@@ -1538,6 +1538,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=9.6"></script>
+    <script src="app.js?v=9.7"></script>
   </body>
 </html>
