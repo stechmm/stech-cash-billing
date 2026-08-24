@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=9.0">
+    <link rel="stylesheet" href="styles.css?v=9.1">
     <script>
       (function(){
         try {
@@ -1237,141 +1237,179 @@
 
     <!-- System & Telegram & Cloud Backup Settings Modal -->
     <div id="systemSettingsDialog" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="systemSettingsDialogTitle">
-      <div class="modal-panel wide-modal" style="max-width: 580px !important;">
+      <div class="modal-panel wide-modal settings-modal-panel" style="max-width: 660px !important;">
         <div class="modal-head">
           <div>
-            <span class="summary-kicker">Integrations & Data Safety</span>
-            <strong id="systemSettingsDialogTitle">Telegram Bot & Cloud Backup Settings</strong>
+            <span class="summary-kicker">Integrations &amp; System</span>
+            <strong id="systemSettingsDialogTitle">System &amp; Integration Settings</strong>
           </div>
           <button id="closeSystemSettingsDialogBtn" class="modal-close" type="button" aria-label="Close dialog" onclick="closeSystemSettingsDialog()">x</button>
         </div>
-        <form id="systemSettingsForm" class="dialog-form" style="display: grid; gap: 16px;">
-          <!-- Section 1: Telegram Bot Alert -->
-          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; display: grid; gap: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong style="color: #38bdf8; font-size: 14px;">🤖 Telegram Alert Bot</strong>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
-                <input type="checkbox" id="settingsTelegramAlerts" checked style="accent-color: #0284c7;">
-                <span>Enable Alerts</span>
-              </label>
-            </div>
-            <label>
-              Bot Token (from @BotFather)
-              <input id="settingsTelegramToken" type="text" placeholder="e.g. 7123456789:AAF..." autocomplete="off">
-            </label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+
+        <!-- Horizontal Tab Navigation Bar -->
+        <div class="settings-nav-tabs" role="tablist">
+          <button type="button" class="settings-nav-tab active" data-tab="tabTelegram" onclick="switchSettingsTab('tabTelegram')" role="tab" aria-selected="true">
+            <span>🤖 Telegram Bot</span>
+          </button>
+          <button type="button" class="settings-nav-tab" data-tab="tabBackup" onclick="switchSettingsTab('tabBackup')" role="tab" aria-selected="false">
+            <span>💾 Auto Backup</span>
+          </button>
+          <button type="button" class="settings-nav-tab" data-tab="tabCompany" onclick="switchSettingsTab('tabCompany')" role="tab" aria-selected="false">
+            <span>🏢 Company Info</span>
+          </button>
+          <button type="button" class="settings-nav-tab" data-tab="tabAppUpdate" onclick="switchSettingsTab('tabAppUpdate')" role="tab" aria-selected="false">
+            <span>📲 App Update</span>
+          </button>
+          <button type="button" class="settings-nav-tab danger-tab" data-tab="tabDanger" onclick="switchSettingsTab('tabDanger')" role="tab" aria-selected="false">
+            <span>⚠️ Danger Zone</span>
+          </button>
+        </div>
+
+        <form id="systemSettingsForm" class="dialog-form" style="display: grid; gap: 14px; margin-top: 12px;">
+          <!-- Tab 1: Telegram Bot Alert -->
+          <div id="tabTelegram" class="settings-tab-pane active">
+            <div class="settings-section-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #38bdf8; font-size: 14px;">🤖 Telegram Alert Bot Configuration</strong>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
+                  <input type="checkbox" id="settingsTelegramAlerts" checked style="accent-color: #0284c7; width: 16px; height: 16px;">
+                  <span>Enable Real-time Alerts</span>
+                </label>
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; margin: 0 0 10px;">Receive live notifications for customer support messages, new payments, and critical machine alerts.</p>
+              
               <label>
-                Admin Chat ID (Alerts)
-                <input id="settingsTelegramChatId" type="text" placeholder="e.g. 123456789">
+                Bot Token (from @BotFather)
+                <input id="settingsTelegramToken" type="text" placeholder="e.g. 7123456789:AAF..." autocomplete="off">
+              </label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <label>
+                  Admin Chat ID (Alerts)
+                  <input id="settingsTelegramChatId" type="text" placeholder="e.g. 123456789">
+                </label>
+                <label>
+                  Backup Channel/Group ID
+                  <input id="settingsTelegramBackupChatId" type="text" placeholder="e.g. -100123456789">
+                </label>
+              </div>
+              <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                <button type="button" id="testTelegramBtn" onclick="testTelegramAlert()" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); border-radius: 8px; padding: 7px 16px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                  🚀 Test Telegram Alert
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Automated Cloud & Server Backup -->
+          <div id="tabBackup" class="settings-tab-pane hidden">
+            <div class="settings-section-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #34d399; font-size: 14px;">💾 Cloud &amp; Automated Database Backup</strong>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
+                  <input type="checkbox" id="settingsAutoBackup" checked style="accent-color: #10b981; width: 16px; height: 16px;">
+                  <span>Daily Auto Backup</span>
+                </label>
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; margin: 0 0 10px;">Automatically zip database and send backup snapshot directly to your Telegram backup channel.</p>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <label>
+                  Backup Schedule Time
+                  <select id="settingsAutoBackupHour">
+                    <option value="0">00:00 (Midnight)</option>
+                    <option value="1">01:00 AM</option>
+                    <option value="2">02:00 AM</option>
+                    <option value="3">03:00 AM</option>
+                    <option value="6">06:00 AM</option>
+                    <option value="12">12:00 PM (Noon)</option>
+                  </select>
+                </label>
+                <label>
+                  Auto-Voucher Delivery
+                  <select id="settingsAutoVouchers">
+                    <option value="true">Enabled (Auto-send)</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                </label>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+                <button type="button" id="triggerBackupNowBtn" onclick="triggerImmediateBackup()" style="flex: 1; background: #0f766e; color: #fff; border: none; border-radius: 8px; padding: 9px 14px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                  📦 Backup &amp; Send to Telegram Now
+                </button>
+                <button type="button" id="downloadZipBackupModalBtn" onclick="downloadZipBackup()" style="flex: 1; background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 9px 14px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                  📥 Download .ZIP Backup
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Company & E-Voucher Info -->
+          <div id="tabCompany" class="settings-tab-pane hidden">
+            <div class="settings-section-card">
+              <strong style="color: #fbbf24; font-size: 14px; display: block; margin-bottom: 4px;">🏢 Company &amp; E-Receipt Info</strong>
+              <p style="font-size: 12px; color: #94a3b8; margin: 0 0 12px;">This branding information will be displayed on customer invoices, printed vouchers, and support headers.</p>
+              <label>
+                Company / Brand Name
+                <input id="settingsCompanyName" type="text" placeholder="S-Tech Telecommunication Services">
               </label>
               <label>
-                Backup Channel/Group ID
-                <input id="settingsTelegramBackupChatId" type="text" placeholder="e.g. -100123456789">
+                Support Hotline Phone
+                <input id="settingsCompanyPhone" type="text" placeholder="+95 9 777 888 999">
               </label>
-            </div>
-            <div style="display: flex; justify-content: flex-end;">
-              <button type="button" id="testTelegramBtn" onclick="testTelegramAlert()" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); border-radius: 8px; padding: 6px 14px; font-size: 12px; font-weight: 700; cursor: pointer;">
-                🚀 Test Telegram Alert
-              </button>
             </div>
           </div>
 
-          <!-- Section 2: Automated Cloud & Server Backup -->
-          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; display: grid; gap: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong style="color: #34d399; font-size: 14px;">💾 Cloud & Automated Backup</strong>
-              <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #fff; cursor: pointer;">
-                <input type="checkbox" id="settingsAutoBackup" checked style="accent-color: #10b981;">
-                <span>Daily Auto Backup</span>
-              </label>
-            </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <!-- Tab 4: Customer App Update Notification -->
+          <div id="tabAppUpdate" class="settings-tab-pane hidden">
+            <div class="settings-section-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <strong style="color: #38bdf8; font-size: 14px;">📲 Customer In-App Update Prompt</strong>
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #fff; cursor: pointer;">
+                  <input type="checkbox" id="settingsCustomerUpdateEnabled" style="accent-color: #38bdf8; width: 16px; height: 16px;">
+                  <span>Enable Update Prompt</span>
+                </label>
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; margin: 0 0 12px;">Show an update popup modal to all customers when they log in to the Customer Portal.</p>
               <label>
-                Backup Schedule Time
-                <select id="settingsAutoBackupHour">
-                  <option value="0">00:00 (Midnight)</option>
-                  <option value="1">01:00 AM</option>
-                  <option value="2">02:00 AM</option>
-                  <option value="3">03:00 AM</option>
-                  <option value="6">06:00 AM</option>
-                  <option value="12">12:00 PM (Noon)</option>
-                </select>
+                Update Version / Label
+                <input id="settingsCustomerUpdateVersion" type="text" placeholder="e.g. 2.1.0">
               </label>
               <label>
-                Auto-Voucher Delivery
-                <select id="settingsAutoVouchers">
-                  <option value="true">Enabled (Auto-send)</option>
-                  <option value="false">Disabled</option>
-                </select>
+                Notification Title
+                <input id="settingsCustomerUpdateTitle" type="text" placeholder="New App Update Available">
+              </label>
+              <label>
+                Notification Message
+                <input id="settingsCustomerUpdateDesc" type="text" placeholder="Please update your SpaceLink App to continue.">
+              </label>
+              <label>
+                Download / Update URL <span style="font-size: 11px; color: #94a3b8;">(optional — blank = refresh page)</span>
+                <input id="settingsCustomerUpdateUrl" type="url" placeholder="https://play.google.com/store/...">
               </label>
             </div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px;">
-              <button type="button" id="triggerBackupNowBtn" onclick="triggerImmediateBackup()" style="flex: 1; background: #0f766e; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">
-                📦 Backup & Send to Telegram Now
-              </button>
-              <button type="button" id="downloadZipBackupModalBtn" onclick="downloadZipBackup()" style="flex: 1; background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">
-                📥 Download .ZIP Backup
-              </button>
+          </div>
+
+          <!-- Tab 5: Data Management & Danger Zone -->
+          <div id="tabDanger" class="settings-tab-pane hidden">
+            <div class="settings-section-card danger-zone-card" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 14px; padding: 16px; display: grid; gap: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="color: #f87171; font-size: 14px;">🗑️ Reset Data Usage Records</strong>
+                <span style="font-size: 10px; padding: 3px 8px; border-radius: 999px; background: rgba(239,68,68,0.25); color: #fca5a5; font-weight: 800; letter-spacing: 0.05em;">DANGER ZONE</span>
+              </div>
+              <p style="font-size: 12px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                Clear all recorded Starlink data usage entries (daily history &amp; limits) across all machines to start entering fresh data from scratch.
+                <br><strong style="color:#fca5a5;">(Machines, customer accounts, and cash billing records will NOT be affected).</strong>
+              </p>
+              <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
+                <button type="button" id="resetAllUsageBtn" class="danger" style="padding: 9px 18px; border-radius: 10px; font-weight: 700; font-size: 12.5px; background: #dc2626; color: #fff; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;" onclick="resetAllDataUsageRecords()">
+                  ⚠️ Reset All Data Usage
+                </button>
+                <span id="resetUsageStatus" style="font-size: 12px; color: #94a3b8;"></span>
+              </div>
             </div>
           </div>
 
-          <!-- Section 3: Company & E-Voucher Info -->
-          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; display: grid; gap: 10px;">
-            <strong style="color: #fbbf24; font-size: 14px;">🧾 Company Receipt / Voucher Info</strong>
-            <label>
-              Company / Brand Name
-              <input id="settingsCompanyName" type="text" placeholder="S-Tech Telecommunication Services">
-            </label>
-            <label>
-              Support Hotline Phone
-              <input id="settingsCompanyPhone" type="text" placeholder="+95 9 777 888 999">
-            </label>
-          </div>
-
-          <!-- Section 4: Customer App Update Notification -->
-          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; display: grid; gap: 10px;">
-            <strong style="color: #34d399; font-size: 14px;">📲 Customer App Update Notification</strong>
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-              <input type="checkbox" id="settingsCustomerUpdateEnabled" style="accent-color: #34d399; width: 16px; height: 16px;">
-              Enable in-app update prompt for customers
-            </label>
-            <label>
-              Update Version / Label
-              <input id="settingsCustomerUpdateVersion" type="text" placeholder="e.g. 2.1.0">
-            </label>
-            <label>
-              Notification Title
-              <input id="settingsCustomerUpdateTitle" type="text" placeholder="New App Update Available">
-            </label>
-            <label>
-              Notification Message
-              <input id="settingsCustomerUpdateDesc" type="text" placeholder="Please update your SpaceLink App to continue.">
-            </label>
-            <label>
-              Download / Update URL <span style="font-size: 11px; color: #94a3b8;">(optional — blank = refresh page)</span>
-              <input id="settingsCustomerUpdateUrl" type="url" placeholder="https://play.google.com/store/...">
-            </label>
-            <p style="font-size: 11px; color: #64748b; margin: 0;">When enabled, customers will see an update prompt on login until they tap "Update &amp; Install" or dismiss it for that version.</p>
-          </div>
-
-          <!-- Section 5: Data Management & Reset -->
-          <div style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25); border-radius: 14px; padding: 16px; display: grid; gap: 10px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <strong style="color: #f87171; font-size: 14px;">🗑️ Reset Data Usage Records</strong>
-              <span style="font-size: 10.5px; padding: 3px 8px; border-radius: 999px; background: rgba(239,68,68,0.2); color: #fca5a5; font-weight: 800; letter-spacing: 0.05em;">DANGER ZONE</span>
-            </div>
-            <p style="font-size: 12px; color: #cbd5e1; margin: 0; line-height: 1.5;">
-              Clear all recorded Starlink data usage entries (daily history &amp; limits) across all machines to start entering fresh data from scratch. <strong style="color:#fca5a5;">(Devices, customers, and billing ledger will NOT be deleted).</strong>
-            </p>
-            <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px; flex-wrap: wrap;">
-              <button type="button" id="resetAllUsageBtn" class="danger" style="padding: 9px 16px; border-radius: 10px; font-weight: 700; font-size: 12.5px; background: #dc2626; color: #fff; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;" onclick="resetAllDataUsageRecords()">
-                ⚠️ Reset All Data Usage
-              </button>
-              <span id="resetUsageStatus" style="font-size: 12px; color: #94a3b8;"></span>
-            </div>
-          </div>
-
-          <div class="form-actions">
+          <div class="form-actions" style="margin-top: 6px;">
             <button id="saveSystemSettingsBtn" type="submit" class="primary">Save Settings</button>
             <button type="button" onclick="closeSystemSettingsDialog()">Close</button>
           </div>
@@ -1473,6 +1511,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=9.0"></script>
+    <script src="app.js?v=9.1"></script>
   </body>
 </html>

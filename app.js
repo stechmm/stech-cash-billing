@@ -3303,9 +3303,26 @@ document.addEventListener("click", (event) => {
   }
 });
 
+function switchSettingsTab(tabId) {
+  const tabs = document.querySelectorAll(".settings-nav-tab");
+  const panes = document.querySelectorAll(".settings-tab-pane");
+  tabs.forEach(t => {
+    const isAct = t.dataset.tab === tabId;
+    t.classList.toggle("active", isAct);
+    t.setAttribute("aria-selected", isAct ? "true" : "false");
+  });
+  panes.forEach(p => {
+    const isAct = p.id === tabId;
+    p.classList.toggle("active", isAct);
+    p.classList.toggle("hidden", !isAct);
+  });
+}
+window.switchSettingsTab = switchSettingsTab;
+
 async function openSystemSettingsModal(event) {
   if (event) event.preventDefault();
   closeUtilityMenu();
+  switchSettingsTab("tabTelegram");
   try {
     const data = await api("/api/admin/settings");
     if (!data) return;
