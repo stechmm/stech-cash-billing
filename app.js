@@ -155,6 +155,7 @@ const el = {
   serviceAddressInput: document.querySelector("#serviceAddressInput"),
   regionInput: document.querySelector("#regionInput"),
   planStatusInput: document.querySelector("#planStatusInput"),
+  deviceCycleDayInput: document.querySelector("#deviceCycleDayInput"),
   deviceActiveInput: document.querySelector("#deviceActiveInput"),
   saveDeviceBtn: document.querySelector("#saveDeviceBtn"),
   deleteDeviceBtn: document.querySelector("#deleteDeviceBtn"),
@@ -602,6 +603,85 @@ function renderStarlinkChart(containerSvg, tooltipEl, dataPoints, options = {}) 
   });
 }
 
+/**
+ * Calculates the active billing cycle date range for a given device & reference date.
+ * E.g. If cycleResetDay is 28:
+ * - If today is 2026-08-25: cycle runs 2026-07-28 to 2026-08-27 (Resets in 3 days)
+ * - If today is 2026-08-28: cycle runs 2026-08-28 to 2026-09-27 (Reset today / fresh cycle)
+ */
+function getDeviceCycleWindow(cycleResetDay = 28, refDate = new Date()) {
+  const ref = typeof refDate === "string" ? new Date(`${refDate.slice(0, 10)}T00:00:00`) : new Date(refDate);
+  const resetDay = Math.min(Math.max(Number(cycleResetDay) || 28, 1), 31);
+
+  const curYear = ref.getFullYear();
+  const curMonth = ref.getMonth(); // 0-indexed
+  const curDay = ref.getDate();
+
+  let startYear, startMonth, endYear, endMonth;
+
+  if (curDay >= resetDay) {
+    startYear = curYear;
+    startMonth = curMonth;
+    const nextMonthDate = new Date(curYear, curMonth + 1, 1);
+    endYear = nextMonthDate.getFullYear();
+    endMonth = nextMonthDate.getMonth();
+  } else {
+    const prevMonthDate = new Date(curYear, curMonth - 1, 1);
+    startYear = prevMonthDate.getFullYear();
+    startMonth = prevMonthDate.getMonth();
+    endYear = curYear;
+    endMonth = curMonth;
+  }
+
+  const maxStartDays = new Date(startYear, startMonth + 1, 0).getDate();
+  const actualStartDay = Math.min(resetDay, maxStartDays);
+  const startDateStr = `${startYear}-${String(startMonth + 1).padStart(2, "0")}-${String(actualStartDay).padStart(2, "0")}`;
+
+  const maxEndDays = new Date(endYear, endMonth + 1, 0).getDate();
+  const targetEndDay = resetDay === 1 ? maxEndDays : resetDay - 1;
+  const actualEndDay = Math.min(targetEndDay, maxEndDays);
+  const endDateStr = `${endYear}-${String(endMonth + 1).padStart(2, "0")}-${String(actualEndDay).padStart(2, "0")}`;
+
+  const nextResetYear = endYear;
+  const nextResetMonth = endMonth;
+  const maxNextDays = new Date(nextResetYear, nextResetMonth + 1, 0).getDate();
+  const actualNextResetDay = Math.min(resetDay, maxNextDays);
+  const nextResetDateStr = `${nextResetYear}-${String(nextResetMonth + 1).padStart(2, "0")}-${String(actualNextResetDay).padStart(2, "0")}`;
+
+  const todayKey = localDateKey();
+  const todayDate = new Date(`${todayKey}T00:00:00`);
+  const nextResetDate = new Date(`${nextResetDateStr}T00:00:00`);
+  const diffDays = Math.ceil((nextResetDate - todayDate) / (1000 * 60 * 60 * 24));
+
+  return {
+    cycleResetDay: resetDay,
+    startDateStr,
+    endDateStr,
+    nextResetDateStr,
+    daysRemaining: Math.max(0, diffDays),
+    isResetToday: curDay === actualStartDay,
+    label: `${formatUsageDateBadge(startDateStr)} - ${formatUsageDateBadge(endDateStr)}`
+  };
+}
+
+function getMachineCycleUsageTB(machineId, cycleWindow) {
+  if (!machineId || !cycleWindow) return 0;
+  const devId = String(machineId).trim().toUpperCase();
+  let cycleTotalTB = 0;
+
+  state.usageRecords
+    .filter((r) => String(r.machine || "").trim().toUpperCase() === devId)
+    .forEach((r) => {
+      Object.entries(r.dailyUsage || {}).forEach(([dateStr, valTB]) => {
+        if (dateStr >= cycleWindow.startDateStr && dateStr <= cycleWindow.endDateStr) {
+          cycleTotalTB += Number(valTB || 0);
+        }
+      });
+    });
+
+  return cycleTotalTB;
+}
+
 const modalChartState = {
   machineId: "",
   period: "daily",
@@ -661,9 +741,14 @@ function renderModalMachineVisualizer() {
   const customerName = linkedDevice?.name || linkedBill?.customer || targetRecord?.customer || "Customer";
   const limitTB = Number(targetRecord?.usageLimitTB || 5);
 
+  const cycleResetDay = linkedDevice?.cycleResetDay || 28;
+  const cycleWindow = getDeviceCycleWindow(cycleResetDay);
+
   if (el.machineChartMachineBadge) el.machineChartMachineBadge.textContent = machineId;
   if (el.machineChartModalTitle) el.machineChartModalTitle.textContent = `${machineId} • ${customerName}`;
-  if (el.machineChartSubtitle) el.machineChartSubtitle.textContent = `Plan: ${String(planName).toUpperCase()} | Limit: ${limitTB.toFixed(1)} TB | ${monthLabel(currentMonth)}`;
+  if (el.machineChartSubtitle) {
+    el.machineChartSubtitle.textContent = `Plan: ${String(planName).toUpperCase()} | Limit: ${limitTB.toFixed(1)} TB | Cycle: ${cycleWindow.label} (Resets ${cycleWindow.nextResetDateStr})`;
+  }
   if (el.modalVizPlanLabel) el.modalVizPlanLabel.textContent = String(planName).toUpperCase();
   if (el.modalVizLimitLabel) el.modalVizLimitLabel.textContent = `${limitTB.toFixed(1)} TB Limit`;
 
@@ -1134,6 +1219,11 @@ function renderDevicePage() {
     row.querySelector(".device-name-cell").textContent = record.name || "";
     row.querySelector(".device-email-cell").textContent = record.email || "";
     row.querySelector(".device-id-cell").textContent = record.deviceId || "";
+    const cycleCell = row.querySelector(".device-cycle-cell");
+    if (cycleCell) {
+      const day = record.cycleResetDay || 28;
+      cycleCell.innerHTML = `<span class="device-cycle-badge" style="background:rgba(56,189,248,0.12); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); padding:2px 8px; border-radius:6px; font-size:11.5px; font-weight:800;" title="Billing cycle resets on the ${day}th of every month">🔄 ${day}th</span>`;
+    }
     row.querySelector(".device-serial-cell").textContent = record.serialNumber || "";
     row.querySelector(".device-kit-cell").textContent = record.kitNumber || "";
     row.querySelector(".device-address-cell").textContent = record.serviceAddress || "";
@@ -1278,8 +1368,12 @@ function renderUsagePage() {
     
     const customer = linkedDevice?.name || linkedBill?.customer || usageRec?.customer || "Unlinked";
     const plan = linkedDevice?.planStatus || linkedBill?.billType || usageRec?.billType || "normal";
-    const totalTB = usageRec ? usageTotal(usageRec) : 0;
-    const limitTB = Number(usageRec?.usageLimitTB || 5);
+    
+    // Calculate Active Cycle Window & Usage for this machine
+    const cycleResetDay = linkedDevice?.cycleResetDay || 28;
+    const cycleWindow = getDeviceCycleWindow(cycleResetDay);
+    const totalTB = getMachineCycleUsageTB(machineId, cycleWindow);
+    const limitTB = Number(usageRec?.usageLimitTB || (plan === "discount" ? 2.0 : 5.0));
     const remainingTB = Math.max(limitTB - totalTB, 0);
 
     // Find latest recorded entry for this machine in current month
@@ -1332,6 +1426,20 @@ function renderUsagePage() {
     const tdPlan = document.createElement("td");
     tdPlan.innerHTML = `<span style="text-transform:uppercase; font-size:11px; font-weight:700; color:#0f766e;">${plan}</span>`;
 
+    // Billing Cycle Window Status
+    const tdCycle = document.createElement("td");
+    const isReset = cycleWindow.isResetToday;
+    const daysLeft = cycleWindow.daysRemaining;
+    const alertColor = isReset ? "#34d399" : (daysLeft <= 3 ? "#f59e0b" : "#38bdf8");
+    tdCycle.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:2px;">
+        <span style="font-size:11.5px; font-weight:700; color:#38bdf8;">🔄 ${cycleWindow.label}</span>
+        <small style="font-size:10.5px; font-weight:700; color:${alertColor};">
+          ${isReset ? "✨ Reset Today (New Cycle)" : `⏳ ${daysLeft} days left (Resets ${formatUsageDateBadge(cycleWindow.nextResetDateStr)})`}
+        </small>
+      </div>
+    `;
+
     // Last Recorded Status Pill (Date + Usage)
     const tdToday = document.createElement("td");
     if (latestEntry) {
@@ -1343,7 +1451,7 @@ function renderUsagePage() {
       tdToday.innerHTML = `<span class="today-status-badge pending">⏳ No records</span>`;
     }
 
-    // Month Total (Accumulated)
+    // Cycle Total (Accumulated)
     const tdTotal = document.createElement("td");
     tdTotal.className = "money";
     const totalGB = totalTB * 1000;
@@ -1360,7 +1468,7 @@ function renderUsagePage() {
     // Row Click opens modal chart
     tr.onclick = () => openMachineChartModal(machineId, currentMonth);
 
-    tr.append(tdMachine, tdCustomer, tdPlan, tdToday, tdTotal, tdLimit, tdRemaining);
+    tr.append(tdMachine, tdCustomer, tdPlan, tdCycle, tdToday, tdTotal, tdLimit, tdRemaining);
     if (el.usageBody) el.usageBody.append(tr);
   });
 
@@ -2230,6 +2338,7 @@ function resetDeviceForm() {
   el.saveDeviceBtn.textContent = "Save Device";
   if (el.deleteDeviceBtn) el.deleteDeviceBtn.classList.add("hidden");
   el.planStatusInput.value = "normal";
+  if (el.deviceCycleDayInput) el.deviceCycleDayInput.value = "28";
   if (el.deviceActiveInput) el.deviceActiveInput.value = "true";
 }
 
@@ -2434,6 +2543,7 @@ async function saveDeviceRecord(event) {
     serviceAddress: el.serviceAddressInput.value.trim(),
     region: el.regionInput.value.trim(),
     planStatus: el.planStatusInput.value,
+    cycleResetDay: Number(el.deviceCycleDayInput?.value) || 28,
     active: el.deviceActiveInput ? el.deviceActiveInput.value === "true" : true
   };
   await api("/api/devices/record", { method: "POST", body: JSON.stringify({ record: payload }) });
@@ -2455,6 +2565,9 @@ function editDeviceRecord(id) {
   el.serviceAddressInput.value = record.serviceAddress || "";
   el.regionInput.value = record.region || "";
   el.planStatusInput.value = record.planStatus || "normal";
+  if (el.deviceCycleDayInput) {
+    el.deviceCycleDayInput.value = record.cycleResetDay || 28;
+  }
   if (el.deviceActiveInput) {
     el.deviceActiveInput.value = record.active !== false ? "true" : "false";
   }

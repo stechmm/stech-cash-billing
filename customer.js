@@ -213,6 +213,61 @@ function formatGbOrTbCustomer(valueTB) {
   return { number: gb >= 100 ? gb.toFixed(0) : gb.toFixed(1), unit: "GB", text: `${gb >= 100 ? gb.toFixed(0) : gb.toFixed(1)} GB`, gb };
 }
 
+function getDeviceCycleWindow(cycleResetDay = 28, refDate = new Date()) {
+  const ref = typeof refDate === "string" ? new Date(`${refDate.slice(0, 10)}T00:00:00`) : new Date(refDate);
+  const resetDay = Math.min(Math.max(Number(cycleResetDay) || 28, 1), 31);
+
+  const curYear = ref.getFullYear();
+  const curMonth = ref.getMonth();
+  const curDay = ref.getDate();
+
+  let startYear, startMonth, endYear, endMonth;
+
+  if (curDay >= resetDay) {
+    startYear = curYear;
+    startMonth = curMonth;
+    const nextMonthDate = new Date(curYear, curMonth + 1, 1);
+    endYear = nextMonthDate.getFullYear();
+    endMonth = nextMonthDate.getMonth();
+  } else {
+    const prevMonthDate = new Date(curYear, curMonth - 1, 1);
+    startYear = prevMonthDate.getFullYear();
+    startMonth = prevMonthDate.getMonth();
+    endYear = curYear;
+    endMonth = curMonth;
+  }
+
+  const maxStartDays = new Date(startYear, startMonth + 1, 0).getDate();
+  const actualStartDay = Math.min(resetDay, maxStartDays);
+  const startDateStr = `${startYear}-${String(startMonth + 1).padStart(2, "0")}-${String(actualStartDay).padStart(2, "0")}`;
+
+  const maxEndDays = new Date(endYear, endMonth + 1, 0).getDate();
+  const targetEndDay = resetDay === 1 ? maxEndDays : resetDay - 1;
+  const actualEndDay = Math.min(targetEndDay, maxEndDays);
+  const endDateStr = `${endYear}-${String(endMonth + 1).padStart(2, "0")}-${String(actualEndDay).padStart(2, "0")}`;
+
+  const nextResetYear = endYear;
+  const nextResetMonth = endMonth;
+  const maxNextDays = new Date(nextResetYear, nextResetMonth + 1, 0).getDate();
+  const actualNextResetDay = Math.min(resetDay, maxNextDays);
+  const nextResetDateStr = `${nextResetYear}-${String(nextResetMonth + 1).padStart(2, "0")}-${String(actualNextResetDay).padStart(2, "0")}`;
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayDate = new Date(`${todayKey}T00:00:00`);
+  const nextResetDate = new Date(`${nextResetDateStr}T00:00:00`);
+  const diffDays = Math.ceil((nextResetDate - todayDate) / (1000 * 60 * 60 * 24));
+
+  return {
+    cycleResetDay: resetDay,
+    startDateStr,
+    endDateStr,
+    nextResetDateStr,
+    daysRemaining: Math.max(0, diffDays),
+    isResetToday: curDay === actualStartDay,
+    label: `${startDateStr} ~ ${endDateStr}`
+  };
+}
+
 function renderStarlinkCustomerChart(containerSvg, tooltipEl, dataPoints, options = {}) {
   if (!containerSvg) return;
   const width = 800;

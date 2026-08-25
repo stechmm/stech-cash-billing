@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=9.9">
+    <link rel="stylesheet" href="styles.css?v=10.0">
     <script>
       (function(){
         try {
@@ -619,6 +619,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Device ID</th>
+                <th>Cycle Day</th>
                 <th>Serial Number</th>
                 <th>Kit Number</th>
                 <th>Service Address</th>
@@ -682,13 +683,14 @@
           <table class="device-table usage-table usage-sheet-table">
             <thead>
               <tr>
-                <th style="width: 120px;">Machine</th>
+                <th style="width: 100px;">Machine</th>
                 <th>Customer</th>
                 <th>Plan Status</th>
-                <th style="width: 170px;">Last Recorded</th>
-                <th style="width: 150px;" class="money">Month Total</th>
-                <th style="width: 120px;">Limit</th>
-                <th style="width: 120px;">Remaining</th>
+                <th style="width: 190px;">Billing Cycle</th>
+                <th style="width: 160px;">Last Recorded</th>
+                <th style="width: 145px;" class="money">Cycle Total</th>
+                <th style="width: 110px;">Limit</th>
+                <th style="width: 110px;">Remaining</th>
               </tr>
             </thead>
             <tbody id="usageBody"></tbody>
@@ -1005,6 +1007,10 @@
             </select>
           </label>
           <label>
+            Cycle Reset Day (1 - 31)
+            <input id="deviceCycleDayInput" type="number" min="1" max="31" placeholder="28" value="28" required>
+          </label>
+          <label style="grid-column: span 2;">
             Active Status
             <select id="deviceActiveInput">
               <option value="true">Active (In Service)</option>
@@ -1609,6 +1615,7 @@
         <td class="device-name-cell"></td>
         <td class="device-email-cell"></td>
         <td class="device-id-cell"></td>
+        <td class="device-cycle-cell"></td>
         <td class="device-serial-cell"></td>
         <td class="device-kit-cell"></td>
         <td class="device-address-cell"></td>
@@ -1660,6 +1667,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=9.9"></script>
+    <script src="app.js?v=10.0"></script>
   </body>
 </html>

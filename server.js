@@ -1824,6 +1824,7 @@ async function handleApi(req, res, pathname) {
       serviceAddress: record.serviceAddress || "",
       region: record.region || "",
       planStatus: record.planStatus || "normal",
+      cycleResetDay: Number(record.cycleResetDay) > 0 && Number(record.cycleResetDay) <= 31 ? Number(record.cycleResetDay) : 28,
       active: record.active !== false
     };
     if (index >= 0) db.deviceRecords.splice(index, 1, payload);
@@ -1833,7 +1834,7 @@ async function handleApi(req, res, pathname) {
     reconcileBillStatusFromLedger(db);
     db.billRecords.sort((a, b) => String(a.machine || "").localeCompare(String(b.machine || ""), undefined, { numeric: true }));
     await writeDb(db);
-    return json(res, 200, { ok: true });
+    return json(res, 200, { ok: true, device: payload });
   }
 
   if (pathname === "/api/devices/record" && req.method === "DELETE") {
