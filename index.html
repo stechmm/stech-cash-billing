@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=9.8">
+    <link rel="stylesheet" href="styles.css?v=9.9">
     <script>
       (function(){
         try {
@@ -18,27 +18,142 @@
     </script>
   </head>
   <body>
-    <!-- Login Screen: Split-Screen Hero & Showcase Landing -->
+    <!-- Login Screen: Ultra-Premium Split-Screen Hero & Showcase Landing -->
     <section id="loginScreen" class="login-view spacelink-landing-view">
+      <!-- Background Ambient Glow & Grid -->
+      <div class="landing-ambient-glow glow-1"></div>
+      <div class="landing-ambient-glow glow-2"></div>
+      <div class="landing-grid-overlay"></div>
+
       <div class="spacelink-landing-container">
-        <!-- Left Side: SpaceLink MM Showcase & Branding Area -->
+        <!-- Left Side: SpaceLink MM Showcase & Visual Hero Artwork Area -->
         <div class="spacelink-hero-panel">
-          <div class="hero-badge-pill">
-            <span class="pulse-glow-dot"></span>
-            <span>SpaceLink High-Speed Satellite Operations</span>
+          <div class="hero-top-row">
+            <div class="hero-badge-pill">
+              <span class="pulse-glow-dot"></span>
+              <span>High-Speed Satellite Network</span>
+            </div>
+            <span class="hero-system-status">● Live Operations</span>
           </div>
 
           <div class="hero-brand-header">
             <div class="hero-logo-box">S</div>
             <div>
-              <h1 class="hero-brand-title">SpaceLink <span>MM</span></h1>
+              <h1 class="hero-brand-title">SpaceLink <span class="glow-text">MM</span></h1>
               <p class="hero-brand-tagline">Advanced Satellite Operations &amp; Automated Billing Platform</p>
             </div>
           </div>
 
+          <!-- Futuristic Visual Showcase Artwork Card -->
+          <div class="hero-visual-card">
+            <div class="visual-art-container">
+              <!-- Custom Animated High-Tech Satellite & Cyber Orbit SVG -->
+              <svg class="satellite-hero-svg" viewBox="0 0 540 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Orbit Rings -->
+                <ellipse cx="270" cy="100" rx="230" ry="75" stroke="url(#orbitGrad1)" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.65" />
+                <ellipse cx="270" cy="100" rx="170" ry="50" stroke="url(#orbitGrad2)" stroke-width="1.2" opacity="0.5" />
+                <ellipse cx="270" cy="100" rx="100" ry="30" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1" />
+                
+                <!-- Central Core Earth / Data Nexus -->
+                <circle cx="270" cy="100" r="28" fill="url(#coreGrad)" />
+                <circle cx="270" cy="100" r="36" stroke="rgba(56, 189, 248, 0.4)" stroke-width="1.5" stroke-dasharray="4 4" />
+                <circle cx="270" cy="100" r="28" stroke="#38bdf8" stroke-width="2" />
+                
+                <!-- Core Icon Details -->
+                <path d="M260 100h20M270 90v20" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="270" cy="100" r="6" fill="#38bdf8"/>
+
+                <!-- Satellite Left -->
+                <g class="orbiting-sat-1" transform="translate(100, 75)">
+                  <!-- Solar Panels -->
+                  <rect x="-24" y="-8" width="14" height="16" rx="2" fill="url(#solarGrad)" stroke="#38bdf8" stroke-width="1"/>
+                  <line x1="-17" y1="-8" x2="-17" y2="8" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                  <rect x="10" y="-8" width="14" height="16" rx="2" fill="url(#solarGrad)" stroke="#38bdf8" stroke-width="1"/>
+                  <line x1="17" y1="-8" x2="17" y2="8" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                  <!-- Body -->
+                  <rect x="-8" y="-10" width="16" height="20" rx="4" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+                  <circle cx="0" cy="0" r="3" fill="#34d399"/>
+                  <!-- Beam to Core -->
+                  <line x1="0" y1="0" x2="170" y2="25" stroke="url(#beamGrad1)" stroke-width="1.5" stroke-dasharray="4 4" />
+                </g>
+
+                <!-- Satellite Right -->
+                <g class="orbiting-sat-2" transform="translate(430, 115)">
+                  <!-- Solar Panels -->
+                  <rect x="-22" y="-7" width="12" height="14" rx="2" fill="url(#solarGrad)" stroke="#818cf8" stroke-width="1"/>
+                  <rect x="10" y="-7" width="12" height="14" rx="2" fill="url(#solarGrad)" stroke="#818cf8" stroke-width="1"/>
+                  <!-- Body -->
+                  <rect x="-8" y="-8" width="16" height="16" rx="3" fill="#0f172a" stroke="#818cf8" stroke-width="1.5"/>
+                  <circle cx="0" cy="0" r="3" fill="#38bdf8"/>
+                  <!-- Beam to Core -->
+                  <line x1="0" y1="0" x2="-160" y2="-15" stroke="url(#beamGrad2)" stroke-width="1.5" stroke-dasharray="4 4" />
+                </g>
+
+                <!-- Nodes & Constellation Stars -->
+                <circle cx="180" cy="45" r="3" fill="#38bdf8" filter="url(#glowFilter)"/>
+                <circle cx="370" cy="55" r="2.5" fill="#34d399" filter="url(#glowFilter)"/>
+                <circle cx="150" cy="150" r="2.5" fill="#818cf8" filter="url(#glowFilter)"/>
+                <circle cx="390" cy="160" r="3" fill="#38bdf8" filter="url(#glowFilter)"/>
+                <circle cx="480" cy="60" r="2" fill="#ffffff" opacity="0.8"/>
+                <circle cx="60" cy="120" r="2" fill="#ffffff" opacity="0.8"/>
+
+                <!-- Gradients & Filters -->
+                <defs>
+                  <linearGradient id="orbitGrad1" x1="40" y1="100" x2="500" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#38bdf8" stop-opacity="0.1"/>
+                    <stop offset="0.5" stop-color="#38bdf8" stop-opacity="0.8"/>
+                    <stop offset="1" stop-color="#818cf8" stop-opacity="0.1"/>
+                  </linearGradient>
+                  <linearGradient id="orbitGrad2" x1="100" y1="100" x2="440" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#34d399" stop-opacity="0.1"/>
+                    <stop offset="0.5" stop-color="#38bdf8" stop-opacity="0.7"/>
+                    <stop offset="1" stop-color="#34d399" stop-opacity="0.1"/>
+                  </linearGradient>
+                  <linearGradient id="coreGrad" x1="242" y1="72" x2="298" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#0284c7"/>
+                    <stop offset="1" stop-color="#0f172a"/>
+                  </linearGradient>
+                  <linearGradient id="solarGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop stop-color="#1e293b"/>
+                    <stop offset="1" stop-color="#0284c7"/>
+                  </linearGradient>
+                  <linearGradient id="beamGrad1" x1="0" y1="0" x2="170" y2="25" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#38bdf8"/>
+                    <stop offset="1" stop-color="#38bdf8" stop-opacity="0.1"/>
+                  </linearGradient>
+                  <linearGradient id="beamGrad2" x1="0" y1="0" x2="-160" y2="-15" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#818cf8"/>
+                    <stop offset="1" stop-color="#818cf8" stop-opacity="0.1"/>
+                  </linearGradient>
+                  <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="2" result="blur"/>
+                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                  </filter>
+                </defs>
+              </svg>
+            </div>
+
+            <!-- Floating Live Status Chips -->
+            <div class="visual-status-chips">
+              <div class="status-chip-pill">
+                <span class="chip-dot cyan"></span>
+                <span>Constellation Active</span>
+              </div>
+              <div class="status-chip-pill">
+                <span class="chip-dot green"></span>
+                <span>Speed: 250+ Mbps</span>
+              </div>
+              <div class="status-chip-pill">
+                <span class="chip-dot purple"></span>
+                <span>256-Bit Encrypted</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature Highlights Grid -->
           <div class="hero-feature-grid">
             <div class="hero-feature-card">
-              <span class="feature-icon">📡</span>
+              <div class="feature-icon-box cyan-box">📡</div>
               <div>
                 <strong>Live Data Tracking</strong>
                 <p>Monitor satellite daily &amp; monthly quota usage in real-time.</p>
@@ -46,7 +161,7 @@
             </div>
 
             <div class="hero-feature-card">
-              <span class="feature-icon">💳</span>
+              <div class="feature-icon-box emerald-box">💳</div>
               <div>
                 <strong>Smart E-Invoicing</strong>
                 <p>Automated billing calculation &amp; verified digital receipts.</p>
@@ -54,7 +169,7 @@
             </div>
 
             <div class="hero-feature-card">
-              <span class="feature-icon">⚡</span>
+              <div class="feature-icon-box blue-box">⚡</div>
               <div>
                 <strong>24/7 Priority Support</strong>
                 <p>Direct real-time technical assistance &amp; broadcast notices.</p>
@@ -104,21 +219,41 @@
         <!-- Right Side: Ultra-Modern Frosted Glass Login Box -->
         <div class="spacelink-login-panel">
           <div class="login-glass-card">
+            <div class="login-glass-glow-border"></div>
+            
             <div class="login-card-head">
-              <span id="loginKicker" class="login-kicker">SpaceLink Satellite Network</span>
+              <div class="login-badge-row">
+                <span id="loginKicker" class="login-kicker">SpaceLink Satellite Network</span>
+                <span class="login-security-badge">🔒 SSL Secured</span>
+              </div>
               <h2 id="loginTitle">Customer Sign In</h2>
               <p id="loginSubtext">View live satellite usage, billing invoices, announcements &amp; 24/7 technical support.</p>
             </div>
 
             <form id="loginForm" class="login-form">
-              <label>
-                Username
-                <input id="loginUsername" type="text" placeholder="Enter customer username" autocomplete="username" required>
+              <label class="login-field-label">
+                <span>Username</span>
+                <div class="login-input-wrapper">
+                  <span class="input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </span>
+                  <input id="loginUsername" class="login-input-field" type="text" placeholder="Enter customer username" autocomplete="username" required>
+                </div>
               </label>
-              <label>
-                Password
-                <div class="password-field-wrapper">
-                  <input id="loginPassword" type="password" placeholder="Enter password" autocomplete="current-password" required>
+
+              <label class="login-field-label">
+                <span>Password</span>
+                <div class="login-input-wrapper">
+                  <span class="input-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                  </span>
+                  <input id="loginPassword" class="login-input-field" type="password" placeholder="Enter password" autocomplete="current-password" required>
                   <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show or hide password" title="Show / Hide Password">
                     <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -139,7 +274,10 @@
                 </label>
               </div>
 
-              <button type="submit" id="loginSubmitBtn" class="primary login-btn">Sign In to Customer Portal</button>
+              <button type="submit" id="loginSubmitBtn" class="primary login-btn glowing-action-btn">
+                <span>Sign In to Customer Portal</span>
+                <span class="btn-shine"></span>
+              </button>
               <p id="loginMessage" class="login-message"></p>
             </form>
 
@@ -1522,6 +1660,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=9.8"></script>
+    <script src="app.js?v=9.9"></script>
   </body>
 </html>
