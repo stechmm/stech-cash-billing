@@ -33,6 +33,8 @@ const customerEl = {
 
   deviceBar: document.querySelector("#customerDeviceBar"),
   deviceChipsContainer: document.querySelector("#customerDeviceChipsContainer"),
+  usageDeviceBar: document.querySelector("#customerUsageDeviceBar"),
+  usageDeviceChipsContainer: document.querySelector("#customerUsageDeviceChipsContainer"),
   fleetSection: document.querySelector("#customerFleetSection"),
   fleetCount: document.querySelector("#customerFleetCount"),
   fleetGrid: document.querySelector("#customerFleetGrid"),
@@ -196,13 +198,30 @@ function customerDate(value, withTime = false) {
 }
 
 function customerUsageEntries() {
-  return Object.entries(customerState.usage?.dailyUsage || {})
+  const devices = customerState.devices || [];
+  let targetMachine = customerState.selectedDeviceId;
+  if (!targetMachine || targetMachine === "ALL") {
+    targetMachine = devices[0]?.deviceId || customerState.customer?.linkedDeviceId || "";
+  }
+  const currentMonth = customerState.activeMonth || new Date().toISOString().slice(0, 7);
+  const allRecords = customerState.usageRecords || [];
+  const rec = allRecords.find((r) => String(r.machine || "").trim().toUpperCase() === String(targetMachine).trim().toUpperCase() && r.monthKey === currentMonth) || customerState.usage;
+  const daily = rec?.dailyUsage || {};
+  return Object.entries(daily)
     .map(([date, value]) => ({ date, value: Number(value || 0) }))
     .sort((a, b) => b.date.localeCompare(a.date));
 }
 
 function customerUsageTotal() {
-  return customerUsageEntries().reduce((sum, item) => sum + item.value, Number(customerState.usage?.legacyUsageTB || 0));
+  const devices = customerState.devices || [];
+  let targetMachine = customerState.selectedDeviceId;
+  if (!targetMachine || targetMachine === "ALL") {
+    targetMachine = devices[0]?.deviceId || customerState.customer?.linkedDeviceId || "";
+  }
+  const currentMonth = customerState.activeMonth || new Date().toISOString().slice(0, 7);
+  const allRecords = customerState.usageRecords || [];
+  const rec = allRecords.find((r) => String(r.machine || "").trim().toUpperCase() === String(targetMachine).trim().toUpperCase() && r.monthKey === currentMonth) || customerState.usage;
+  return customerUsageEntries().reduce((sum, item) => sum + item.value, Number(rec?.legacyUsageTB || 0));
 }
 
 function formatGbOrTbCustomer(valueTB) {
@@ -368,13 +387,20 @@ function renderCustomerVisualizer() {
   const yearNum = Number(yearStr) || new Date().getFullYear();
   const monthNum = Number(monthStr) || new Date().getMonth() + 1;
 
-  const allRecords = customerState.usageRecords || (customerState.usage ? [customerState.usage] : []);
-  const activeRecord = allRecords.find((r) => r.monthKey === currentMonth) || customerState.usage || null;
-  const limitTB = Number(activeRecord?.usageLimitTB || 5);
-  const planName = String(customerState.device?.planStatus || activeRecord?.billType || "Roam Data").replaceAll("_", " ");
+  const devices = customerState.devices || [];
+  let targetMachine = customerState.selectedDeviceId;
+  if (!targetMachine || targetMachine === "ALL") {
+    targetMachine = devices[0]?.deviceId || customerState.customer?.linkedDeviceId || "";
+  }
+  const targetDevice = devices.find((d) => d.deviceId === targetMachine) || devices[0] || null;
+
+  const allRecords = (customerState.usageRecords || []).filter((r) => !targetMachine || String(r.machine || "").trim().toUpperCase() === String(targetMachine).trim().toUpperCase());
+  const activeRecord = allRecords.find((r) => r.monthKey === currentMonth) || targetDevice?.usage || null;
+  const limitTB = Number(activeRecord?.usageLimitTB || (targetDevice?.planStatus === "discount" ? 2 : 5));
+  const planName = String(targetDevice?.planStatus || activeRecord?.billType || "Roam Data").replaceAll("_", " ");
 
   if (customerEl.customerVizPlanLabel) customerEl.customerVizPlanLabel.textContent = planName.toUpperCase();
-  if (customerEl.customerVizBadge) customerEl.customerVizBadge.textContent = customerState.device?.deviceId || customerState.customer?.linkedDeviceId || "Device";
+  if (customerEl.customerVizBadge) customerEl.customerVizBadge.textContent = targetMachine || "Device";
 
   if (customerEl.customerCycleNav) {
     customerEl.customerCycleNav.innerHTML = "";
@@ -491,40 +517,71 @@ function syncActiveDeviceSelection() {
 }
 
 function renderCustomerDeviceBar() {
-  if (!customerEl.deviceBar || !customerEl.deviceChipsContainer) return;
   const devices = customerState.devices || [];
-  if (devices.length <= 1) {
-    customerEl.deviceBar.classList.add("hidden");
-    return;
+
+  // Home Page Device Bar
+  if (customerEl.deviceBar && customerEl.deviceChipsContainer) {
+    if (devices.length <= 1) {
+      customerEl.deviceBar.classList.add("hidden");
+    } else {
+      customerEl.deviceBar.classList.remove("hidden");
+      customerEl.deviceChipsContainer.innerHTML = "";
+
+      // "All Devices" Chip
+      const allChip = document.createElement("button");
+      allChip.type = "button";
+      allChip.className = `customer-device-chip ${customerState.selectedDeviceId === "ALL" ? "active" : ""}`;
+      allChip.innerHTML = `🌐 All Devices (${devices.length})`;
+      allChip.onclick = () => {
+        customerState.selectedDeviceId = "ALL";
+        syncActiveDeviceSelection();
+        renderCustomerApp();
+      };
+      customerEl.deviceChipsContainer.append(allChip);
+
+      // Individual Device Chips
+      devices.forEach((d) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = `customer-device-chip ${customerState.selectedDeviceId === d.deviceId ? "active" : ""}`;
+        chip.innerHTML = `📟 ${d.deviceId}`;
+        chip.onclick = () => {
+          customerState.selectedDeviceId = d.deviceId;
+          syncActiveDeviceSelection();
+          renderCustomerApp();
+        };
+        customerEl.deviceChipsContainer.append(chip);
+      });
+    }
   }
-  customerEl.deviceBar.classList.remove("hidden");
-  customerEl.deviceChipsContainer.innerHTML = "";
 
-  // "All Devices" Chip
-  const allChip = document.createElement("button");
-  allChip.type = "button";
-  allChip.className = `customer-device-chip ${customerState.selectedDeviceId === "ALL" ? "active" : ""}`;
-  allChip.innerHTML = `🌐 All Devices (${devices.length})`;
-  allChip.onclick = () => {
-    customerState.selectedDeviceId = "ALL";
-    syncActiveDeviceSelection();
-    renderCustomerApp();
-  };
-  customerEl.deviceChipsContainer.append(allChip);
+  // Usage Page Device Bar
+  if (customerEl.usageDeviceBar && customerEl.usageDeviceChipsContainer) {
+    if (devices.length <= 1) {
+      customerEl.usageDeviceBar.classList.add("hidden");
+    } else {
+      customerEl.usageDeviceBar.classList.remove("hidden");
+      customerEl.usageDeviceChipsContainer.innerHTML = "";
 
-  // Individual Device Chips
-  devices.forEach((d) => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = `customer-device-chip ${customerState.selectedDeviceId === d.deviceId ? "active" : ""}`;
-    chip.innerHTML = `📟 ${d.deviceId}`;
-    chip.onclick = () => {
-      customerState.selectedDeviceId = d.deviceId;
-      syncActiveDeviceSelection();
-      renderCustomerApp();
-    };
-    customerEl.deviceChipsContainer.append(chip);
-  });
+      let activeMachine = customerState.selectedDeviceId;
+      if (!activeMachine || activeMachine === "ALL") {
+        activeMachine = devices[0]?.deviceId || "";
+      }
+
+      devices.forEach((d) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = `customer-device-chip ${activeMachine === d.deviceId ? "active" : ""}`;
+        chip.innerHTML = `📟 ${d.deviceId}`;
+        chip.onclick = () => {
+          customerState.selectedDeviceId = d.deviceId;
+          syncActiveDeviceSelection();
+          renderCustomerApp();
+        };
+        customerEl.usageDeviceChipsContainer.append(chip);
+      });
+    }
+  }
 }
 
 function renderCustomerFleetOverview() {

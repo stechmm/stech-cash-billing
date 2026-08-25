@@ -825,18 +825,18 @@ function buildCustomerBootstrap(db, customer) {
   
   const linkedDeviceIds = getCustomerLinkedDeviceIds(customer);
   
-  // Find all devices linked to this customer (by linkedDeviceIds, or matching email/username, or name)
-  const matchedDevices = db.deviceRecords.filter((item) => {
-    const devId = String(item.deviceId || "").trim().toUpperCase();
-    if (linkedDeviceIds.includes(devId)) return true;
-    if (customer.username && item.email && String(item.email).trim().toLowerCase() === String(customer.username).trim().toLowerCase()) return true;
-    if (customer.fullName && item.name && String(item.name).trim().toLowerCase() === String(customer.fullName).trim().toLowerCase()) return true;
-    return false;
-  });
+  const matchedDevices = [];
+  const seenIds = new Set();
 
-  // If no devices matched in deviceRecords but linkedDeviceIds exist, create placeholder items
-  if (matchedDevices.length === 0 && linkedDeviceIds.length > 0) {
-    linkedDeviceIds.forEach((id) => {
+  // 1. Check all explicitly linked device IDs
+  linkedDeviceIds.forEach((id) => {
+    const devId = String(id || "").trim().toUpperCase();
+    if (!devId) return;
+    const existing = db.deviceRecords.find((item) => String(item.deviceId || "").trim().toUpperCase() === devId);
+    if (existing) {
+      matchedDevices.push(existing);
+      seenIds.add(devId);
+    } else {
       matchedDevices.push({
         deviceId: id,
         name: customer.fullName || id,
@@ -844,11 +844,29 @@ function buildCustomerBootstrap(db, customer) {
         serialNumber: "-",
         kitNumber: "-",
         serviceAddress: "-",
-        region: "Myanmar",
-        planStatus: "normal"
+        region: "PH",
+        planStatus: "normal",
+        cycleResetDay: 28,
+        active: true
       });
-    });
-  }  // Build device list with their respective usage & bill
+      seenIds.add(devId);
+    }
+  });
+
+  // 2. Also match by customer username/email or fullName
+  db.deviceRecords.forEach((item) => {
+    const devId = String(item.deviceId || "").trim().toUpperCase();
+    if (devId && !seenIds.has(devId)) {
+      const matchEmail = customer.username && item.email && String(item.email).trim().toLowerCase() === String(customer.username).trim().toLowerCase();
+      const matchName = customer.fullName && item.name && String(item.name).trim().toLowerCase() === String(customer.fullName).trim().toLowerCase();
+      if (matchEmail || matchName) {
+        matchedDevices.push(item);
+        seenIds.add(devId);
+      }
+    }
+  });
+
+  // Build device list with their respective usage & bill
   const devicesList = matchedDevices.map((device) => {
     const devId = String(device.deviceId || "").trim().toUpperCase();
     const usage = db.usageRecords.find((item) => (
@@ -865,6 +883,7 @@ function buildCustomerBootstrap(db, customer) {
       serviceAddress: device.serviceAddress || "",
       region: device.region || "",
       planStatus: device.planStatus || "normal",
+      cycleResetDay: device.cycleResetDay || 28,
       active: device.active !== false,
       usage,
       bill: bill ? {
