@@ -4915,14 +4915,31 @@ body.resizing-columns {
   left: 150%;
 }
 
-/* Responsive Split Layout */
+/* Responsive Split Layout: Prioritize Sign In on Mobile */
 @media (max-width: 960px) {
   .spacelink-landing-container {
-    grid-template-columns: 1fr;
-    gap: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .spacelink-hero-panel {
+    order: 2;
+  }
+  .spacelink-login-panel {
+    order: 1;
+    width: 100%;
+  }
+  .login-glass-card {
+    max-width: 100%;
   }
   .hero-download-cards {
     grid-template-columns: 1fr 1fr;
+  }
+  .hero-visual-card {
+    padding: 12px 14px;
+  }
+  .satellite-hero-svg {
+    max-height: 130px;
   }
 }
 
@@ -4931,17 +4948,19 @@ body.resizing-columns {
     padding: 20px 14px;
   }
   .hero-brand-title {
-    font-size: 26px;
+    font-size: 24px;
   }
   .hero-download-cards {
     grid-template-columns: 1fr;
   }
   .login-glass-card {
-    padding: 24px 18px;
+    padding: 22px 16px;
+    border-radius: 20px;
   }
   .visual-status-chips {
     flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
   }
 }
 
