@@ -224,6 +224,33 @@ function customerUsageTotal() {
   return customerUsageEntries().reduce((sum, item) => sum + item.value, Number(rec?.legacyUsageTB || 0));
 }
 
+function customerUsageLevel(usedTB, limitTB = 5.0) {
+  const percent = limitTB > 0 ? (usedTB / limitTB) * 100 : 0;
+  if (percent >= 100) return "critical";
+  if (percent >= 85 || (limitTB >= 5 && usedTB >= 4.8) || (limitTB < 5 && usedTB >= 1.9)) return "warning";
+  return "safe";
+}
+
+function makeCustomerEmpty(text) {
+  const empty = document.createElement("div");
+  empty.className = "customer-empty";
+  empty.textContent = text;
+  return empty;
+}
+
+function makeAnnouncementCard(item) {
+  const card = document.createElement("article");
+  card.className = `announcement-card${item.type ? ` ${item.type}` : ""}`;
+  const title = document.createElement("strong");
+  title.textContent = item.title || "Announcement";
+  const body = document.createElement("p");
+  body.textContent = item.message || "";
+  const time = document.createElement("small");
+  time.textContent = customerDate(item.createdAt || item.updatedAt, true);
+  card.append(title, body, time);
+  return card;
+}
+
 function formatGbOrTbCustomer(valueTB) {
   const gb = Number(valueTB || 0) * 1000;
   if (gb >= 1000) {
@@ -505,9 +532,9 @@ function syncActiveDeviceSelection() {
     customerState.selectedDeviceId = customerState.devices[0].deviceId;
   }
   if (customerState.selectedDeviceId === "ALL" && customerState.devices.length > 1) {
-    customerState.device = null;
-    customerState.usage = null;
-    customerState.bill = null;
+    customerState.device = customerState.devices[0] || null;
+    customerState.usage = customerState.devices[0]?.usage || null;
+    customerState.bill = customerState.devices[0]?.bill || null;
   } else {
     const d = customerState.devices.find((item) => item.deviceId === customerState.selectedDeviceId) || customerState.devices[0];
     customerState.device = d || null;
