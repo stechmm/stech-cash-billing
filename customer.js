@@ -32,12 +32,9 @@ const customerEl = {
   usageState: document.querySelector("#customerUsageState"),
 
   deviceBar: document.querySelector("#customerDeviceBar"),
-  deviceChipsContainer: document.querySelector("#customerDeviceChipsContainer"),
+  deviceSelect: document.querySelector("#customerDeviceSelect"),
   usageDeviceBar: document.querySelector("#customerUsageDeviceBar"),
-  usageDeviceChipsContainer: document.querySelector("#customerUsageDeviceChipsContainer"),
-  fleetSection: document.querySelector("#customerFleetSection"),
-  fleetCount: document.querySelector("#customerFleetCount"),
-  fleetGrid: document.querySelector("#customerFleetGrid"),
+  usageDeviceSelect: document.querySelector("#customerUsageDeviceSelect"),
   singleDeviceSection: document.querySelector("#customerSingleDeviceSection"),
 
   deviceId: document.querySelector("#customerDeviceId"),
@@ -423,10 +420,9 @@ function renderCustomerVisualizer() {
 
   const allRecords = (customerState.usageRecords || []).filter((r) => !targetMachine || String(r.machine || "").trim().toUpperCase() === String(targetMachine).trim().toUpperCase());
   const activeRecord = allRecords.find((r) => r.monthKey === currentMonth) || targetDevice?.usage || null;
-  const limitTB = Number(activeRecord?.usageLimitTB || (targetDevice?.planStatus === "discount" ? 2 : 5));
-  const planName = String(targetDevice?.planStatus || activeRecord?.billType || "Roam Data").replaceAll("_", " ");
+  const limitTB = Number(activeRecord?.usageLimitTB || 5.0);
 
-  if (customerEl.customerVizPlanLabel) customerEl.customerVizPlanLabel.textContent = planName.toUpperCase();
+  if (customerEl.customerVizPlanLabel) customerEl.customerVizPlanLabel.textContent = "STANDARD ROAM";
   if (customerEl.customerVizBadge) customerEl.customerVizBadge.textContent = targetMachine || "Device";
 
   if (customerEl.customerCycleNav) {
@@ -528,161 +524,54 @@ function syncActiveDeviceSelection() {
     customerState.bill = null;
     return;
   }
-  if (customerState.devices.length === 1) {
-    customerState.selectedDeviceId = customerState.devices[0].deviceId;
-  }
-  if (customerState.selectedDeviceId === "ALL" && customerState.devices.length > 1) {
-    customerState.device = customerState.devices[0] || null;
-    customerState.usage = customerState.devices[0]?.usage || null;
-    customerState.bill = customerState.devices[0]?.bill || null;
-  } else {
-    const d = customerState.devices.find((item) => item.deviceId === customerState.selectedDeviceId) || customerState.devices[0];
-    customerState.device = d || null;
-    customerState.usage = d?.usage || null;
-    customerState.bill = d?.bill || null;
-  }
+  const d = customerState.devices.find((item) => item.deviceId === customerState.selectedDeviceId) || customerState.devices[0];
+  customerState.selectedDeviceId = d.deviceId;
+  customerState.device = d;
+  customerState.usage = d?.usage || null;
+  customerState.bill = d?.bill || null;
 }
 
 function renderCustomerDeviceBar() {
   const devices = customerState.devices || [];
 
-  // Home Page Device Bar
-  if (customerEl.deviceBar && customerEl.deviceChipsContainer) {
+  const updateSelect = (selectEl, barEl) => {
+    if (!selectEl || !barEl) return;
     if (devices.length <= 1) {
-      customerEl.deviceBar.classList.add("hidden");
-    } else {
-      customerEl.deviceBar.classList.remove("hidden");
-      customerEl.deviceChipsContainer.innerHTML = "";
-
-      // "All Devices" Chip
-      const allChip = document.createElement("button");
-      allChip.type = "button";
-      allChip.className = `customer-device-chip ${customerState.selectedDeviceId === "ALL" ? "active" : ""}`;
-      allChip.innerHTML = `🌐 All Devices (${devices.length})`;
-      allChip.onclick = () => {
-        customerState.selectedDeviceId = "ALL";
-        syncActiveDeviceSelection();
-        renderCustomerApp();
-      };
-      customerEl.deviceChipsContainer.append(allChip);
-
-      // Individual Device Chips
-      devices.forEach((d) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = `customer-device-chip ${customerState.selectedDeviceId === d.deviceId ? "active" : ""}`;
-        chip.innerHTML = `📟 ${d.deviceId}`;
-        chip.onclick = () => {
-          customerState.selectedDeviceId = d.deviceId;
-          syncActiveDeviceSelection();
-          renderCustomerApp();
-        };
-        customerEl.deviceChipsContainer.append(chip);
-      });
+      barEl.classList.add("hidden");
+      return;
     }
-  }
-
-  // Usage Page Device Bar
-  if (customerEl.usageDeviceBar && customerEl.usageDeviceChipsContainer) {
-    if (devices.length <= 1) {
-      customerEl.usageDeviceBar.classList.add("hidden");
-    } else {
-      customerEl.usageDeviceBar.classList.remove("hidden");
-      customerEl.usageDeviceChipsContainer.innerHTML = "";
-
-      let activeMachine = customerState.selectedDeviceId;
-      if (!activeMachine || activeMachine === "ALL") {
-        activeMachine = devices[0]?.deviceId || "";
-      }
-
-      devices.forEach((d) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = `customer-device-chip ${activeMachine === d.deviceId ? "active" : ""}`;
-        chip.innerHTML = `📟 ${d.deviceId}`;
-        chip.onclick = () => {
-          customerState.selectedDeviceId = d.deviceId;
-          syncActiveDeviceSelection();
-          renderCustomerApp();
-        };
-        customerEl.usageDeviceChipsContainer.append(chip);
-      });
-    }
-  }
-}
-
-function renderCustomerFleetOverview() {
-  const devices = customerState.devices || [];
-  if (!customerEl.fleetSection || !customerEl.fleetGrid) return;
-  if (customerState.selectedDeviceId !== "ALL" || devices.length <= 1) {
-    customerEl.fleetSection.classList.add("hidden");
-    customerEl.singleDeviceSection?.classList.remove("hidden");
-    return;
-  }
-  customerEl.fleetSection.classList.remove("hidden");
-  customerEl.singleDeviceSection?.classList.add("hidden");
-  customerEl.fleetCount.textContent = `${devices.length} Machines`;
-  customerEl.fleetGrid.innerHTML = "";
-
-  devices.forEach((d) => {
-    const daily = d.usage?.dailyUsage || {};
-    const sumDaily = Object.values(daily).reduce((a, b) => a + Number(b || 0), 0);
-    const legacy = Number(d.usage?.legacyUsageTB || 0);
-    const usedTB = sumDaily + legacy;
-    const limitTB = d.planStatus === "discount" ? 2.0 : 5.0;
-    const thresholdTB = d.planStatus === "discount" ? 1.9 : 4.8;
-    const isNearLimit = usedTB >= thresholdTB;
-    const percent = Math.min(100, Math.round((usedTB / limitTB) * 100));
-
-    const card = document.createElement("div");
-    card.className = `fleet-machine-card ${isNearLimit ? "near-limit-card" : ""}`;
-    card.innerHTML = `
-      <div class="fleet-card-top">
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span class="fleet-card-id">📟 ${d.deviceId}</span>
-          ${isNearLimit ? '<span class="fleet-near-badge">⚠️ ≥ 4.8 TB</span>' : ''}
-        </div>
-        <span class="fleet-card-badge ${d.planStatus === "discount" ? "discount" : "normal"}">${d.planStatus || "Normal"}</span>
-      </div>
-      <div class="fleet-card-usage">
-        <span>Data Used (Limit: ${limitTB.toFixed(1)} TB)</span>
-        <strong style="color: ${isNearLimit ? "#f43f5e" : "#38bdf8"};">${usedTB.toFixed(2)} / ${limitTB.toFixed(1)} TB</strong>
-      </div>
-      <div class="fleet-progress-bar">
-        <div class="fleet-progress-fill ${isNearLimit ? "critical" : percent > 75 ? "warning" : ""}" style="width: ${percent}%;"></div>
-      </div>
-      <div class="fleet-card-meta">
-        <span>${d.region || "Myanmar"} ${d.active === false ? '<b style="color:#ef4444;">(Inactive)</b>' : ''}</span>
-        <span style="color: #38bdf8; font-weight: 700;">Inspect Machine →</span>
-      </div>
-    `;
-    card.onclick = () => {
-      customerState.selectedDeviceId = d.deviceId;
+    barEl.classList.remove("hidden");
+    selectEl.innerHTML = "";
+    devices.forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d.deviceId;
+      opt.textContent = `📟 ${d.deviceId} • ${d.name || "Terminal"} (${d.region || "Myanmar"})`;
+      selectEl.append(opt);
+    });
+    selectEl.value = customerState.selectedDeviceId || devices[0]?.deviceId || "";
+    selectEl.onchange = (e) => {
+      customerState.selectedDeviceId = e.target.value;
       syncActiveDeviceSelection();
       renderCustomerApp();
     };
-    customerEl.fleetGrid.append(card);
-  });
+  };
+
+  // Home Page Select
+  updateSelect(customerEl.deviceSelect, customerEl.deviceBar);
+
+  // Usage Page Select
+  updateSelect(customerEl.usageDeviceSelect, customerEl.usageDeviceBar);
 }
 
 function renderCustomerApp() {
   const customer = customerState.customer || {};
   const devices = customerState.devices || [];
-  const isFleetAll = customerState.selectedDeviceId === "ALL" && devices.length > 1;
 
-  let total = 0;
-  let limit = 5;
-  let remaining = 5;
+  syncActiveDeviceSelection();
 
-  if (isFleetAll) {
-    total = customerState.fleetSummary?.totalUsageTB || 0;
-    limit = 5.0;
-    remaining = 5.0;
-  } else {
-    total = customerUsageTotal();
-    limit = Number(customerState.usage?.usageLimitTB || (customerState.device?.planStatus === "discount" ? 2 : 5));
-    remaining = Math.max(0, limit - total);
-  }
+  const total = customerUsageTotal();
+  const limit = Number(customerState.usage?.usageLimitTB || 5.0);
+  const remaining = Math.max(0, limit - total);
 
   const level = customerUsageLevel(total, limit);
   const entries = customerUsageEntries();
@@ -692,53 +581,27 @@ function renderCustomerApp() {
   customerEl.welcomeName.textContent = `Hello, ${customer.fullName || customer.username || "Customer"}`;
   customerEl.monthLabel.textContent = customerMonthLabel(customerState.activeMonth);
 
-  if (isFleetAll) {
-    const nearLimitList = customerState.fleetSummary?.nearLimitDevices || [];
-    customerEl.deviceSummary.textContent = `Fleet of ${devices.length} Satellite Machines | Individual 5.0 TB Limits`;
-    
-    // Left Card: Total Fleet Machines
-    if (customerEl.usageTotal.previousElementSibling) {
-      customerEl.usageTotal.previousElementSibling.textContent = "Fleet Machines";
-    }
-    customerEl.usageTotal.textContent = `${devices.length} Units`;
-    customerEl.usageLimit.textContent = `${customerState.fleetSummary?.activeCount || devices.length} Active in Service`;
-    
-    // Right Card: 4.8 TB Near-Limit Alert / Fleet Status
-    if (customerEl.usageRemaining.previousElementSibling) {
-      customerEl.usageRemaining.previousElementSibling.textContent = "High Usage Alert";
-    }
-    if (nearLimitList.length > 0) {
-      customerEl.usageRemaining.textContent = `⚠️ ${nearLimitList.length} Machine(s)`;
-      customerEl.usageRemaining.style.color = "#f43f5e";
-      customerEl.usageState.textContent = nearLimitList.map(d => `${d.deviceId}: ${d.usedTB} TB`).join(", ");
-    } else {
-      customerEl.usageRemaining.textContent = "✓ All Safe";
-      customerEl.usageRemaining.style.color = "#10b981";
-      customerEl.usageState.textContent = "All machines < 4.8 TB limit";
-    }
-  } else {
-    if (customerEl.usageTotal.previousElementSibling) {
-      customerEl.usageTotal.previousElementSibling.textContent = "Data Used";
-    }
-    customerEl.usageTotal.textContent = `${total.toFixed(3)} TB`;
-    customerEl.usageLimit.textContent = `of ${limit.toFixed(1)} TB`;
-    if (customerEl.usageRemaining.previousElementSibling) {
-      customerEl.usageRemaining.previousElementSibling.textContent = "Remaining";
-    }
-    customerEl.usageRemaining.textContent = `${remaining.toFixed(3)} TB`;
-    customerEl.usageRemaining.style.color = "";
-    customerEl.usageState.textContent = level === "critical" ? "Limit reached" : level === "warning" ? "Near limit" : "Safe usage";
-    customerEl.deviceSummary.textContent = customerState.device
-      ? `${customerState.device.deviceId} | ${customerState.device.region || "Service active"}`
-      : `${customer.linkedDeviceId || "Device not linked"}`;
+  if (customerEl.usageTotal.previousElementSibling) {
+    customerEl.usageTotal.previousElementSibling.textContent = "Data Used";
   }
+  customerEl.usageTotal.textContent = `${total.toFixed(3)} TB`;
+  customerEl.usageLimit.textContent = `of ${limit.toFixed(1)} TB`;
+  if (customerEl.usageRemaining.previousElementSibling) {
+    customerEl.usageRemaining.previousElementSibling.textContent = "Remaining";
+  }
+  customerEl.usageRemaining.textContent = `${remaining.toFixed(3)} TB`;
+  customerEl.usageRemaining.style.color = "";
+  customerEl.usageState.textContent = level === "critical" ? "Limit reached" : level === "warning" ? "Near limit" : "Safe usage";
+  customerEl.deviceSummary.textContent = customerState.device
+    ? `${customerState.device.deviceId} | ${customerState.device.region || "Service active"} • 5.0 TB Plan`
+    : `${customer.linkedDeviceId || "Device not linked"}`;
 
   if (customerState.device) {
     customerEl.deviceId.textContent = customerState.device.deviceId || "-";
     customerEl.deviceRegion.textContent = customerState.device.region || "-";
     customerEl.deviceSerial.textContent = customerState.device.serialNumber || "-";
     customerEl.deviceKit.textContent = customerState.device.kitNumber || "-";
-    customerEl.devicePlan.textContent = String(customerState.device.planStatus || "-").replaceAll("_", " ");
+    customerEl.devicePlan.textContent = "Standard (5.0 TB)";
     customerEl.deviceAddress.textContent = customerState.device.serviceAddress || "-";
   }
 
@@ -752,11 +615,10 @@ function renderCustomerApp() {
     : document.createTextNode("No announcements yet."));
 
   renderCustomerDeviceBar();
-  renderCustomerFleetOverview();
   renderCustomerVisualizer();
 
   customerEl.dailyUsageList.innerHTML = "";
-  if (!entries.length) customerEl.dailyUsageList.append(makeCustomerEmpty(isFleetAll ? "Select an individual machine above to view its daily breakdown." : "No daily usage has been recorded yet."));
+  if (!entries.length) customerEl.dailyUsageList.append(makeCustomerEmpty("No daily usage has been recorded yet."));
   entries.forEach((item) => {
     const row = document.createElement("div");
     row.className = "daily-row";

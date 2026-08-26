@@ -1267,20 +1267,16 @@ button { cursor: pointer; }
   line-height: 1.4;
 }
 
-/* Multi-Device Fleet Switcher Bar */
+/* Multi-Device Selector Bar & Dropdown */
 .customer-device-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 10px 16px;
   background: #090d16;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  overflow-x: auto;
-  scrollbar-width: none;
 }
-.customer-device-bar::-webkit-scrollbar {
-  display: none;
-}
+
 .device-bar-title {
   display: flex;
   align-items: center;
@@ -1292,35 +1288,45 @@ button { cursor: pointer; }
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
-.device-chips-scroll {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+
+.device-select-wrapper {
+  flex: 1;
+  position: relative;
+  min-width: 170px;
 }
-.customer-device-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: #94a3b8;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.18s ease;
-}
-.customer-device-chip:hover {
-  border-color: rgba(56, 189, 248, 0.4);
+
+.customer-device-select {
+  width: 100%;
+  height: 38px;
+  background: #131a29;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
   color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 34px 0 12px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  transition: all 0.2s ease;
 }
-.customer-device-chip.active {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(56, 189, 248, 0.2));
+
+.customer-device-select:focus {
   border-color: #38bdf8;
-  color: #38bdf8;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+  background-color: #1a233a;
+}
+
+.customer-device-select option {
+  background: #0d121f;
+  color: #ffffff;
+  padding: 8px;
+  font-weight: 600;
 }
 
 /* Fleet Machine Grid */

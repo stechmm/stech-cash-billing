@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/customer.css?v=8.0">
+  <link rel="stylesheet" href="/customer.css?v=8.2">
   <title>SpaceLink</title>
 </head>
 <body>
@@ -65,14 +65,16 @@
 
     <div id="customerDeviceBar" class="customer-device-bar hidden">
       <div class="device-bar-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="2" y1="12" x2="22" y2="12"></line>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
         </svg>
-        <span>Machines:</span>
+        <span>Selected Terminal:</span>
       </div>
-      <div id="customerDeviceChipsContainer" class="device-chips-scroll"></div>
+      <div class="device-select-wrapper">
+        <select id="customerDeviceSelect" class="customer-device-select" aria-label="Select Machine"></select>
+      </div>
     </div>
 
     <main class="customer-main">
@@ -87,18 +89,13 @@
           <article class="customer-stat remaining"><span>Remaining</span><strong id="customerUsageRemaining">5 TB</strong><small id="customerUsageState">Safe usage</small></article>
         </section>
 
-        <section id="customerFleetSection" class="customer-section hidden">
-          <div class="customer-section-head"><span>Fleet Machines</span><strong id="customerFleetCount">0 Devices</strong></div>
-          <div id="customerFleetGrid" class="fleet-machine-grid"></div>
-        </section>
-
         <section id="customerSingleDeviceSection" class="customer-section">
           <div class="customer-section-head"><span>Device Information</span><strong id="customerDeviceId">-</strong></div>
           <dl class="device-info-grid">
             <div><dt>Region</dt><dd id="customerDeviceRegion">-</dd></div>
             <div><dt>Serial Number</dt><dd id="customerDeviceSerial">-</dd></div>
             <div><dt>Kit Number</dt><dd id="customerDeviceKit">-</dd></div>
-            <div><dt>Plan</dt><dd id="customerDevicePlan">-</dd></div>
+            <div><dt>Plan</dt><dd id="customerDevicePlan">Standard (5.0 TB)</dd></div>
             <div class="wide"><dt>Service Address</dt><dd id="customerDeviceAddress">-</dd></div>
           </dl>
         </section>
@@ -110,11 +107,18 @@
 
       <section id="customerUsagePage" class="customer-page">
         <!-- Usage Page Device Selector Bar -->
-        <div id="customerUsageDeviceBar" class="customer-device-bar" style="margin-bottom: 12px; border-radius: 14px; border: 1px solid rgba(56, 189, 248, 0.2); background: rgba(13, 18, 31, 0.9);">
+        <div id="customerUsageDeviceBar" class="customer-device-bar hidden" style="margin-bottom: 14px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.25); background: #0d121f;">
           <div class="device-bar-title">
-            <span>Select Machine:</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span>Machine Data:</span>
           </div>
-          <div id="customerUsageDeviceChipsContainer" class="device-chips-scroll"></div>
+          <div class="device-select-wrapper">
+            <select id="customerUsageDeviceSelect" class="customer-device-select" aria-label="Select Machine for Usage"></select>
+          </div>
         </div>
 
         <!-- Customer Starlink Visualizer -->
@@ -253,6 +257,6 @@
       </div>
     </div>
   </div>
-  <script src="/customer.js?v=9.0"></script>
+  <script src="/customer.js?v=9.2"></script>
 </body>
 </html>

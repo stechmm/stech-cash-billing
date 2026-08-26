@@ -910,8 +910,8 @@ function buildCustomerBootstrap(db, customer) {
     const usedTB = sumDaily + legacy;
     totalUsageTB += usedTB;
     
-    const limitTB = d.planStatus === "discount" ? 2.0 : 5.0;
-    const thresholdTB = d.planStatus === "discount" ? 1.9 : 4.8;
+    const limitTB = Number(d.usage?.usageLimitTB || 5.0);
+    const thresholdTB = 4.8;
     
     if (usedTB >= thresholdTB) {
       nearLimitDevices.push({
@@ -1908,7 +1908,7 @@ async function handleApi(req, res, pathname) {
       machine,
       customer: String(record.customer || existing?.customer || autoCustomer).trim(),
       billType: String(record.billType || existing?.billType || autoBillType).trim(),
-      usageLimitTB: Number(record.usageLimitTB || existing?.usageLimitTB || (autoBillType === "discount" ? 2 : 5)),
+      usageLimitTB: Number(record.usageLimitTB || existing?.usageLimitTB || 5),
       dailyUsage,
       legacyUsageTB: Number(existing?.legacyUsageTB || 0),
       notes: String(record.notes || existing?.notes || "").trim(),
@@ -1922,11 +1922,11 @@ async function handleApi(req, res, pathname) {
       return String(a.machine || "").localeCompare(String(b.machine || ""), undefined, { numeric: true });
     });
 
-    // Check for High Usage Alert (>= 4.8 TB on 5TB plan, or >= 1.9 TB on 2TB plan)
+    // Check for High Usage Alert (>= 4.8 TB on 5TB plan)
     const totalDailyTB = Object.values(dailyUsage).reduce((sum, v) => sum + Number(v || 0), 0);
     const totalUsageTB = totalDailyTB + Number(payload.legacyUsageTB || 0);
-    const limitTB = Number(payload.usageLimitTB || (payload.billType === "discount" ? 2.0 : 5.0));
-    const thresholdTB = payload.billType === "discount" ? 1.9 : 4.8;
+    const limitTB = Number(payload.usageLimitTB || 5.0);
+    const thresholdTB = 4.8;
     if (totalUsageTB >= thresholdTB) {
       const usageAlertText = `⚠️ <b>HIGH USAGE ALERT (≥ ${thresholdTB} TB)</b>\n📟 <b>Machine:</b> ${machine}\n👤 <b>Customer:</b> ${payload.customer || "-"}\n📊 <b>Total Used:</b> ${totalUsageTB.toFixed(2)} / ${limitTB.toFixed(1)} TB (${Math.round((totalUsageTB / limitTB) * 100)}%)\nTerminal is nearing its plan limit.`;
       sendTelegramNotification(db, usageAlertText);
