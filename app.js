@@ -188,7 +188,10 @@ const el = {
   usageUnitToggleGroup: document.querySelector("#usageUnitToggleGroup"),
   usageNotesInput: document.querySelector("#usageNotesInput"),
   usageDailyHistory: document.querySelector("#usageDailyHistory"),
+  usageDailyHistoryList: document.querySelector("#usageDailyHistoryList"),
   usageHistoryTotal: document.querySelector("#usageHistoryTotal"),
+  usageHistoryTotalBadge: document.querySelector("#usageHistoryTotalBadge"),
+  resetMachineCycleUsageBtn: document.querySelector("#resetMachineCycleUsageBtn"),
   saveUsageBtn: document.querySelector("#saveUsageBtn"),
 
   fleetUsageTotalValue: document.querySelector("#fleetUsageTotalValue"),
@@ -1465,10 +1468,41 @@ function renderUsagePage() {
     const tdRemaining = document.createElement("td");
     tdRemaining.textContent = `${remainingTB.toFixed(2)} TB`;
 
+    // Actions Column (Edit Data & View Chart)
+    const tdActions = document.createElement("td");
+    tdActions.style.textAlign = "center";
+    tdActions.onclick = (e) => e.stopPropagation();
+
+    const actionContainer = document.createElement("div");
+    actionContainer.className = "usage-action-btns";
+
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "btn-usage-action edit";
+    editBtn.innerHTML = "✏️ Edit";
+    editBtn.title = `Manage daily records and reset data for ${machineId}`;
+    editBtn.onclick = (e) => {
+      e.stopPropagation();
+      openUsageDialog(null, machineId);
+    };
+
+    const chartBtn = document.createElement("button");
+    chartBtn.type = "button";
+    chartBtn.className = "btn-usage-action chart";
+    chartBtn.innerHTML = "📊 Chart";
+    chartBtn.title = `View interactive usage chart for ${machineId}`;
+    chartBtn.onclick = (e) => {
+      e.stopPropagation();
+      openMachineChartModal(machineId, currentMonth);
+    };
+
+    actionContainer.append(editBtn, chartBtn);
+    tdActions.append(actionContainer);
+
     // Row Click opens modal chart
     tr.onclick = () => openMachineChartModal(machineId, currentMonth);
 
-    tr.append(tdMachine, tdCustomer, tdPlan, tdCycle, tdToday, tdTotal, tdLimit, tdRemaining);
+    tr.append(tdMachine, tdCustomer, tdPlan, tdCycle, tdToday, tdTotal, tdLimit, tdRemaining, tdActions);
     if (el.usageBody) el.usageBody.append(tr);
   });
 
@@ -2602,7 +2636,7 @@ window.deleteDeviceRecordFromModal = deleteDeviceRecordFromModal;
 function resetUsageForm() {
   if (el.usageForm) el.usageForm.reset();
   if (el.usageId) el.usageId.value = "";
-  if (el.usageDialogTitle) el.usageDialogTitle.textContent = "Add Daily Usage";
+  if (el.usageDialogTitle) el.usageDialogTitle.textContent = "Manage Daily Usage";
   if (el.saveUsageBtn) el.saveUsageBtn.textContent = "Save Daily Usage";
   if (el.usageLimitInput) el.usageLimitInput.value = "5";
   if (el.usageDateInput) el.usageDateInput.value = localDateKey();
@@ -2673,13 +2707,17 @@ async function saveUsageRecord(event) {
     notes: el.usageNotesInput.value.trim()
   };
   await api("/api/usage/record", { method: "POST", body: JSON.stringify({ record: payload }) });
-  resetUsageForm();
-  setDialogOpen(el.usageDialog, false);
   await refreshState();
+  
+  // Re-sync and refresh history list
+  const currentMonth = state.activeMonth || currentMonthKey();
+  const updatedRec = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === machine.toUpperCase() && r.monthKey === currentMonth);
+  syncUsageMachineContext();
+  if (el.saveUsageBtn) el.saveUsageBtn.textContent = "Save Daily Usage";
+  if (el.usageDailyInput) el.usageDailyInput.value = "";
 }
 
 function editUsageRecord(id) {
-  if (!isAdmin()) return;
   const record = state.usageRecords.find((item) => item.id === id);
   if (!record) return;
   el.usageId.value = record.id;
@@ -2693,68 +2731,87 @@ function editUsageRecord(id) {
   const unit = vizState.inputUnit || "GB";
   setUsageModalUnit(unit);
   const valTB = latest?.value || 0;
-  el.usageDailyInput.value = unit === "GB" ? Number((valTB * 1000).toFixed(3)) : valTB;
+  el.usageDailyInput.value = unit === "GB" ? Number((valTB * 1000).toFixed(2)) : valTB;
   
   el.usageNotesInput.value = record.notes || "";
   el.usageDialogTitle.textContent = `Manage ${record.machine} Daily Usage`;
   el.saveUsageBtn.textContent = "Save Daily Usage";
   syncUsageMachineContext();
-  renderUsageHistory(record);
+  renderUsageHistory(record, record.machine);
   setDialogOpen(el.usageDialog, true);
 }
+window.editUsageRecord = editUsageRecord;
 
-function renderUsageHistory(record) {
-  if (!el.usageDailyHistory) return;
-  el.usageDailyHistory.innerHTML = "";
+function renderUsageHistory(record, machineId = "") {
+  const listEl = el.usageDailyHistoryList || el.usageDailyHistory || document.querySelector("#usageDailyHistoryList");
+  if (!listEl) return;
+  listEl.innerHTML = "";
+
+  const machine = machineId || record?.machine || el.usageMachineInput?.value.trim().toUpperCase() || "";
   const entries = record ? dailyUsageEntries(record).reverse() : [];
-  const legacyTotal = Number(record?.legacyUsageTB || 0);
   const total = record ? usageTotal(record) : 0;
-  el.usageHistoryTotal.textContent = `${formatGbOrTb(total).text} this month`;
+  const formattedTotal = formatGbOrTb(total);
 
-  if (legacyTotal > 0) {
-    const imported = document.createElement("div");
-    imported.className = "usage-history-item imported";
-    imported.innerHTML = `<span>Imported previous usage</span><strong>${formatGbOrTb(legacyTotal).text}</strong>`;
-    el.usageDailyHistory.append(imported);
+  if (el.usageHistoryTotalBadge) {
+    el.usageHistoryTotalBadge.textContent = `${formattedTotal.text} Recorded`;
+  }
+  if (el.usageHistoryTotal) {
+    el.usageHistoryTotal.textContent = `${formattedTotal.text} this month`;
   }
 
-  if (!entries.length && legacyTotal === 0) {
+  if (el.resetMachineCycleUsageBtn) {
+    el.resetMachineCycleUsageBtn.style.display = machine ? "inline-flex" : "none";
+  }
+
+  if (!entries.length) {
     const empty = document.createElement("div");
-    empty.className = "usage-history-empty";
-    empty.textContent = "No daily usage recorded for this machine yet.";
-    el.usageDailyHistory.append(empty);
+    empty.style.cssText = "padding: 16px; text-align: center; color: #64748b; font-size: 11.5px; font-weight: 600;";
+    empty.textContent = machine ? `No daily usage recorded yet for ${machine}. Enter data above to record.` : "Select or enter a Device ID to view recorded history.";
+    listEl.append(empty);
     return;
   }
 
   entries.forEach((entry) => {
-    const item = document.createElement("div");
-    item.className = "usage-history-item";
-    const date = document.createElement("span");
-    date.textContent = formatUsageDate(entry.date);
-    const value = document.createElement("strong");
-    value.textContent = formatGbOrTb(entry.value).text;
-    item.append(date, value);
-    if (isAdmin()) {
-      const actions = document.createElement("div");
-      actions.className = "usage-history-actions";
-      const editButton = document.createElement("button");
-      editButton.type = "button";
-      editButton.textContent = "Edit";
-      editButton.onclick = () => {
-        el.usageDateInput.value = entry.date;
-        const u = vizState.inputUnit || "GB";
-        el.usageDailyInput.value = u === "GB" ? Number((entry.value * 1000).toFixed(3)) : entry.value;
-        el.usageDailyInput.focus();
-      };
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "danger";
-      deleteButton.textContent = "Delete";
-      deleteButton.onclick = () => removeDailyUsage(record, entry.date);
-      actions.append(editButton, deleteButton);
-      item.append(actions);
-    }
-    el.usageDailyHistory.append(item);
+    const row = document.createElement("div");
+    row.className = "usage-history-row";
+
+    const dateCol = document.createElement("div");
+    dateCol.className = "usage-history-date";
+    dateCol.innerHTML = `<span>📅</span> <strong>${entry.date}</strong> <small style="color:#64748b; font-weight:600;">(${formatUsageDateBadge(entry.date)})</small>`;
+
+    const valCol = document.createElement("div");
+    valCol.className = "usage-history-val";
+    const gbVal = (entry.value * 1000).toFixed(2);
+    valCol.innerHTML = `${gbVal} GB <small style="color:#94a3b8; font-size:10px;">(${entry.value.toFixed(3)} TB)</small>`;
+
+    const actionCol = document.createElement("div");
+    actionCol.className = "usage-history-actions";
+
+    // Edit button
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "btn-history-tool edit";
+    editBtn.innerHTML = "✏️ Edit";
+    editBtn.title = "Edit this date's data entry";
+    editBtn.onclick = () => {
+      el.usageDateInput.value = entry.date;
+      const u = vizState.inputUnit || "GB";
+      el.usageDailyInput.value = u === "GB" ? Number((entry.value * 1000).toFixed(2)) : entry.value;
+      if (el.saveUsageBtn) el.saveUsageBtn.textContent = `Update ${entry.date} Entry`;
+      el.usageDailyInput.focus();
+    };
+
+    // Delete button
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "btn-history-tool delete";
+    delBtn.innerHTML = "🗑️ Delete";
+    delBtn.title = "Delete this day's record";
+    delBtn.onclick = () => removeDailyUsage(machine, entry.date);
+
+    actionCol.append(editBtn, delBtn);
+    row.append(dateCol, valCol, actionCol);
+    listEl.append(row);
   });
 }
 
@@ -2767,7 +2824,8 @@ function syncUsageMachineContext() {
   }
   const linkedDevice = state.deviceRecords.find((d) => String(d.deviceId || "").trim().toUpperCase() === machine);
   const linkedBill = state.billRecords.find((b) => String(b.machine || "").trim().toUpperCase() === machine);
-  const record = currentMonthUsageRecords().find((item) => String(item.machine || "").trim().toUpperCase() === machine);
+  const currentMonth = state.activeMonth || currentMonthKey();
+  const record = state.usageRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine && item.monthKey === currentMonth);
 
   if (record) {
     el.usageId.value = record.id;
@@ -2775,14 +2833,14 @@ function syncUsageMachineContext() {
     if (!el.usageBillTypeInput.value) el.usageBillTypeInput.value = record.billType || "";
     el.usageLimitInput.value = record.usageLimitTB || 5;
     if (record.notes) el.usageNotesInput.value = record.notes;
-    renderUsageHistory(record);
+    renderUsageHistory(record, machine);
   } else {
     el.usageId.value = "";
     if (linkedDevice && !el.usageCustomerInput.value) el.usageCustomerInput.value = linkedDevice.name || "";
     if (linkedDevice && !el.usageBillTypeInput.value) el.usageBillTypeInput.value = linkedDevice.planStatus || "";
     if (linkedBill && !el.usageCustomerInput.value) el.usageCustomerInput.value = linkedBill.customer || "";
     if (linkedBill && !el.usageBillTypeInput.value) el.usageBillTypeInput.value = linkedBill.billType || "";
-    renderUsageHistory(null);
+    renderUsageHistory(null, machine);
   }
 
   if (el.usageMachineHint) {
@@ -2794,18 +2852,64 @@ function syncUsageMachineContext() {
   }
 }
 
-async function removeDailyUsage(record, usageDate) {
-  if (!isAdmin()) return;
-  const ok = confirm(`Delete usage for ${formatUsageDate(usageDate)}?`);
+async function removeDailyUsage(machine, usageDate) {
+  const m = machine || el.usageMachineInput?.value.trim().toUpperCase();
+  if (!m || !usageDate) return;
+  const ok = confirm(`🗑️ Delete data usage for ${m} on ${usageDate}?`);
   if (!ok) return;
   await api("/api/usage/record", {
     method: "POST",
-    body: JSON.stringify({ record: { id: record.id, monthKey: record.monthKey, machine: record.machine, usageDate, removeDate: true } })
+    body: JSON.stringify({ record: { machine: m, usageDate, removeDate: true } })
   });
   await refreshState();
-  const updated = state.usageRecords.find((item) => item.id === record.id);
-  if (updated) editUsageRecord(updated.id);
+  const currentMonth = state.activeMonth || currentMonthKey();
+  const updated = state.usageRecords.find((item) => String(item.machine || "").toUpperCase() === m.toUpperCase() && item.monthKey === currentMonth);
+  renderUsageHistory(updated, m);
 }
+window.removeDailyUsage = removeDailyUsage;
+
+async function confirmResetMachineDataUsage(machineId) {
+  const m = machineId || el.usageMachineInput?.value.trim().toUpperCase() || modalChartState.machineId;
+  if (!m) {
+    alert("Please specify a Device ID to reset.");
+    return;
+  }
+  const ok = confirm(`⚠️ RESET DATA USAGE FOR ${m}?\n\nAre you sure you want to reset all recorded daily data usage for machine ${m} in the current billing cycle?\n\nThis will clear the current cycle consumption and start fresh from 0 GB.`);
+  if (!ok) return;
+
+  await api("/api/usage/reset-machine", {
+    method: "POST",
+    body: JSON.stringify({ machine: m, monthKey: state.activeMonth })
+  });
+  await refreshState();
+  
+  if (el.usageDialog && !el.usageDialog.classList.contains("hidden")) {
+    const updatedRec = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === m.toUpperCase() && r.monthKey === state.activeMonth);
+    renderUsageHistory(updatedRec, m);
+  }
+  if (el.machineChartModal && !el.machineChartModal.classList.contains("hidden")) {
+    renderModalMachineVisualizer();
+  }
+  alert(`✨ Data usage for ${m} has been reset to 0 GB.`);
+}
+window.confirmResetMachineDataUsage = confirmResetMachineDataUsage;
+
+function handleResetActiveMachineUsage() {
+  const machine = el.usageMachineInput?.value.trim().toUpperCase();
+  if (!machine) {
+    alert("Please select or enter a Device ID first.");
+    return;
+  }
+  confirmResetMachineDataUsage(machine);
+}
+window.handleResetActiveMachineUsage = handleResetActiveMachineUsage;
+
+function openUsageDialogFromChart() {
+  const currentMachine = modalChartState.machineId;
+  closeMachineChartModal();
+  openUsageDialog(null, currentMachine);
+}
+window.openUsageDialogFromChart = openUsageDialogFromChart;
 
 async function deleteUsageRecord(id) {
   if (!isAdmin()) return;

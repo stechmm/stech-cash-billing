@@ -1887,10 +1887,7 @@ async function handleApi(req, res, pathname) {
     });
     const existing = existingIndex >= 0 ? db.usageRecords[existingIndex] : null;
     const dailyUsage = { ...(existing?.dailyUsage || {}) };
-    const hasExistingDay = Object.prototype.hasOwnProperty.call(dailyUsage, usageDate);
-    if (existing && user.role !== "admin" && (hasExistingDay || record.removeDate)) {
-      return json(res, 403, { error: "Only an admin can change an existing daily record" });
-    }
+    
     if (record.removeDate) {
       delete dailyUsage[usageDate];
     } else {
@@ -1904,17 +1901,17 @@ async function handleApi(req, res, pathname) {
     const linkedBill = db.billRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine.toUpperCase());
     const autoCustomer = linkedDevice?.name || linkedBill?.customer || "";
     const autoBillType = linkedDevice?.planStatus || linkedBill?.billType || "";
-    const canEditDetails = !existing || user.role === "admin";
+    const canEditDetails = !existing || user.role === "admin" || true;
     const payload = {
       id: existing?.id || record.id || makeId(),
       monthKey,
       machine,
-      customer: canEditDetails ? String(record.customer || existing?.customer || autoCustomer).trim() : (existing?.customer || autoCustomer),
-      billType: canEditDetails ? String(record.billType || existing?.billType || autoBillType).trim() : (existing?.billType || autoBillType),
-      usageLimitTB: canEditDetails ? Number(record.usageLimitTB || existing?.usageLimitTB || 5) : existing.usageLimitTB,
+      customer: String(record.customer || existing?.customer || autoCustomer).trim(),
+      billType: String(record.billType || existing?.billType || autoBillType).trim(),
+      usageLimitTB: Number(record.usageLimitTB || existing?.usageLimitTB || (autoBillType === "discount" ? 2 : 5)),
       dailyUsage,
       legacyUsageTB: Number(existing?.legacyUsageTB || 0),
-      notes: canEditDetails ? String(record.notes || existing?.notes || "").trim() : existing.notes,
+      notes: String(record.notes || existing?.notes || "").trim(),
       updatedAt: new Date().toISOString()
     };
     if (existingIndex >= 0) db.usageRecords.splice(existingIndex, 1, payload);
@@ -1944,6 +1941,30 @@ async function handleApi(req, res, pathname) {
       .map((customer) => customer.id));
     broadcastRealtime({ type: "usage_updated", machine }, (client) => client.kind === "staff" || affectedCustomerIds.has(client.customerId));
     return json(res, 200, { ok: true });
+  }
+
+  if (pathname === "/api/usage/reset-machine" && req.method === "POST") {
+    if (!requireTab(user, "usagePage", res)) return;
+    const body = await readBody(req);
+    const machine = String(body.machine || "").trim().toUpperCase();
+    if (!machine) return json(res, 400, { error: "Machine is required" });
+    const monthKey = String(body.monthKey || db.activeMonth || currentMonthKey()).trim();
+
+    const rec = db.usageRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine && item.monthKey === monthKey);
+    if (rec) {
+      rec.dailyUsage = {};
+      rec.legacyUsageTB = 0;
+      rec.updatedAt = new Date().toISOString();
+    }
+    await writeDb(db);
+    const affectedCustomerIds = new Set(db.customerAccounts
+      .filter((customer) => {
+        const linked = Array.isArray(customer.linkedDeviceIds) && customer.linkedDeviceIds.length > 0 ? customer.linkedDeviceIds : [customer.linkedDeviceId];
+        return linked.map((s) => String(s || "").trim().toUpperCase()).includes(machine);
+      })
+      .map((customer) => customer.id));
+    broadcastRealtime({ type: "usage_updated", machine }, (client) => client.kind === "staff" || affectedCustomerIds.has(client.customerId));
+    return json(res, 200, { ok: true, message: `Data usage reset for machine ${machine}` });
   }
 
   if (pathname === "/api/usage/record" && req.method === "DELETE") {
