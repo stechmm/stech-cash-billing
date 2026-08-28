@@ -3096,10 +3096,14 @@ async function deleteAnnouncement(id) {
 }
 
 async function sendSupportMessage(event) {
-  event.preventDefault();
-  const customerId = state.selectedSupportCustomerId;
+  if (event) event.preventDefault();
+  const customerId = state.selectedSupportCustomerId || state.customerAccounts[0]?.id;
+  if (!customerId) {
+    alert("⚠️ Please select a customer conversation from the inbox first.");
+    return;
+  }
   const message = el.supportMessageInput.value.trim();
-  if (!customerId || (!message && !supportPendingAttachment)) return;
+  if (!message && !supportPendingAttachment) return;
   const pending = supportPendingAttachment;
   const replyContext = supportActiveReply;
   el.supportMessageInput.value = "";
@@ -3118,7 +3122,7 @@ async function sendSupportMessage(event) {
     await refreshState();
   } catch (error) {
     el.supportMessageInput.value = message;
-    alert(error.message);
+    alert("❌ Failed to send message: " + (error.message || "Please check your network or try logging in again."));
   }
 }
 

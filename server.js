@@ -687,27 +687,35 @@ function getCurrentUser(req, db) {
   const cookies = parseCookies(req);
   const authHeader = String(req.headers.authorization || "").trim();
   const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  const sid = cookies[SESSION_COOKIE] || bearerToken;
-  if (!sid) return null;
-  let session = sessions.get(sid);
-  if (!session && db?.sessions?.[sid]) {
-    session = db.sessions[sid];
-    sessions.set(sid, session);
+  const cookieSid = cookies[SESSION_COOKIE] || "";
+  
+  const candidateSids = [bearerToken, cookieSid].filter(Boolean);
+  if (candidateSids.length === 0) return null;
+
+  for (const sid of candidateSids) {
+    let session = sessions.get(sid);
+    if (!session && db?.sessions?.[sid]) {
+      session = db.sessions[sid];
+      sessions.set(sid, session);
+    }
+    if (session) {
+      if (session.expiresAt && session.expiresAt < Date.now()) {
+        sessions.delete(sid);
+        if (db?.sessions) delete db.sessions[sid];
+        continue;
+      }
+      const user = db.users.find((u) => u.id === session.userId);
+      if (user) return user;
+    }
   }
-  if (!session) return null;
-  if (session.expiresAt && session.expiresAt < Date.now()) {
-    sessions.delete(sid);
-    if (db?.sessions) delete db.sessions[sid];
-    return null;
-  }
-  return db.users.find((user) => user.id === session.userId) || null;
+  return null;
 }
 
 function clearSession(req, res, db) {
   const cookies = parseCookies(req);
   const authHeader = String(req.headers.authorization || "").trim();
   const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  const sid = cookies[SESSION_COOKIE] || bearerToken;
+  const sid = bearerToken || cookies[SESSION_COOKIE];
   if (sid) {
     sessions.delete(sid);
     if (db?.sessions) delete db.sessions[sid];
@@ -730,20 +738,28 @@ function getCurrentCustomer(req, db) {
   const cookies = parseCookies(req);
   const authHeader = String(req.headers.authorization || "").trim();
   const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  const sid = cookies[CUSTOMER_SESSION_COOKIE] || bearerToken;
-  if (!sid) return null;
-  let session = customerSessions.get(sid);
-  if (!session && db?.customerSessions?.[sid]) {
-    session = db.customerSessions[sid];
-    customerSessions.set(sid, session);
+  const cookieSid = cookies[CUSTOMER_SESSION_COOKIE] || "";
+
+  const candidateSids = [bearerToken, cookieSid].filter(Boolean);
+  if (candidateSids.length === 0) return null;
+
+  for (const sid of candidateSids) {
+    let session = customerSessions.get(sid);
+    if (!session && db?.customerSessions?.[sid]) {
+      session = db.customerSessions[sid];
+      customerSessions.set(sid, session);
+    }
+    if (session) {
+      if (session.expiresAt && session.expiresAt < Date.now()) {
+        customerSessions.delete(sid);
+        if (db?.customerSessions) delete db.customerSessions[sid];
+        continue;
+      }
+      const customer = db.customerAccounts.find((c) => c.id === session.customerId && c.active !== false);
+      if (customer) return customer;
+    }
   }
-  if (!session) return null;
-  if (session.expiresAt && session.expiresAt < Date.now()) {
-    customerSessions.delete(sid);
-    if (db?.customerSessions) delete db.customerSessions[sid];
-    return null;
-  }
-  return db.customerAccounts.find((customer) => customer.id === session.customerId && customer.active !== false) || null;
+  return null;
 }
 
 function clearCustomerSession(req, res, db) {
@@ -1595,7 +1611,13 @@ async function handleApi(req, res, pathname) {
     const body = await readBody(req);
     const customerId = String(body.customerId || "").trim();
     const message = String(body.message || "").trim();
-    if (!db.customerAccounts.some((item) => item.id === customerId)) return json(res, 404, { error: "Customer not found" });
+    const targetCustomer = db.customerAccounts.find((item) => (
+      item.id === customerId ||
+      String(item.username || "").trim().toLowerCase() === customerId.toLowerCase() ||
+      getCustomerLinkedDeviceIds(item).includes(customerId.toUpperCase())
+    ));
+    if (!targetCustomer) return json(res, 404, { error: "Customer not found" });
+    const targetCustomerId = targetCustomer.id;
     let attachment = null;
     try {
       attachment = saveChatAttachment(body.attachment);
@@ -1616,7 +1638,7 @@ async function handleApi(req, res, pathname) {
 
     db.supportMessages.push({
       id: makeId(),
-      customerId,
+      customerId: targetCustomerId,
       senderType: "staff",
       senderId: user.id,
       topic: "conversation",
@@ -1629,7 +1651,7 @@ async function handleApi(req, res, pathname) {
       readByStaff: true
     });
     await writeDb(db);
-    broadcastRealtime({ type: "support_message", customerId }, (client) => client.kind === "staff" || client.customerId === customerId);
+    broadcastRealtime({ type: "support_message", customerId: targetCustomerId }, (client) => client.kind === "staff" || client.customerId === targetCustomerId);
     return json(res, 200, { ok: true });
   }
 
