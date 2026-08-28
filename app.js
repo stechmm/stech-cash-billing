@@ -742,15 +742,12 @@ function renderModalMachineVisualizer() {
   const targetRecord = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === machineId.toUpperCase() && r.monthKey === currentMonth);
   const planName = linkedDevice?.planStatus || linkedBill?.billType || targetRecord?.billType || "Roam Data";
   const customerName = linkedDevice?.name || linkedBill?.customer || targetRecord?.customer || "Customer";
-  const limitTB = Number(targetRecord?.usageLimitTB || 5);
-
-  const cycleResetDay = linkedDevice?.cycleResetDay || 28;
-  const cycleWindow = getDeviceCycleWindow(cycleResetDay);
+  const limitTB = Number(targetRecord?.usageLimitTB || 5.0);
 
   if (el.machineChartMachineBadge) el.machineChartMachineBadge.textContent = machineId;
   if (el.machineChartModalTitle) el.machineChartModalTitle.textContent = `${machineId} • ${customerName}`;
   if (el.machineChartSubtitle) {
-    el.machineChartSubtitle.textContent = `Plan: ${String(planName).toUpperCase()} | Limit: ${limitTB.toFixed(1)} TB | Cycle: ${cycleWindow.label} (Resets ${cycleWindow.nextResetDateStr})`;
+    el.machineChartSubtitle.textContent = `Plan: ${String(planName).toUpperCase()} | Limit: ${limitTB.toFixed(1)} TB | Month: ${monthLabel(currentMonth)}`;
   }
   if (el.modalVizPlanLabel) el.modalVizPlanLabel.textContent = String(planName).toUpperCase();
   if (el.modalVizLimitLabel) el.modalVizLimitLabel.textContent = `${limitTB.toFixed(1)} TB Limit`;
@@ -1372,11 +1369,10 @@ function renderUsagePage() {
     const customer = linkedDevice?.name || linkedBill?.customer || usageRec?.customer || "Unlinked";
     const plan = linkedDevice?.planStatus || linkedBill?.billType || usageRec?.billType || "normal";
     
-    // Calculate Active Cycle Window & Usage for this machine
-    const cycleResetDay = linkedDevice?.cycleResetDay || 28;
-    const cycleWindow = getDeviceCycleWindow(cycleResetDay);
-    const totalTB = getMachineCycleUsageTB(machineId, cycleWindow);
-    const limitTB = Number(usageRec?.usageLimitTB || (plan === "discount" ? 2.0 : 5.0));
+    // Calculate Monthly Usage for this machine (calendar month data)
+    const dailySum = Object.values(usageRec?.dailyUsage || {}).reduce((s, v) => s + Number(v || 0), 0);
+    const totalTB = dailySum + Number(usageRec?.legacyUsageTB || 0);
+    const limitTB = Number(usageRec?.usageLimitTB || 5.0);
     const remainingTB = Math.max(limitTB - totalTB, 0);
 
     // Find latest recorded entry for this machine in current month
@@ -1429,17 +1425,13 @@ function renderUsagePage() {
     const tdPlan = document.createElement("td");
     tdPlan.innerHTML = `<span style="text-transform:uppercase; font-size:11px; font-weight:700; color:#0f766e;">${plan}</span>`;
 
-    // Billing Cycle Window Status
+    // Billing Month
     const tdCycle = document.createElement("td");
-    const isReset = cycleWindow.isResetToday;
-    const daysLeft = cycleWindow.daysRemaining;
-    const alertColor = isReset ? "#34d399" : (daysLeft <= 3 ? "#f59e0b" : "#38bdf8");
+    const entryCount = Object.keys(usageRec?.dailyUsage || {}).length;
     tdCycle.innerHTML = `
       <div style="display:flex; flex-direction:column; gap:2px;">
-        <span style="font-size:11.5px; font-weight:700; color:#38bdf8;">🔄 ${cycleWindow.label}</span>
-        <small style="font-size:10.5px; font-weight:700; color:${alertColor};">
-          ${isReset ? "✨ Reset Today (New Cycle)" : `⏳ ${daysLeft} days left (Resets ${formatUsageDateBadge(cycleWindow.nextResetDateStr)})`}
-        </small>
+        <span style="font-size:12px; font-weight:700; color:#38bdf8;">📅 ${monthLabel(currentMonth)}</span>
+        <small style="font-size:10.5px; font-weight:600; color:#94a3b8;">${entryCount} daily entries</small>
       </div>
     `;
 
