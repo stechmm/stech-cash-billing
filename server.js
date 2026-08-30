@@ -1755,6 +1755,7 @@ async function handleApi(req, res, pathname) {
       description: entry.description || "",
       inAmount: Number(entry.inAmount || 0),
       outAmount: Number(entry.outAmount || 0),
+      status: String(entry.status || "clear").trim(),
       rate: Number(entry.rate || 0),
       cost: Number(entry.cost || 0),
       price: Number(entry.price || 0),

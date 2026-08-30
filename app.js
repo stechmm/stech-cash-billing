@@ -65,6 +65,7 @@ const el = {
   logoutBtn: document.querySelector("#logoutBtn"),
 
   summaryMonth: document.querySelector("#summaryMonth"),
+  cashMonthSelect: document.querySelector("#cashMonthSelect"),
   openingCashInput: document.querySelector("#openingCashInput"),
   totalIn: document.querySelector("#totalIn"),
   totalOut: document.querySelector("#totalOut"),
@@ -82,6 +83,7 @@ const el = {
   descriptionInput: document.querySelector("#descriptionInput"),
   inInput: document.querySelector("#inInput"),
   outInput: document.querySelector("#outInput"),
+  entryStatusInput: document.querySelector("#entryStatusInput"),
   creditInput: document.querySelector("#creditInput"),
   manualAmountFields: document.querySelector("#manualAmountFields"),
   entryCalculatorPanel: document.querySelector("#entryCalculatorPanel"),
@@ -981,10 +983,88 @@ function cashTotals(month) {
   return { totalIn, totalOut, closingCash: Number(month.openingCash || 0) + totalIn - totalOut };
 }
 
+function populateCashMonthSelect() {
+  if (!el.cashMonthSelect) return;
+  const monthKeys = new Set(Object.keys(state.months || {}));
+  
+  const now = new Date();
+  const curRealYear = now.getFullYear();
+  const curRealMonth = now.getMonth() + 1;
+  const realCurrentKey = `${curRealYear}-${String(curRealMonth).padStart(2, "0")}`;
+  monthKeys.add(realCurrentKey);
+  if (state.activeMonth) monthKeys.add(state.activeMonth);
+
+  for (let offset = -12; offset <= 6; offset++) {
+    const d = new Date(curRealYear, curRealMonth - 1 + offset, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    monthKeys.add(key);
+  }
+
+  const sortedMonths = Array.from(monthKeys).sort((a, b) => b.localeCompare(a));
+  
+  el.cashMonthSelect.innerHTML = "";
+  sortedMonths.forEach((mKey) => {
+    const opt = document.createElement("option");
+    opt.value = mKey;
+    opt.textContent = `${monthLabel(mKey)}${mKey === realCurrentKey ? " (This Month)" : ""}`;
+    el.cashMonthSelect.append(opt);
+  });
+  el.cashMonthSelect.value = state.activeMonth || realCurrentKey;
+}
+
+function selectCashMonth(monthKey) {
+  if (!monthKey || monthKey === state.activeMonth) return;
+  state.activeMonth = monthKey;
+  renderCashPage();
+  api("/api/cash/opening", {
+    method: "POST",
+    body: JSON.stringify({ monthKey: state.activeMonth, openingCash: activeMonthData().openingCash || 0 })
+  }).catch(() => {});
+}
+window.selectCashMonth = selectCashMonth;
+
+function navigateCashMonth(step) {
+  const current = state.activeMonth || currentMonthKey();
+  const [yStr, mStr] = current.split("-");
+  let y = Number(yStr) || new Date().getFullYear();
+  let m = Number(mStr) || (new Date().getMonth() + 1);
+  m += step;
+  if (m < 1) { m = 12; y--; }
+  else if (m > 12) { m = 1; y++; }
+  const newKey = `${y}-${String(m).padStart(2, "0")}`;
+  selectCashMonth(newKey);
+}
+window.navigateCashMonth = navigateCashMonth;
+
+function makeCashStatusBadge(status) {
+  const badge = document.createElement("span");
+  badge.className = "cash-status-pill";
+  const s = String(status || "clear").toLowerCase().trim();
+  if (s === "prepaid" || s === "advance") {
+    badge.classList.add("status-prepaid");
+    badge.innerHTML = "💎 Prepaid";
+    badge.title = "ငွေကြိုရှင်းထားသည် (Advance Payment)";
+  } else if (s === "credit_due" || s === "due" || s === "unpaid") {
+    badge.classList.add("status-due");
+    badge.innerHTML = "⚠️ Credit / Due";
+    badge.title = "ဘေကြိုဆောင်ထားပြီး ငွေမရှင်းရသေး (Pending Due)";
+  } else if (s === "deposit") {
+    badge.classList.add("status-deposit");
+    badge.innerHTML = "🏦 Deposit";
+    badge.title = "စပေါ်ငွေ (Security Deposit)";
+  } else {
+    badge.classList.add("status-clear");
+    badge.innerHTML = "✓ Clear";
+    badge.title = "ငွေရှင်းပြီး (Fully Settled)";
+  }
+  return badge;
+}
+
 function renderCashPage() {
   const month = activeMonthData();
   const totals = cashTotals(month);
-  el.summaryMonth.textContent = monthLabel(state.activeMonth);
+  populateCashMonthSelect();
+  if (el.summaryMonth) el.summaryMonth.textContent = monthLabel(state.activeMonth);
   el.openingCashInput.value = month.openingCash || 0;
   el.totalIn.textContent = formatMoney(totals.totalIn);
   el.totalOut.textContent = formatMoney(totals.totalOut);
@@ -998,20 +1078,35 @@ function renderCashPage() {
   });
 
   el.ledgerBody.innerHTML = "";
+  if (!month.entries || month.entries.length === 0) {
+    const emptyRow = document.createElement("tr");
+    emptyRow.className = "empty-row";
+    emptyRow.innerHTML = `<td colspan="8" style="text-align: center; color: #94a3b8; padding: 24px;">No cash movement records found for ${monthLabel(state.activeMonth)}. Click <b>+ Add Record</b> to add one.</td>`;
+    el.ledgerBody.append(emptyRow);
+    return;
+  }
+
   month.entries.forEach((entry, index) => {
     const row = el.rowTemplate.content.firstElementChild.cloneNode(true);
     row.dataset.id = entry.id;
     row.querySelector(".row-number").textContent = index + 1;
     row.querySelector(".date-cell").textContent = entry.date || "";
     row.querySelector(".description-cell").textContent = entry.description || "";
-    row.querySelector(".in-cell").textContent = entry.inAmount ? formatMoney(entry.inAmount) : "";
-    row.querySelector(".out-cell").textContent = entry.outAmount ? formatMoney(entry.outAmount) : "";
-    row.querySelector(".status-cell").textContent = formatMoney(balances.get(entry.id));
+    row.querySelector(".in-cell").textContent = entry.inAmount ? formatMoney(entry.inAmount) : "-";
+    row.querySelector(".out-cell").textContent = entry.outAmount ? formatMoney(entry.outAmount) : "-";
+    row.querySelector(".balance-cell").textContent = formatMoney(balances.get(entry.id));
+    
+    const statusCell = row.querySelector(".status-badge-cell");
+    if (statusCell) {
+      statusCell.innerHTML = "";
+      statusCell.append(makeCashStatusBadge(entry.status));
+    }
+    
     const actions = row.querySelector(".row-actions");
     if (isAdmin()) {
       row.querySelector(".edit-row").onclick = () => editCashEntry(entry.id);
       row.querySelector(".delete-row").onclick = () => deleteCashEntry(entry.id);
-    } else {
+    } else if (actions) {
       actions.classList.add("hidden");
     }
     el.ledgerBody.append(row);
@@ -2340,6 +2435,7 @@ function resetEntryForm() {
   el.entryForm.reset();
   el.entryId.value = "";
   el.dateInput.value = `${state.activeMonth}-01`;
+  if (el.entryStatusInput) el.entryStatusInput.value = "clear";
   el.entryDialogTitle.textContent = "Add Record";
   el.saveBtn.textContent = "Add Record";
   updateEntryCalculation();
@@ -2463,6 +2559,7 @@ async function saveCashEntry(event) {
     description: el.descriptionInput.value.trim(),
     inAmount: parseMoney(el.inInput.value),
     outAmount: parseMoney(el.outInput.value),
+    status: el.entryStatusInput ? el.entryStatusInput.value : "clear",
     useProfitCalculation: el.creditInput.checked,
     rate: el.creditInput.checked ? calculation.rate : 0,
     cost: el.creditInput.checked ? calculation.cost : 0,
@@ -2493,6 +2590,9 @@ function editCashEntry(id) {
   el.descriptionInput.value = entry.description || "";
   el.inInput.value = entry.inAmount || "";
   el.outInput.value = entry.outAmount || "";
+  if (el.entryStatusInput) {
+    el.entryStatusInput.value = entry.status || (entry.outAmount && !entry.inAmount ? "credit_due" : "clear");
+  }
   el.creditInput.checked = Boolean(entry.useProfitCalculation);
   el.entryRateInput.value = entry.rate || "";
   el.entryCostInput.value = entry.cost || "";

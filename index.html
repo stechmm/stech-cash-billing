@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=10.3">
+    <link rel="stylesheet" href="styles.css?v=10.4">
     <script>
       (function(){
         try {
@@ -394,11 +394,16 @@
 
       <section id="cashPage" class="page-view">
         <section class="summary-grid" aria-label="Monthly summary">
-          <div class="summary-panel card-month">
+          <div class="summary-panel card-month card-active">
             <span class="summary-kicker">Active Month</span>
-            <div class="summary-title">
-              <strong id="summaryMonth">July 2026</strong>
+            <div class="month-switcher-control">
+              <button type="button" id="prevCashMonthBtn" class="month-nav-btn" title="Previous Month" onclick="navigateCashMonth(-1)">◀</button>
+              <select id="cashMonthSelect" class="cash-month-select" onchange="selectCashMonth(this.value)">
+                <!-- Dynamically populated -->
+              </select>
+              <button type="button" id="nextCashMonthBtn" class="month-nav-btn" title="Next Month" onclick="navigateCashMonth(1)">▶</button>
             </div>
+            <strong id="summaryMonth" class="hidden"></strong>
             <label class="opening-control">
               Opening Cash
               <input id="openingCashInput" type="number" step="1" min="0">
@@ -431,11 +436,12 @@
               <thead>
                 <tr>
                   <th class="number-col">#</th>
-                  <th>Date</th>
-                  <th>Descriptions</th>
-                  <th>In</th>
-                  <th>Out</th>
-                  <th>Status</th>
+                  <th class="date-col">Date</th>
+                  <th class="desc-col">Descriptions</th>
+                  <th class="money-col money-th">In</th>
+                  <th class="money-col money-th">Out</th>
+                  <th class="money-col money-th">Balance</th>
+                  <th class="status-col" style="text-align:center;">Status</th>
                   <th class="action-col admin-action-col">Action</th>
                 </tr>
               </thead>
@@ -845,6 +851,15 @@
               <input id="outInput" type="number" min="0" step="1" placeholder="0">
             </label>
           </div>
+          <label class="wide" style="margin-top: 4px;">
+            Payment / Ledger Status
+            <select id="entryStatusInput" style="width: 100%; height: 40px; background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: #fff; padding: 0 12px; font-weight: 700;">
+              <option value="clear">🟢 Clear / Paid (ငွေရှင်းပြီး / အကုန်ရှင်း)</option>
+              <option value="prepaid">💎 Prepaid / Advance (ငွေကြိုရှင်းထားသည်)</option>
+              <option value="credit_due">⚠️ Credit / Due (ဘေကြိုဆောင်ထား / ငွေမရှင်းရသေး)</option>
+              <option value="deposit">🏦 Deposit (စပေါ်ငွေ)</option>
+            </select>
+          </label>
           <section id="entryCalculatorPanel" class="entry-calculator-panel wide hidden">
             <div class="entry-calculator-head">
               <strong>Profit Calculation</strong>
@@ -1569,8 +1584,9 @@
         <td class="description-cell"></td>
         <td class="money in-cell"></td>
         <td class="money out-cell"></td>
-        <td class="money status-cell"></td>
-        <td class="row-actions">
+        <td class="money balance-cell"></td>
+        <td class="status-badge-cell" style="text-align: center;"></td>
+        <td class="row-actions admin-action-col">
           <button type="button" class="edit-row" title="Edit row">Edit</button>
           <button type="button" class="delete-row danger" title="Delete row">Delete</button>
         </td>
@@ -1657,6 +1673,6 @@
       </tr>
     </template>
 
-    <script src="app.js?v=10.3"></script>
+    <script src="app.js?v=10.4"></script>
   </body>
 </html>
