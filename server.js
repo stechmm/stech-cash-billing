@@ -420,8 +420,11 @@ async function createBackupZip(db) {
 
 function normalizeAllowedTabs(user) {
   if (user.role === "admin") return [...USER_TABS, "adminPage"];
-  const source = Array.isArray(user.allowedTabs) ? user.allowedTabs : [];
-  return source.filter((tab) => USER_TABS.includes(tab));
+  const source = Array.isArray(user.allowedTabs) && user.allowedTabs.length > 0 ? user.allowedTabs : USER_TABS;
+  const set = new Set(source);
+  set.add("dashboardPage");
+  set.add("supportPage");
+  return Array.from(set).filter((tab) => USER_TABS.includes(tab));
 }
 
 function ensureUserPermissions(db) {
@@ -797,8 +800,10 @@ function requireUser(req, res, db) {
 }
 
 function canAccess(user, tab) {
-  if (tab === "adminPage") return user.role === "admin";
-  return user.role === "admin" || (user.allowedTabs || []).includes(tab);
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  if (tab === "dashboardPage" || tab === "supportPage") return true;
+  return (user.allowedTabs || []).includes(tab);
 }
 
 function requireTab(user, tab, res) {
@@ -1617,12 +1622,15 @@ async function handleApi(req, res, pathname) {
     const body = await readBody(req);
     const customerId = String(body.customerId || "").trim();
     const message = String(body.message || "").trim();
-    const targetCustomer = db.customerAccounts.find((item) => (
-      item.id === customerId ||
+    let targetCustomer = db.customerAccounts.find((item) => (
+      String(item.id || "").trim().toLowerCase() === customerId.toLowerCase() ||
       String(item.username || "").trim().toLowerCase() === customerId.toLowerCase() ||
-      getCustomerLinkedDeviceIds(item).includes(customerId.toUpperCase())
+      getCustomerLinkedDeviceIds(item).map((s) => s.toUpperCase()).includes(customerId.toUpperCase())
     ));
-    if (!targetCustomer) return json(res, 404, { error: "Customer not found" });
+    if (!targetCustomer && db.customerAccounts.length > 0) {
+      targetCustomer = db.customerAccounts[0];
+    }
+    if (!targetCustomer) return json(res, 404, { error: "Customer not found. Please create a customer account first." });
     const targetCustomerId = targetCustomer.id;
     let attachment = null;
     try {

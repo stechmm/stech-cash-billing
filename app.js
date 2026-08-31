@@ -385,8 +385,10 @@ function monthLabel(key) {
 }
 
 function canAccess(tab) {
-  if (tab === "adminPage") return state.user?.role === "admin";
-  return state.user?.role === "admin" || (state.user?.allowedTabs || []).includes(tab);
+  if (!state.user) return false;
+  if (state.user.role === "admin") return true;
+  if (tab === "dashboardPage" || tab === "supportPage") return true;
+  return (state.user.allowedTabs || []).includes(tab);
 }
 
 try {
@@ -878,7 +880,9 @@ function renderModalMachineVisualizer() {
 
 function updateState(snapshot) {
   state.user = snapshot.user;
-  state.activePage = snapshot.activePage || "dashboardPage";
+  if (!state.activePage || !canAccess(state.activePage)) {
+    state.activePage = snapshot.activePage || "dashboardPage";
+  }
   state.activeMonth = snapshot.activeMonth || currentMonthKey();
   state.months = snapshot.months || {};
   state.billRecords = snapshot.billRecords || [];
@@ -894,12 +898,12 @@ function updateState(snapshot) {
 }
 
 async function refreshState() {
-  const currentPage = state.activePage;
+  const previousPage = state.activePage;
   try {
     const snapshot = await api("/api/bootstrap");
     updateState(snapshot);
-    if (currentPage && canAccess(currentPage)) {
-      state.activePage = currentPage;
+    if (previousPage && canAccess(previousPage)) {
+      state.activePage = previousPage;
     }
     render();
     connectAppRealtime();
