@@ -3220,6 +3220,7 @@ async function sendSupportMessage(event) {
     alert("❌ Failed to send message: " + (error.message || "Please check your network or try logging in again."));
   }
 }
+window.sendSupportMessage = sendSupportMessage;
 
 function closeUtilityMenu() {
   if (el.utilityMenu) el.utilityMenu.removeAttribute("open");

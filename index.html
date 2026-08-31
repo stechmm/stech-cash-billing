@@ -698,7 +698,7 @@
               <div><span id="supportThreadUserId" class="summary-kicker">Select customer</span><strong id="supportThreadName">Billing &amp; Support</strong></div>
             </div>
             <div id="supportMessageList" class="support-message-list"></div>
-            <form id="supportMessageForm" class="support-message-form">
+            <form id="supportMessageForm" class="support-message-form" onsubmit="sendSupportMessage(event); return false;">
               <div id="supportReplyPreview" class="reply-context-banner hidden"></div>
               <div id="supportAttachmentPreview" class="chat-attachment-preview hidden"></div>
               <div class="chat-composer">

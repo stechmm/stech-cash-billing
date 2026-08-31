@@ -1478,6 +1478,7 @@ async function submitCustomerMessage(event) {
     alert("❌ Message delivery failed: " + (error.message || "Please check connection"));
   }
 }
+window.submitCustomerMessage = submitCustomerMessage;
 
 customerEl.loginForm.addEventListener("submit", submitCustomerLogin);
 customerEl.messageForm.addEventListener("submit", submitCustomerMessage);
