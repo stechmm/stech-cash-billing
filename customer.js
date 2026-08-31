@@ -1408,12 +1408,15 @@ async function refreshCustomer() {
     renderCustomerApp();
     connectCustomerRealtime();
     if (customerState.activePage === "customerSupportPage" && customerState.messages.some((item) => item.senderType === "staff" && !item.readByCustomer)) {
-      await customerApi("/api/customer/messages/read", { method: "POST", body: "{}" });
+      await customerApi("/api/customer/messages/read", { method: "POST", body: "{}" }).catch(() => {});
       customerState.messages = customerState.messages.map((item) => item.senderType === "staff" ? { ...item, readByCustomer: true } : item);
       renderCustomerApp();
     }
   } catch (error) {
-    if (/login|required|unauthorized/i.test(error.message)) showCustomerLogin();
+    console.error("refreshCustomer error:", error);
+    if (error.status === 401 && !localStorage.getItem("stech_customer_session_token")) {
+      showCustomerLogin();
+    }
   }
 }
 
@@ -1447,7 +1450,10 @@ async function submitCustomerLogin(event) {
 }
 
 async function submitCustomerMessage(event) {
-  event.preventDefault();
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   const message = customerEl.messageInput.value.trim();
   if (!message && !customerPendingAttachment) return;
   const pending = customerPendingAttachment;
@@ -1467,8 +1473,9 @@ async function submitCustomerMessage(event) {
     clearCustomerReply();
     await refreshCustomer();
   } catch (error) {
+    console.error("Customer message error:", error);
     customerEl.messageInput.value = message;
-    alert(error.message);
+    alert("❌ Message delivery failed: " + (error.message || "Please check connection"));
   }
 }
 

@@ -704,7 +704,10 @@ function getCurrentUser(req, db) {
         if (db?.sessions) delete db.sessions[sid];
         continue;
       }
-      const user = db.users.find((u) => u.id === session.userId);
+      const targetId = String(session.userId || "").trim().toLowerCase();
+      const user = db.users.find((u) => {
+        return String(u.id || "").trim().toLowerCase() === targetId || String(u.username || "").trim().toLowerCase() === targetId;
+      });
       if (user) return user;
     }
   }
@@ -713,9 +716,7 @@ function getCurrentUser(req, db) {
 
 function clearSession(req, res, db) {
   const cookies = parseCookies(req);
-  const authHeader = String(req.headers.authorization || "").trim();
-  const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-  const sid = bearerToken || cookies[SESSION_COOKIE];
+  const sid = cookies[SESSION_COOKIE];
   if (sid) {
     sessions.delete(sid);
     if (db?.sessions) delete db.sessions[sid];
@@ -755,7 +756,12 @@ function getCurrentCustomer(req, db) {
         if (db?.customerSessions) delete db.customerSessions[sid];
         continue;
       }
-      const customer = db.customerAccounts.find((c) => c.id === session.customerId && c.active !== false);
+      const targetId = String(session.customerId || "").trim().toLowerCase();
+      const customer = db.customerAccounts.find((c) => {
+        if (c.active === false) return false;
+        return String(c.id || "").trim().toLowerCase() === targetId ||
+               String(c.username || "").trim().toLowerCase() === targetId;
+      });
       if (customer) return customer;
     }
   }

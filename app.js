@@ -3188,7 +3188,10 @@ async function deleteAnnouncement(id) {
 }
 
 async function sendSupportMessage(event) {
-  if (event) event.preventDefault();
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   const customerId = state.selectedSupportCustomerId || state.customerAccounts[0]?.id;
   if (!customerId) {
     alert("⚠️ Please select a customer conversation from the inbox first.");
