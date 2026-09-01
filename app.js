@@ -2554,6 +2554,16 @@ async function saveOpeningCash() {
   await refreshState();
 }
 
+function findCashEntryById(id) {
+  for (const [mKey, mData] of Object.entries(state.months || {})) {
+    if (mData && Array.isArray(mData.entries)) {
+      const found = mData.entries.find((item) => item.id === id);
+      if (found) return { entry: found, monthKey: mKey };
+    }
+  }
+  return null;
+}
+
 async function saveCashEntry(event) {
   event.preventDefault();
   const calculation = entryCalculationValues();
@@ -2575,11 +2585,19 @@ async function saveCashEntry(event) {
     alert("Please enter an In or Out amount.");
     return;
   }
+  
+  if (payload.date && /^\d{4}-\d{2}/.test(payload.date)) {
+    state.activeMonth = payload.date.slice(0, 7);
+  }
+  
   const sendVoucher = Boolean(document.getElementById("entrySendVoucher")?.checked);
-  await api("/api/cash/entry", {
+  const res = await api("/api/cash/entry", {
     method: "POST",
     body: JSON.stringify({ monthKey: state.activeMonth, entry: payload, sendVoucher })
   });
+  if (res && res.activeMonth) {
+    state.activeMonth = res.activeMonth;
+  }
   resetEntryForm();
   setDialogOpen(el.entryDialog, false);
   await refreshState();
@@ -2587,8 +2605,9 @@ async function saveCashEntry(event) {
 
 function editCashEntry(id) {
   if (!isAdmin()) return;
-  const entry = activeMonthData().entries.find((item) => item.id === id);
-  if (!entry) return;
+  const match = findCashEntryById(id);
+  if (!match || !match.entry) return;
+  const entry = match.entry;
   el.entryId.value = entry.id;
   el.dateInput.value = entry.date || "";
   el.descriptionInput.value = entry.description || "";

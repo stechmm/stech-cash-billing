@@ -97,6 +97,63 @@ function currentMonthKey() {
   return `${year}-${month}`;
 }
 
+function normalizeCashLedger(db) {
+  if (!db.months || typeof db.months !== "object") db.months = {};
+  
+  // 1. Gather all entries across all months
+  const allEntries = [];
+  for (const [mKey, mData] of Object.entries(db.months)) {
+    if (mData && Array.isArray(mData.entries)) {
+      mData.entries.forEach((e) => {
+        if (e && e.id) {
+          allEntries.push({ ...e, fallbackMonth: mKey });
+        }
+      });
+    }
+  }
+
+  // 2. Clear entries array in each month
+  for (const mKey of Object.keys(db.months)) {
+    if (db.months[mKey]) db.months[mKey].entries = [];
+  }
+
+  // 3. Redistribute each entry to its exact month according to its date YYYY-MM
+  allEntries.forEach((entry) => {
+    let targetMonth = entry.fallbackMonth || db.activeMonth || currentMonthKey();
+    if (entry.date && /^\d{4}-\d{2}/.test(entry.date)) {
+      targetMonth = entry.date.slice(0, 7);
+    }
+    if (!db.months[targetMonth]) {
+      db.months[targetMonth] = { openingCash: 0, entries: [] };
+    }
+    const list = db.months[targetMonth].entries;
+    const cleanEntry = {
+      id: entry.id,
+      date: entry.date || "",
+      description: entry.description || "",
+      inAmount: Number(entry.inAmount || 0),
+      outAmount: Number(entry.outAmount || 0),
+      status: String(entry.status || "clear").trim(),
+      rate: Number(entry.rate || 0),
+      cost: Number(entry.cost || 0),
+      price: Number(entry.price || 0),
+      totalCost: Number(entry.totalCost || 0),
+      profitAmount: Number(entry.profitAmount || 0),
+      useProfitCalculation: Boolean(entry.useProfitCalculation)
+    };
+    const existingIndex = list.findIndex((item) => item.id === cleanEntry.id);
+    if (existingIndex >= 0) list.splice(existingIndex, 1, cleanEntry);
+    else list.push(cleanEntry);
+  });
+
+  // 4. Sort entries by date ascending in each month
+  for (const mKey of Object.keys(db.months)) {
+    if (Array.isArray(db.months[mKey].entries)) {
+      db.months[mKey].entries.sort((a, b) => String(a.date || "9999-99-99").localeCompare(String(b.date || "9999-99-99")));
+    }
+  }
+}
+
 function ensureActiveMonth(db) {
   const monthKey = currentMonthKey();
   if (!db.months) db.months = {};
@@ -104,6 +161,7 @@ function ensureActiveMonth(db) {
     db.months[monthKey] = { openingCash: 0, entries: [] };
   }
   db.activeMonth = monthKey;
+  normalizeCashLedger(db);
   rollBillRecordsToMonth(db, monthKey);
   reconcileBillStatusFromLedger(db);
 }
@@ -1757,12 +1815,27 @@ async function handleApi(req, res, pathname) {
   if (pathname === "/api/cash/entry" && req.method === "POST") {
     if (!requireTab(user, "cashPage", res)) return;
     const body = await readBody(req);
-    const monthKey = body.monthKey || db.activeMonth;
-    if (!db.months[monthKey]) db.months[monthKey] = { openingCash: 0, entries: [] };
     const entry = body.entry || {};
-    const list = db.months[monthKey].entries;
-    const existingEntry = entry.id ? list.find((item) => item.id === entry.id) : null;
-    if (existingEntry && !requireAdmin(user, res)) return;
+    
+    // Automatically determine monthKey from entry.date (e.g. "2026-08-01" -> "2026-08")
+    let targetMonthKey = body.monthKey || db.activeMonth || currentMonthKey();
+    if (entry.date && /^\d{4}-\d{2}/.test(entry.date)) {
+      targetMonthKey = entry.date.slice(0, 7);
+    }
+    
+    if (!db.months) db.months = {};
+    if (!db.months[targetMonthKey]) db.months[targetMonthKey] = { openingCash: 0, entries: [] };
+    
+    // Remove entry from any other month if it existed previously
+    if (entry.id) {
+      for (const mKey of Object.keys(db.months)) {
+        if (db.months[mKey]?.entries) {
+          db.months[mKey].entries = db.months[mKey].entries.filter((item) => item.id !== entry.id);
+        }
+      }
+    }
+    
+    const list = db.months[targetMonthKey].entries;
     const payload = {
       id: entry.id || makeId(),
       date: entry.date || "",
@@ -1777,13 +1850,12 @@ async function handleApi(req, res, pathname) {
       profitAmount: Number(entry.profitAmount || 0),
       useProfitCalculation: Boolean(entry.useProfitCalculation)
     };
-    const index = list.findIndex((item) => item.id === payload.id);
-    if (index >= 0) list.splice(index, 1, payload);
-    else list.push(payload);
-    list.sort((a, b) => String(a.date || "9999-99-99").localeCompare(String(b.date || "9999-99-99")));
+    
+    list.push(payload);
+    normalizeCashLedger(db);
     reconcileBillStatusFromLedger(db);
     db.billRecords.sort((a, b) => String(a.machine || "").localeCompare(String(b.machine || ""), undefined, { numeric: true }));
-    db.activeMonth = monthKey;
+    db.activeMonth = targetMonthKey;
 
     // Auto-generate voucher if In Amount is recorded
     let createdVoucher = null;
@@ -1794,7 +1866,7 @@ async function handleApi(req, res, pathname) {
         machineId: body.machineId || payload.description,
         amount: payload.inAmount,
         date: payload.date,
-        monthKey,
+        monthKey: targetMonthKey,
         notes: payload.description,
         paymentMethod: body.paymentMethod || "Bank Transfer / Cash",
         staffUserId: user.id
@@ -1802,7 +1874,7 @@ async function handleApi(req, res, pathname) {
     }
 
     await writeDb(db);
-    return json(res, 200, { ok: true, voucher: createdVoucher });
+    return json(res, 200, { ok: true, voucher: createdVoucher, activeMonth: targetMonthKey });
   }
 
   if (pathname === "/api/cash/entry" && req.method === "DELETE") {
@@ -1810,9 +1882,13 @@ async function handleApi(req, res, pathname) {
     if (!requireAdmin(user, res)) return;
     const target = new URL(req.url, `http://${req.headers.host}`);
     const id = target.searchParams.get("id");
-    const monthKey = target.searchParams.get("monthKey") || db.activeMonth;
-    if (db.months[monthKey]) {
-      db.months[monthKey].entries = db.months[monthKey].entries.filter((item) => item.id !== id);
+    if (db.months) {
+      for (const mKey of Object.keys(db.months)) {
+        if (db.months[mKey]?.entries) {
+          db.months[mKey].entries = db.months[mKey].entries.filter((item) => item.id !== id);
+        }
+      }
+      normalizeCashLedger(db);
       reconcileBillStatusFromLedger(db);
       await writeDb(db);
     }
