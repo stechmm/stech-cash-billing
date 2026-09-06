@@ -1238,13 +1238,32 @@ function renderBillPage() {
     row.querySelector(".bill-date-cell").textContent = record.billDate || "";
     row.querySelector(".cut-off-cell").textContent = record.cutOffDate || "";
     row.querySelector(".bill-type-cell").textContent = record.billType || "";
-    row.querySelector(".bill-status-cell").textContent = billStatusLabel(display.status);
-    row.querySelector(".bill-alert-cell").textContent = billAlertLabel(alertState);
+    
+    const statusCell = row.querySelector(".bill-status-cell");
+    if (statusCell) {
+      statusCell.innerHTML = `<span class="bill-badge bill-badge-${display.status}">${billStatusLabel(display.status)}</span>`;
+    }
+    
+    const alertCell = row.querySelector(".bill-alert-cell");
+    if (alertCell) {
+      alertCell.innerHTML = alertState !== "none" ? `<span class="bill-badge bill-badge-${alertState}">${billAlertLabel(alertState)}</span>` : "";
+    }
+    
     row.querySelector(".customer-cell").textContent = record.customer || "";
+    
     const actions = row.querySelector(".row-actions");
+    const menu = row.querySelector(".action-menu");
     if (isAdmin()) {
-      row.querySelector(".edit-bill").onclick = () => editBillRecord(record.id);
-      row.querySelector(".delete-bill").onclick = () => deleteBillRecord(record.id);
+      row.querySelector(".edit-bill").onclick = (e) => {
+        e.stopPropagation();
+        menu?.removeAttribute("open");
+        editBillRecord(record.id);
+      };
+      row.querySelector(".delete-bill").onclick = (e) => {
+        e.stopPropagation();
+        menu?.removeAttribute("open");
+        deleteBillRecord(record.id);
+      };
     } else {
       actions.classList.add("hidden");
     }
@@ -3382,7 +3401,12 @@ async function doLogin(event) {
       if (res && (res.token || res.sid)) {
         localStorage.setItem("stech_session_token", res.token || res.sid);
       }
+      if (res && res.user) {
+        state.user = res.user;
+        localStorage.setItem("stech_user", JSON.stringify(res.user));
+      }
       el.loginForm.reset();
+      showApp();
       await refreshState();
     }
   } catch (error) {
@@ -3396,6 +3420,7 @@ async function doLogout(event) {
     event.stopPropagation();
   }
   localStorage.removeItem("stech_session_token");
+  localStorage.removeItem("stech_user");
   closeUtilityMenu();
   try {
     await api("/api/logout", { method: "POST" });
@@ -3413,20 +3438,13 @@ async function importBackup(event) {
   try {
     const text = await file.text();
     const snapshot = JSON.parse(text);
-    closeUtilityMenu();
-    const res = await api("/api/import/backup", {
-      method: "POST",
-      body: JSON.stringify({ snapshot })
-    });
-    if (res && res.error) {
-      alert("Restore Error: " + res.error);
-      return;
-    }
-    event.target.value = "";
-    alert("Data restored successfully!");
-    window.location.reload();
+    await api("/api/admin/restore", { method: "POST", body: JSON.stringify({ snapshot }) });
+    await refreshState();
+    alert("Database restored successfully!");
   } catch (err) {
-    alert("Restore failed: " + err.message);
+    alert("Failed to restore backup: " + err.message);
+  } finally {
+    event.target.value = "";
   }
 }
 
@@ -3449,27 +3467,43 @@ async function boot() {
     applyBillColors(loadBillColors());
     syncColorInputs();
     
-    // 1. Check for active staff / admin session
-    const session = await api("/api/session").catch(() => ({ user: null }));
+    // 1. Immediately restore cached user session if token exists
+    const cachedUser = localStorage.getItem("stech_user");
+    const cachedToken = localStorage.getItem("stech_session_token");
+    if (cachedUser && cachedToken) {
+      try {
+        state.user = JSON.parse(cachedUser);
+        showApp();
+      } catch (e) {}
+    }
+
+    // 2. Validate session with server
+    const session = await api("/api/session").catch(() => null);
     if (session && session.user) {
       state.user = session.user;
+      localStorage.setItem("stech_user", JSON.stringify(session.user));
       await refreshState();
       showApp();
       return;
     }
 
-    // 2. If no staff session, check if active customer session exists (seamlessly route to /customer/)
-    const custSession = await api("/api/customer/session").catch(() => ({ customer: null }));
+    // 3. If no staff session, check if active customer session exists
+    const custSession = await api("/api/customer/session").catch(() => null);
     if (custSession && custSession.customer) {
       window.location.href = "/customer/";
       return;
     }
 
-    // 3. Otherwise show Login screen
-    showLogin();
+    // 4. If unauthenticated, clear cache and show login
+    if (!session?.user) {
+      localStorage.removeItem("stech_user");
+      localStorage.removeItem("stech_session_token");
+      state.user = null;
+      showLogin();
+    }
   } catch (err) {
     console.error("Boot session error:", err);
-    showLogin();
+    if (!state.user) showLogin();
   }
 }
 

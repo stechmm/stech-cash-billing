@@ -3115,21 +3115,56 @@ body.resizing-columns {
   min-width: 820px;
 }
 
+/* Bill Table Column Sizing & Row Styling */
+.bill-table th:nth-child(1), .bill-table td:nth-child(1) { width: 75px; min-width: 60px; font-weight: 800; color: #38bdf8; text-align: center; } /* Machine */
+.bill-table th:nth-child(2), .bill-table td:nth-child(2) { width: 95px; min-width: 80px; text-align: center; } /* Submitted */
+.bill-table th:nth-child(3), .bill-table td:nth-child(3) { width: 95px; min-width: 80px; text-align: center; } /* Billing Due Date */
+.bill-table th:nth-child(4), .bill-table td:nth-child(4) { width: 95px; min-width: 80px; text-align: center; } /* Suspended Date */
+.bill-table th:nth-child(5), .bill-table td:nth-child(5) { width: 100px; min-width: 80px; text-align: center; color: #cbd5e1; } /* Bill Type */
+.bill-table th:nth-child(6), .bill-table td:nth-child(6) { width: 120px; min-width: 95px; text-align: center; } /* Status */
+.bill-table th:nth-child(7), .bill-table td:nth-child(7) { width: 110px; min-width: 85px; text-align: center; font-weight: 800; } /* Alert */
+.bill-table th:nth-child(8), .bill-table td:nth-child(8) { width: 130px; min-width: 90px; } /* Customer */
+.bill-table th:nth-child(9), .bill-table td:nth-child(9) { width: 90px; min-width: 80px; text-align: center; overflow: visible !important; } /* Action */
+
+.bill-table td.row-actions,
+.device-table td.row-actions,
+.cash-table td.row-actions {
+  overflow: visible !important;
+  position: relative;
+  text-align: center;
+}
+
 .bill-row-sent_unpaid {
-  background: rgba(0, 216, 61, 0.08);
+  background: color-mix(in srgb, var(--status-unpaid) 8%, transparent);
+}
+.bill-row-sent_unpaid .bill-status-cell {
+  color: var(--status-unpaid);
+  font-weight: 700;
 }
 
 .bill-row-paid_done {
-  background: rgba(59, 130, 246, 0.08);
+  background: color-mix(in srgb, var(--status-paid) 8%, transparent);
+}
+.bill-row-paid_done .bill-status-cell {
+  color: var(--status-paid);
+  font-weight: 700;
 }
 
 .bill-row-paid_pending {
-  background: rgba(245, 158, 11, 0.12);
+  background: color-mix(in srgb, var(--status-warn) 10%, transparent);
+}
+.bill-row-paid_pending .bill-status-cell {
+  color: var(--status-warn);
+  font-weight: 700;
 }
 
 .bill-row-suspended {
-  background: rgba(239, 68, 68, 0.12);
-  color: #fca5a5 !important;
+  background: color-mix(in srgb, var(--status-suspended) 12%, transparent);
+  color: #fca5a5;
+}
+.bill-row-suspended .bill-status-cell {
+  color: var(--status-suspended);
+  font-weight: 800;
 }
 
 .bill-row-suspended .row-actions button {
@@ -3137,7 +3172,7 @@ body.resizing-columns {
 }
 
 .bill-row-inactive {
-  background: rgba(100, 116, 139, 0.08);
+  background: color-mix(in srgb, var(--status-inactive) 8%, transparent);
   color: #94a3b8 !important;
 }
 
@@ -3146,23 +3181,30 @@ body.resizing-columns {
 }
 
 .bill-alert-due_7_days .bill-alert-cell {
-  color: #fbbf24;
+  color: var(--status-warn);
+  font-weight: 900;
 }
 
 .bill-alert-due_1_day .bill-alert-cell {
-  color: #fb923c;
+  color: var(--status-danger);
+  font-weight: 900;
 }
 
 .bill-alert-suspended .bill-alert-cell {
-  color: #f87171;
+  color: var(--status-suspended);
+  font-weight: 900;
 }
 
 .bill-table tbody tr.bill-alert-due_7_days {
-  background: rgba(245, 158, 11, 0.08);
+  background: color-mix(in srgb, var(--status-warn) 10%, transparent);
 }
 
 .bill-table tbody tr.bill-alert-due_1_day {
-  background: rgba(249, 115, 22, 0.08);
+  background: color-mix(in srgb, var(--status-danger) 12%, transparent);
+}
+
+.bill-table tbody tr.bill-alert-suspended {
+  background: color-mix(in srgb, var(--status-suspended) 14%, transparent);
 }
 
 .usage-table tbody tr.usage-row-warning {
@@ -3434,30 +3476,35 @@ body.resizing-columns {
 
 .action-panel {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 4px);
   right: 0;
-  z-index: 20;
+  z-index: 99999 !important;
   display: grid;
-  min-width: 112px;
+  min-width: 116px;
   padding: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
-  background: #0d121f;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.7);
+  background: #0f172a;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.95);
 }
 
 .action-panel button {
   width: 100%;
   margin: 0;
+  padding: 6px 10px;
   border: 0;
+  border-radius: 6px;
   background: transparent;
-  color: #cbd5e1;
+  color: #f1f5f9;
+  font-size: 11px;
+  font-weight: 700;
   text-align: left;
+  cursor: pointer;
 }
 
 .action-panel button:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  color: #38bdf8;
 }
 
 .action-panel .danger {
