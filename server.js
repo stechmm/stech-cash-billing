@@ -444,6 +444,30 @@ function generateAndSendVoucher(db, { customerId, customerName, machineId, amoun
   return voucher;
 }
 
+function createZipArchive(options = { zlib: { level: 9 } }) {
+  if (!archiver) {
+    try {
+      archiver = require("archiver");
+    } catch {
+      archiver = null;
+    }
+  }
+  if (!archiver) throw new Error("Archiver module is not available on server. Please run npm install.");
+  if (typeof archiver === "function") {
+    return archiver("zip", options);
+  }
+  if (archiver.ZipArchive) {
+    return new archiver.ZipArchive(options);
+  }
+  if (typeof archiver.create === "function") {
+    return archiver.create("zip", options);
+  }
+  if (typeof archiver.default === "function") {
+    return archiver.default("zip", options);
+  }
+  throw new Error("Unable to initialize zip archiver");
+}
+
 async function createBackupZip(db) {
   const backupDir = path.join(DATA_DIR, "backups");
   if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
@@ -452,20 +476,17 @@ async function createBackupZip(db) {
   const zipName = `backup-${timeStr}.zip`;
   const zipPath = path.join(backupDir, zipName);
 
-  if (!archiver) {
-    throw new Error("Archiver module is not available on server");
-  }
-
+  const archive = createZipArchive({ zlib: { level: 9 } });
   const output = fs.createWriteStream(zipPath);
-  const archive = archiver("zip", { zlib: { level: 9 } });
 
   return new Promise((resolve, reject) => {
     output.on("close", async () => {
-      console.log(`[Backup] Created ${zipName} (${archive.pointer()} bytes)`);
+      const size = archive.pointer ? archive.pointer() : (fs.existsSync(zipPath) ? fs.statSync(zipPath).size : 0);
+      console.log(`[Backup] Created ${zipName} (${size} bytes)`);
       if (db.systemSettings?.telegramBotToken && (db.systemSettings?.telegramBackupChatId || db.systemSettings?.telegramChatId)) {
-        await sendTelegramDocument(db, zipPath, `📦 S-Tech Billing Database Backup\nDate: ${new Date().toLocaleString()}\nFile: ${zipName}\nSize: ${(archive.pointer() / 1024).toFixed(1)} KB`);
+        await sendTelegramDocument(db, zipPath, `📦 S-Tech Billing Database Backup\nDate: ${new Date().toLocaleString()}\nFile: ${zipName}\nSize: ${(size / 1024).toFixed(1)} KB`);
       }
-      resolve({ zipName, zipPath, size: archive.pointer() });
+      resolve({ zipName, zipPath, size });
     });
     archive.on("error", (err) => reject(err));
     archive.pipe(output);
