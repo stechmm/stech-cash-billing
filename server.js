@@ -2186,8 +2186,8 @@ async function handleApi(req, res, pathname) {
     if (!requireAdmin(user, res)) return;
     const backup = {
       ...db,
-      users: db.users.map(safeUser),
-      customerAccounts: db.customerAccounts.map(safeCustomerAccount)
+      exportedAt: new Date().toISOString(),
+      version: "11.0"
     };
     res.writeHead(200, {
       "Content-Type": "application/json; charset=utf-8",
@@ -2196,37 +2196,67 @@ async function handleApi(req, res, pathname) {
     return res.end(JSON.stringify(backup, null, 2));
   }
 
-  if (pathname === "/api/import/backup" && req.method === "POST") {
+  if ((pathname === "/api/admin/restore" || pathname === "/api/import/backup") && req.method === "POST") {
     if (!requireAdmin(user, res)) return;
     const body = await readBody(req);
-    const snapshot = body.snapshot || {};
-    if (!snapshot.months || !Array.isArray(snapshot.billRecords) || !Array.isArray(snapshot.deviceRecords)) {
-      return json(res, 400, { error: "Invalid backup payload" });
-    }
-    if (Array.isArray(snapshot.users) && snapshot.users.length > 0) {
-      // keep imported users
-    } else {
-      snapshot.users = db.users;
-    }
-    snapshot.nextDeviceNumber = Number(snapshot.nextDeviceNumber || (snapshot.deviceRecords.length + 1));
-    if (!Array.isArray(snapshot.usageRecords)) snapshot.usageRecords = [];
-    if (!Array.isArray(snapshot.customerAccounts)) snapshot.customerAccounts = [];
-    if (!Array.isArray(snapshot.announcements)) snapshot.announcements = [];
-    if (!Array.isArray(snapshot.supportMessages)) snapshot.supportMessages = [];
-    if (!snapshot.appSettings) ensureAppSettings(snapshot);
-    if (!snapshot.systemSettings) ensureSystemSettings(snapshot);
-    ensureActiveMonth(snapshot);
-    ensureUsageRecords(snapshot);
-    ensureCustomerFeatures(snapshot);
-    ensureUserPermissions(snapshot);
+    const snapshot = body.snapshot || body || {};
 
-    for (const key of Object.keys(db)) {
-      delete db[key];
+    if (!snapshot || typeof snapshot !== "object") {
+      return json(res, 400, { error: "Invalid backup JSON data" });
     }
-    Object.assign(db, snapshot);
+
+    // Merge months
+    if (snapshot.months && typeof snapshot.months === "object") {
+      db.months = { ...(db.months || {}), ...snapshot.months };
+    }
+
+    // Merge/replace records
+    if (Array.isArray(snapshot.billRecords)) db.billRecords = snapshot.billRecords;
+    if (Array.isArray(snapshot.deviceRecords)) db.deviceRecords = snapshot.deviceRecords;
+    if (Array.isArray(snapshot.usageRecords)) db.usageRecords = snapshot.usageRecords;
+    if (Array.isArray(snapshot.customerAccounts)) db.customerAccounts = snapshot.customerAccounts;
+    if (Array.isArray(snapshot.announcements)) db.announcements = snapshot.announcements;
+    if (Array.isArray(snapshot.supportMessages)) db.supportMessages = snapshot.supportMessages;
+
+    // Users: Keep current admin user safely while importing other staff users
+    if (Array.isArray(snapshot.users) && snapshot.users.length > 0) {
+      const existingUsersMap = new Map((db.users || []).map(u => [String(u.username || "").toLowerCase(), u]));
+      const mergedUsers = snapshot.users.map((importedUser) => {
+        const key = String(importedUser.username || "").toLowerCase();
+        const existing = existingUsersMap.get(key);
+        return {
+          ...importedUser,
+          passwordHash: importedUser.passwordHash || (existing ? (existing.passwordHash || existing.password) : hashPassword(importedUser.password || "change-me-now")),
+          allowedTabs: normalizeAllowedTabs(importedUser)
+        };
+      });
+      // Ensure current admin user is always preserved
+      if (user && !mergedUsers.some(u => String(u.username || "").toLowerCase() === String(user.username || "").toLowerCase())) {
+        mergedUsers.unshift(user);
+      }
+      db.users = mergedUsers;
+    }
+
+    if (snapshot.nextDeviceNumber) {
+      db.nextDeviceNumber = Number(snapshot.nextDeviceNumber);
+    } else if (Array.isArray(db.deviceRecords)) {
+      db.nextDeviceNumber = db.deviceRecords.length + 1;
+    }
+
+    if (snapshot.appSettings) db.appSettings = { ...(db.appSettings || {}), ...snapshot.appSettings };
+    if (snapshot.systemSettings) db.systemSettings = { ...(db.systemSettings || {}), ...snapshot.systemSettings };
+
+    normalizeCashLedger(db);
+    ensureActiveMonth(db);
+    ensureUsageRecords(db);
+    ensureCustomerFeatures(db);
+    ensureUserPermissions(db);
+    ensureAppSettings(db);
+    ensureSystemSettings(db);
 
     await writeDb(db);
-    return json(res, 200, { ok: true });
+    broadcastRealtime({ type: "data_restored" });
+    return json(res, 200, { ok: true, message: "Database restored successfully" });
   }
 
   // System & Telegram Settings APIs

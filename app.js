@@ -3437,12 +3437,17 @@ async function importBackup(event) {
   if (!file) return;
   try {
     const text = await file.text();
-    const snapshot = JSON.parse(text);
+    let snapshot;
+    try {
+      snapshot = JSON.parse(text);
+    } catch (e) {
+      throw new Error("Invalid JSON file format. Please upload a valid JSON backup file.");
+    }
     await api("/api/admin/restore", { method: "POST", body: JSON.stringify({ snapshot }) });
     await refreshState();
-    alert("Database restored successfully!");
+    alert("✅ Database restored successfully! All records, devices, and billing ledgers have been loaded.");
   } catch (err) {
-    alert("Failed to restore backup: " + err.message);
+    alert("❌ Failed to restore backup: " + (err.message || "Unknown error"));
   } finally {
     event.target.value = "";
   }
