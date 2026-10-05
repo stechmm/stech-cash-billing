@@ -160,9 +160,10 @@ function ensureActiveMonth(db) {
   if (!db.months[monthKey]) {
     db.months[monthKey] = { openingCash: 0, entries: [] };
   }
-  db.activeMonth = monthKey;
+  if (!db.activeMonth) {
+    db.activeMonth = monthKey;
+  }
   normalizeCashLedger(db);
-  rollBillRecordsToMonth(db, monthKey);
   reconcileBillStatusFromLedger(db);
 }
 
