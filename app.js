@@ -169,6 +169,7 @@ const el = {
   usageSafeCount: document.querySelector("#usageSafeCount"),
   usageWarnCount: document.querySelector("#usageWarnCount"),
   usageExceededCount: document.querySelector("#usageExceededCount"),
+  usageMonthSelect: document.querySelector("#usageMonthSelect"),
   usageBody: document.querySelector("#usageBody"),
   usageRowTemplate: document.querySelector("#usageRowTemplate"),
   openUsageDialogBtn: document.querySelector("#openUsageDialogBtn"),
@@ -1459,8 +1460,48 @@ function formatUsageDateBadge(dateStr) {
   return `${mName} ${d}`;
 }
 
+function populateUsageMonthSelect() {
+  if (!el.usageMonthSelect) return;
+  const monthKeys = new Set();
+  (state.usageRecords || []).forEach((u) => { if (u.monthKey) monthKeys.add(u.monthKey); });
+  if (state.months) Object.keys(state.months).forEach((m) => monthKeys.add(m));
+  
+  const now = new Date();
+  const curRealYear = now.getFullYear();
+  const curRealMonth = now.getMonth() + 1;
+  const realCurrentKey = `${curRealYear}-${String(curRealMonth).padStart(2, "0")}`;
+  monthKeys.add(realCurrentKey);
+  if (state.activeMonth) monthKeys.add(state.activeMonth);
+
+  for (let offset = -12; offset <= 6; offset++) {
+    const d = new Date(curRealYear, curRealMonth - 1 + offset, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    monthKeys.add(key);
+  }
+
+  const sortedMonths = Array.from(monthKeys).sort((a, b) => b.localeCompare(a));
+  const activeUsageMonth = vizState.activeMonth || state.activeMonth || realCurrentKey;
+  
+  el.usageMonthSelect.innerHTML = "";
+  sortedMonths.forEach((mKey) => {
+    const opt = document.createElement("option");
+    opt.value = mKey;
+    opt.textContent = `📅 ${monthLabel(mKey)}${mKey === realCurrentKey ? " (This Month)" : ""}`;
+    el.usageMonthSelect.append(opt);
+  });
+  el.usageMonthSelect.value = activeUsageMonth;
+}
+
+function selectUsageMonth(monthKey) {
+  if (!monthKey) return;
+  vizState.activeMonth = monthKey;
+  renderUsagePage();
+}
+window.selectUsageMonth = selectUsageMonth;
+
 function renderUsagePage() {
-  const currentMonth = state.activeMonth || currentMonthKey();
+  populateUsageMonthSelect();
+  const currentMonth = vizState.activeMonth || state.activeMonth || currentMonthKey();
   const allMachineIds = getAllMachineIds();
   const searchFilter = (el.usageSearchInput?.value || "").trim().toLowerCase();
 

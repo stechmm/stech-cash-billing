@@ -658,6 +658,7 @@
               <strong>Machine Usage Ledger (Click machine to view Chart)</strong>
             </div>
             <div class="header-tools">
+              <select id="usageMonthSelect" class="month-select" onchange="selectUsageMonth(this.value)" style="min-height:34px; font-size:12px; font-weight:700; padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: #0f172a; color: #38bdf8; cursor: pointer;"></select>
               <div class="sheet-filter-group" id="usageFilterGroup">
                 <button type="button" class="filter-chip active" data-filter="active" onclick="setUsageActiveFilter('active')">Active Only</button>
                 <button type="button" class="filter-chip" data-filter="all" onclick="setUsageActiveFilter('all')">All Machines</button>

@@ -194,15 +194,31 @@ function customerDate(value, withTime = false) {
     : { month: "short", day: "numeric", year: "numeric" }).format(date);
 }
 
+function getCustomerActiveUsageRecord(targetMachine, monthKey) {
+  const allRecords = customerState.usageRecords || [];
+  const machUpper = String(targetMachine || "").trim().toUpperCase();
+  const machineRecords = allRecords.filter((r) => !machUpper || String(r.machine || "").trim().toUpperCase() === machUpper);
+  
+  if (monthKey) {
+    const matched = machineRecords.find((r) => r.monthKey === monthKey);
+    if (matched && (Object.keys(matched.dailyUsage || {}).length > 0 || matched.legacyUsageTB > 0)) {
+      return matched;
+    }
+  }
+  
+  // Fallback to latest record with entries for this device
+  const sorted = [...machineRecords].sort((a, b) => String(b.monthKey || "").localeCompare(String(a.monthKey || "")));
+  return sorted[0] || customerState.usage || null;
+}
+
 function customerUsageEntries() {
   const devices = customerState.devices || [];
   let targetMachine = customerState.selectedDeviceId;
   if (!targetMachine || targetMachine === "ALL") {
     targetMachine = devices[0]?.deviceId || customerState.customer?.linkedDeviceId || "";
   }
-  const currentMonth = customerState.activeMonth || new Date().toISOString().slice(0, 7);
-  const allRecords = customerState.usageRecords || [];
-  const rec = allRecords.find((r) => String(r.machine || "").trim().toUpperCase() === String(targetMachine).trim().toUpperCase() && r.monthKey === currentMonth) || customerState.usage;
+  const currentMonth = customerVizState.activeMonth || customerState.activeMonth || new Date().toISOString().slice(0, 7);
+  const rec = getCustomerActiveUsageRecord(targetMachine, currentMonth);
   const daily = rec?.dailyUsage || {};
   return Object.entries(daily)
     .map(([date, value]) => ({ date, value: Number(value || 0) }))
@@ -215,9 +231,8 @@ function customerUsageTotal() {
   if (!targetMachine || targetMachine === "ALL") {
     targetMachine = devices[0]?.deviceId || customerState.customer?.linkedDeviceId || "";
   }
-  const currentMonth = customerState.activeMonth || new Date().toISOString().slice(0, 7);
-  const allRecords = customerState.usageRecords || [];
-  const rec = allRecords.find((r) => String(r.machine || "").trim().toUpperCase() === String(targetMachine).trim().toUpperCase() && r.monthKey === currentMonth) || customerState.usage;
+  const currentMonth = customerVizState.activeMonth || customerState.activeMonth || new Date().toISOString().slice(0, 7);
+  const rec = getCustomerActiveUsageRecord(targetMachine, currentMonth);
   return customerUsageEntries().reduce((sum, item) => sum + item.value, Number(rec?.legacyUsageTB || 0));
 }
 

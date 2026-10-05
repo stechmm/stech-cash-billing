@@ -154,16 +154,40 @@ function normalizeCashLedger(db) {
   }
 }
 
+function getPreviousMonthKey(monthKey) {
+  if (!/^\d{4}-\d{2}$/.test(monthKey || "")) return null;
+  const [year, month] = monthKey.split("-").map(Number);
+  const prevDate = new Date(year, month - 2, 1);
+  const pYear = prevDate.getFullYear();
+  const pMonth = String(prevDate.getMonth() + 1).padStart(2, "0");
+  return `${pYear}-${pMonth}`;
+}
+
+function calculateMonthClosingCash(db, monthKey) {
+  const m = db.months?.[monthKey];
+  if (!m) return 0;
+  const opening = Number(m.openingCash || 0);
+  const entries = Array.isArray(m.entries) ? m.entries : [];
+  const inSum = entries.reduce((s, e) => s + Number(e.inAmount || 0), 0);
+  const outSum = entries.reduce((s, e) => s + Number(e.outAmount || 0), 0);
+  return opening + inSum - outSum;
+}
+
 function ensureActiveMonth(db) {
-  const monthKey = currentMonthKey();
-  if (!db.months) db.months = {};
-  if (!db.months[monthKey]) {
-    db.months[monthKey] = { openingCash: 0, entries: [] };
-  }
-  if (!db.activeMonth) {
-    db.activeMonth = monthKey;
-  }
+  const curKey = currentMonthKey();
+  if (!db.months || typeof db.months !== "object") db.months = {};
   normalizeCashLedger(db);
+  
+  // If current month does not exist, initialize it with auto-carried opening cash from previous month
+  if (!db.months[curKey]) {
+    const prevKey = getPreviousMonthKey(curKey);
+    const carriedOpening = prevKey ? calculateMonthClosingCash(db, prevKey) : 0;
+    db.months[curKey] = { openingCash: carriedOpening, entries: [] };
+  }
+  
+  if (!db.activeMonth || !db.months[db.activeMonth]) {
+    db.activeMonth = curKey;
+  }
   reconcileBillStatusFromLedger(db);
 }
 
@@ -979,7 +1003,9 @@ function buildCustomerBootstrap(db, customer) {
     const usage = db.usageRecords.find((item) => (
       String(item.monthKey || "") === db.activeMonth &&
       String(item.machine || "").trim().toUpperCase() === devId
-    )) || null;
+    )) || db.usageRecords
+      .filter((item) => String(item.machine || "").trim().toUpperCase() === devId)
+      .sort((a, b) => String(b.monthKey || "").localeCompare(String(a.monthKey || "")))[0] || null;
     const bill = db.billRecords.find((item) => String(item.machine || "").trim().toUpperCase() === devId) || null;
     return {
       deviceId: device.deviceId || "",
