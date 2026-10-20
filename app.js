@@ -3403,84 +3403,52 @@ window.toggleLoginRole = toggleLoginRole;
 
 async function doLogin(event) {
   event.preventDefault();
-  el.loginMessage.textContent = "";
+  if (el.loginMessage) el.loginMessage.textContent = "";
   const username = el.loginUsername.value.trim();
   const password = el.loginPassword.value;
   if (!username || !password) {
-    el.loginMessage.textContent = "Please enter both username and password.";
+    if (el.loginMessage) el.loginMessage.textContent = "Please enter both username and password.";
     return;
   }
 
+  const submitBtn = document.getElementById("loginSubmitBtn");
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Signing in...</span>';
+  }
+
   try {
-    if (currentLoginRole === "customer") {
-      let res;
-      try {
-        res = await api("/api/customer/login", {
-          method: "POST",
-          body: JSON.stringify({ username, password })
-        });
-      } catch (custErr) {
-        // Smart fallback: Check if user credentials belong to a staff member
-        try {
-          const staffRes = await api("/api/login", {
-            method: "POST",
-            body: JSON.stringify({ username, password })
-          });
-          if (staffRes && staffRes.user) {
-            localStorage.setItem("stech_session_token", staffRes.token || staffRes.sid);
-            state.user = staffRes.user;
-            localStorage.setItem("stech_user", JSON.stringify(staffRes.user));
-            el.loginForm.reset();
-            showApp();
-            await refreshState();
-            return;
-          }
-        } catch {
-          // If staff login also fails, throw original customer error
-        }
-        throw custErr;
-      }
-      if (res && (res.token || res.sid)) {
-        localStorage.setItem("stech_customer_session_token", res.token || res.sid);
-      }
-      window.location.href = "/customer/";
-    } else {
-      let res;
-      try {
-        res = await api("/api/login", {
-          method: "POST",
-          body: JSON.stringify({ username, password })
-        });
-      } catch (staffErr) {
-        // Smart fallback: Check if user credentials belong to a customer account
-        try {
-          const custRes = await api("/api/customer/login", {
-            method: "POST",
-            body: JSON.stringify({ username, password })
-          });
-          if (custRes && (custRes.token || custRes.sid)) {
-            localStorage.setItem("stech_customer_session_token", custRes.token || custRes.sid);
-            window.location.href = "/customer/";
-            return;
-          }
-        } catch {
-          // If customer login also fails, throw original staff error
-        }
-        throw staffErr;
-      }
-      if (res && (res.token || res.sid)) {
-        localStorage.setItem("stech_session_token", res.token || res.sid);
-      }
-      if (res && res.user) {
-        state.user = res.user;
-        localStorage.setItem("stech_user", JSON.stringify(res.user));
-      }
+    const res = await api("/api/unified-login", {
+      method: "POST",
+      body: JSON.stringify({ username, password })
+    });
+
+    if (res && res.role === "staff" && res.user) {
+      localStorage.setItem("stech_session_token", res.token || res.sid);
+      state.user = res.user;
+      localStorage.setItem("stech_user", JSON.stringify(res.user));
       el.loginForm.reset();
       showApp();
       await refreshState();
+      return;
     }
+
+    if (res && res.role === "customer") {
+      if (res.token || res.sid) {
+        localStorage.setItem("stech_customer_session_token", res.token || res.sid);
+      }
+      window.location.href = "/customer/";
+      return;
+    }
+
+    throw new Error("Invalid username or password");
   } catch (error) {
-    el.loginMessage.textContent = error.message || "Invalid username or password";
+    if (el.loginMessage) el.loginMessage.textContent = error.message || "Invalid username or password";
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Sign in</span><span class="btn-shine"></span>';
+    }
   }
 }
 

@@ -1353,6 +1353,40 @@ async function handleApi(req, res, pathname) {
     return json(res, 200, { user: user ? safeUser(user) : null });
   }
 
+  if (pathname === "/api/unified-login" && req.method === "POST") {
+    const body = await readBody(req);
+    const username = String(body.username || "").trim().toLowerCase();
+    const rawPassword = String(body.password || "");
+
+    // 1. Check if user is Staff/Admin in db.users
+    const staffUser = (db.users || []).find((item) => String(item.username || "").trim().toLowerCase() === username);
+    if (staffUser && verifyPassword(rawPassword, staffUser.passwordHash || staffUser.password)) {
+      const sid = createSession(staffUser.id, db);
+      await writeDb(db);
+      return json(
+        res,
+        200,
+        { role: "staff", user: safeUser(staffUser), sid, token: sid },
+        { "Set-Cookie": `${SESSION_COOKIE}=${sid}; ${cookieOptions(req)}` }
+      );
+    }
+
+    // 2. Check if user is Customer in db.customerAccounts
+    const customer = (db.customerAccounts || []).find((item) => String(item.username || "").trim().toLowerCase() === username);
+    if (customer && customer.active !== false && verifyPassword(rawPassword, customer.passwordHash || customer.password)) {
+      const sid = createCustomerSession(customer.id, db);
+      await writeDb(db);
+      return json(
+        res,
+        200,
+        { role: "customer", customer: safeCustomerAccount(customer), sid, token: sid },
+        { "Set-Cookie": `${CUSTOMER_SESSION_COOKIE}=${sid}; ${cookieOptions(req)}` }
+      );
+    }
+
+    return json(res, 401, { error: "Invalid username or password" });
+  }
+
   if (pathname === "/api/login" && req.method === "POST") {
     const body = await readBody(req);
     const username = String(body.username || "").trim().toLowerCase();

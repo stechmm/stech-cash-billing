@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="preload" as="image" href="/cosmic-spacelink-wallpaper.jpg?v=20261020">
-    <link rel="stylesheet" href="styles.css?v=12.0">
+    <link rel="stylesheet" href="styles.css?v=13.0">
     <script>
       (function(){
         try {
@@ -29,13 +29,21 @@
     <!-- Login Screen: Ultra-Clean Space Wallpaper Experience -->
     <section id="loginScreen" class="login-view spacelink-landing-view">
       <div class="spacelink-login-wrapper">
-        <!-- Smart Frosted Glass Login Card -->
+        <!-- Smart Frosted Glass Terminal Login Card -->
         <div class="compact-login-card">
           <form id="loginForm" class="login-form compact-form">
-            <!-- Micro Brand Pill -->
-            <div class="login-brand-tag">
-              <span class="live-status-dot"></span>
-              <span>SpaceLink Access</span>
+            <!-- Terminal CLI Header Bar -->
+            <div class="terminal-bar">
+              <div class="terminal-controls">
+                <span class="term-dot dot-red"></span>
+                <span class="term-dot dot-yellow"></span>
+                <span class="term-dot dot-green"></span>
+              </div>
+              <div class="terminal-command">
+                <span class="term-prompt">root@spacelink:~#</span>
+                <span class="term-text">access --auth</span>
+                <span class="term-cursor"></span>
+              </div>
             </div>
 
             <!-- Username Input -->
@@ -46,7 +54,7 @@
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
               </span>
-              <input id="loginUsername" class="login-input-field" type="text" placeholder="Username" autocomplete="username" required>
+              <input id="loginUsername" class="login-input-field" type="text" placeholder="Username or Email" autocomplete="username" required>
             </div>
 
             <!-- Password Input with See Password Eye Button -->
@@ -70,13 +78,12 @@
               </button>
             </div>
 
-            <!-- Keep Me Signed In (30 days) & Forgot Password Link -->
+            <!-- Keep Me Signed In (30 days) Row -->
             <div class="login-options-row">
               <label class="remember-label">
                 <input type="checkbox" id="rememberMeCheckbox" checked>
                 <span>Keep me signed in (30 days)</span>
               </label>
-              <button type="button" class="forgot-link-btn" onclick="openForgotModal()">Forgot password?</button>
             </div>
 
             <!-- Compact Sign In Button -->
@@ -86,11 +93,9 @@
             </button>
             <p id="loginMessage" class="login-message"></p>
 
-            <!-- Dedicated Staff Sign In Row (on its own separate line) -->
-            <div class="staff-login-row">
-              <button type="button" id="loginRoleToggleBtn" class="staff-link-pill" onclick="toggleLoginRole()">
-                <span id="loginRoleBtnText">Staff member? Sign in to Console &rarr;</span>
-              </button>
+            <!-- Forgot Password Link Below Sign In Button -->
+            <div class="forgot-below-btn-row">
+              <button type="button" class="forgot-link-btn" onclick="openForgotModal()">Forgot password?</button>
             </div>
           </form>
         </div>
@@ -1548,7 +1553,7 @@
       </tr>
     </template>
 
-    <script src="app.js?v=12.0"></script>
+    <script src="app.js?v=13.0"></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
