@@ -1109,7 +1109,15 @@ function serveStatic(req, res, pathname) {
     return notFound(res);
   }
   const ext = path.extname(filePath).toLowerCase();
-  res.writeHead(200, { "Content-Type": STATIC_TYPES[ext] || "application/octet-stream" });
+  const headers = { "Content-Type": STATIC_TYPES[ext] || "application/octet-stream" };
+  if ([".jpg", ".jpeg", ".png", ".webp", ".svg", ".ico", ".woff2", ".woff", ".ttf"].includes(ext)) {
+    headers["Cache-Control"] = "public, max-age=604800, immutable";
+  } else if ([".css", ".js"].includes(ext)) {
+    headers["Cache-Control"] = "public, max-age=3600";
+  } else {
+    headers["Cache-Control"] = "no-cache";
+  }
+  res.writeHead(200, headers);
   fs.createReadStream(filePath).pipe(res);
 }
 
@@ -1392,6 +1400,107 @@ async function handleApi(req, res, pathname) {
     await writeDb(db);
     return json(res, 200, { ok: true });
   }
+  if (pathname === "/api/forgot-password" && req.method === "POST") {
+    const body = await readBody(req);
+    const rawIdentity = String(body.identity || body.email || body.username || "").trim();
+    if (!rawIdentity) {
+      return json(res, 400, { error: "Please enter your registered email or username." });
+    }
+    const identityLower = rawIdentity.toLowerCase();
+
+    // Look up customer account
+    const customer = (db.customerAccounts || []).find((c) => {
+      const u = String(c.username || "").trim().toLowerCase();
+      const e = String(c.email || "").trim().toLowerCase();
+      const f = String(c.fullName || "").trim().toLowerCase();
+      const devIds = getCustomerLinkedDeviceIds(c).map((d) => d.toLowerCase());
+      return u === identityLower || e === identityLower || f === identityLower || devIds.includes(identityLower);
+    });
+
+    // Also look up staff user
+    const staffUser = (db.users || []).find((u) => {
+      const un = String(u.username || "").trim().toLowerCase();
+      const em = String(u.email || "").trim().toLowerCase();
+      const fn = String(u.fullName || "").trim().toLowerCase();
+      return un === identityLower || em === identityLower || fn === identityLower;
+    });
+
+    if (!customer && !staffUser) {
+      return json(res, 404, {
+        error: "No account found matching this email or username. Please check your spelling or contact support."
+      });
+    }
+
+    // Generate readable random 8-character temporary password (e.g. SL-7X4K2P)
+    const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    let randomPart = "";
+    for (let i = 0; i < 6; i++) {
+      randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const tempPassword = "SL-" + randomPart;
+    const newHash = hashPassword(tempPassword);
+
+    function escapeTg(str) {
+      return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    if (customer) {
+      customer.passwordHash = newHash;
+      customer.password = undefined;
+
+      // Automatically post directly to Customer Support Chat
+      if (!Array.isArray(db.supportMessages)) db.supportMessages = [];
+      const chatMsg = {
+        id: makeId(),
+        customerId: customer.id,
+        senderType: "staff",
+        senderId: "system",
+        topic: "password_reset",
+        message: "🔐 [Password Reset]\n\nHello " + (customer.fullName || customer.username) + ",\nYour password reset request was received and processed.\n\nYour new temporary password is:\n" + tempPassword + "\n\nPlease sign in with this password. Keep it secure!",
+        createdAt: new Date().toISOString(),
+        readByCustomer: false,
+        readByStaff: true
+      };
+      db.supportMessages.push(chatMsg);
+
+      broadcastRealtime({ type: "support_message", customerId: customer.id, message: chatMsg }, (client) => client.kind === "staff" || client.customerId === customer.id);
+
+      const customerName = escapeTg(customer.fullName || customer.username || "Customer");
+      const devIds = escapeTg(getCustomerLinkedDeviceIds(customer).join(", ") || "N/A");
+      const adminAlert = "🔐 <b>SpaceLink Password Reset Request</b>\n\n" +
+        "👤 <b>Customer:</b> " + customerName + "\n" +
+        "🆔 <b>Query / Username:</b> <code>" + escapeTg(rawIdentity) + "</code>\n" +
+        "📡 <b>Linked Machines:</b> <code>" + devIds + "</code>\n" +
+        "🔑 <b>New Temp Password:</b> <code>" + escapeTg(tempPassword) + "</code>\n" +
+        "💬 <i>Delivered to Customer Support Chat ✓</i>\n" +
+        "⏰ <i>" + new Date().toLocaleString("en-GB", { timeZone: "Asia/Yangon" }) + "</i>";
+      sendTelegramNotification(db, adminAlert);
+    }
+
+    if (staffUser && !customer) {
+      staffUser.passwordHash = newHash;
+      staffUser.password = undefined;
+
+      const staffName = escapeTg(staffUser.fullName || staffUser.username || "Staff");
+      const adminAlert = "🔐 <b>SpaceLink Staff Password Reset Request</b>\n\n" +
+        "👤 <b>Staff:</b> " + staffName + " (" + escapeTg(staffUser.role || "staff") + ")\n" +
+        "🆔 <b>Username / Email:</b> <code>" + escapeTg(rawIdentity) + "</code>\n" +
+        "🔑 <b>New Temp Password:</b> <code>" + escapeTg(tempPassword) + "</code>\n" +
+        "⏰ <i>" + new Date().toLocaleString("en-GB", { timeZone: "Asia/Yangon" }) + "</i>";
+      sendTelegramNotification(db, adminAlert);
+    }
+
+    await writeDb(db);
+
+    return json(res, 200, {
+      ok: true,
+      tempPassword,
+      message: customer
+        ? "Your request has been sent to the administrator. A new password has been generated and delivered to your Customer Portal chat!"
+        : "Your password reset request has been dispatched to the administrator."
+    });
+  }
+
 
   if (pathname === "/api/customer/bootstrap" && req.method === "GET") {
     const customer = requireCustomer(req, res, db);

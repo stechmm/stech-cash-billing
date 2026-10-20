@@ -3387,11 +3387,11 @@ function setLoginRole(role) {
   if (currentLoginRole === "customer") {
     if (submitBtn) submitBtn.innerHTML = '<span>Sign in</span><span class="btn-shine"></span>';
     if (userPlaceholder) userPlaceholder.placeholder = "Username";
-    if (roleBtnText) roleBtnText.innerHTML = "Staff Sign in &rarr;";
+    if (roleBtnText) roleBtnText.innerHTML = "Staff member? Sign in to Console &rarr;";
   } else {
-    if (submitBtn) submitBtn.innerHTML = '<span>Sign in</span><span class="btn-shine"></span>';
-    if (userPlaceholder) userPlaceholder.placeholder = "Staff Username";
-    if (roleBtnText) roleBtnText.innerHTML = "&larr; Customer Sign in";
+    if (submitBtn) submitBtn.innerHTML = '<span>Sign in to Console</span><span class="btn-shine"></span>';
+    if (userPlaceholder) userPlaceholder.placeholder = "Staff Username or Email";
+    if (roleBtnText) roleBtnText.innerHTML = "&larr; Customer portal? Return to sign in";
   }
 }
 window.setLoginRole = setLoginRole;
@@ -4059,3 +4059,109 @@ boot();
 setInterval(() => {
   if (state.user && state.activePage === "supportPage" && !document.hidden) refreshState().catch(() => {});
 }, 60000);
+
+
+// --- Forgot Password Flow ---
+function openForgotModal() {
+  const modal = document.getElementById("forgotModal");
+  const input = document.getElementById("forgotIdentity");
+  const statusBox = document.getElementById("forgotStatusBox");
+  const submitBtn = document.getElementById("forgotSubmitBtn");
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span>Send Request</span>';
+  }
+  if (statusBox) {
+    statusBox.className = "forgot-status-box hidden";
+    statusBox.innerHTML = "";
+  }
+  if (input) {
+    const loginUser = document.getElementById("loginUsername")?.value?.trim();
+    if (loginUser) input.value = loginUser;
+  }
+  if (modal) {
+    modal.classList.remove("hidden");
+    setTimeout(() => input?.focus(), 50);
+  }
+}
+window.openForgotModal = openForgotModal;
+
+function closeForgotModal() {
+  const modal = document.getElementById("forgotModal");
+  if (modal) modal.classList.add("hidden");
+}
+window.closeForgotModal = closeForgotModal;
+
+async function handleForgotSubmit(event) {
+  event.preventDefault();
+  const input = document.getElementById("forgotIdentity");
+  const submitBtn = document.getElementById("forgotSubmitBtn");
+  const statusBox = document.getElementById("forgotStatusBox");
+  const identity = input ? input.value.trim() : "";
+  if (!identity) return;
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Sending...</span>';
+  }
+  if (statusBox) {
+    statusBox.className = "forgot-status-box hidden";
+    statusBox.innerHTML = "";
+  }
+
+  try {
+    const res = await api("/api/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ identity })
+    });
+
+    if (statusBox) {
+      statusBox.className = "forgot-status-box success";
+      let html = '<div style="font-weight:600;margin-bottom:4px;">✓ Password Reset Request Processed</div>';
+      html += '<div>' + (res.message || "A new temporary password has been generated and delivered to your Customer Portal chat!") + '</div>';
+      if (res.tempPassword) {
+        html += '<div class="forgot-temp-pwd-card">';
+        html += '<span>New Password: <code>' + res.tempPassword + '</code></span>';
+        html += '<button type="button" class="forgot-copy-btn" onclick="copyTempPassword(\'' + res.tempPassword + '\', this)">Copy</button>';
+        html += '</div>';
+      }
+      statusBox.innerHTML = html;
+      statusBox.classList.remove("hidden");
+    }
+    if (input) input.value = "";
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Done</span>';
+    }
+  } catch (err) {
+    if (statusBox) {
+      statusBox.className = "forgot-status-box error";
+      statusBox.innerHTML = '<strong>Error:</strong> ' + (err.message || "Unable to reset password. Please check your username/email.");
+      statusBox.classList.remove("hidden");
+    }
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<span>Try Again</span>';
+    }
+  }
+}
+window.handleForgotSubmit = handleForgotSubmit;
+
+function copyTempPassword(text, btn) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  }
+  if (btn) {
+    const original = btn.textContent;
+    btn.textContent = "Copied!";
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  }
+}
+window.copyTempPassword = copyTempPassword;
