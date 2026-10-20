@@ -4086,8 +4086,8 @@ async function handleForgotSubmit(event) {
 
     if (statusBox) {
       statusBox.className = "forgot-status-box success";
-      let html = '<div style="font-weight:600;margin-bottom:4px;">✓ Password Reset Request Processed</div>';
-      html += '<div>' + (res.message || "A new temporary password has been generated and delivered to your Customer Portal chat!") + '</div>';
+      let html = '<div style="font-weight:600;margin-bottom:4px;">✓ စကားဝှက် ပြောင်းလဲခြင်း ပြီးမြောက်ပါသည်</div>';
+      html += '<div>စကားဝှက်အသစ် (Temporary Password) ကို ထုတ်ပေးပြီး သင်၏ Customer Portal Chat ထဲသို့ ပေးပို့လိုက်ပါပြီ။</div>';
       if (res.tempPassword) {
         html += '<div class="forgot-temp-pwd-card">';
         html += '<span>New Password: <code>' + res.tempPassword + '</code></span>';
