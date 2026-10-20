@@ -25,121 +25,62 @@
     </script>
   </head>
   <body>
-    <!-- Login Screen: Space Wallpaper Experience -->
+    <!-- Login Screen: Ultra-Clean Space Wallpaper Experience -->
     <section id="loginScreen" class="login-view spacelink-landing-view">
-      <!-- Background Ambient Glow & Starry Dust -->
-      <div class="landing-ambient-glow glow-1"></div>
-      <div class="landing-ambient-glow glow-2"></div>
-      <div class="space-vignette-overlay"></div>
-
       <div class="spacelink-login-wrapper">
-        <!-- Top SpaceLink Brand Lockup -->
-        <div class="login-top-brand">
-          <div class="brand-orbital-logo">
-            <span class="logo-core">S</span>
-            <span class="orbital-ring"></span>
-          </div>
-          <div class="brand-text-block">
-            <h1 class="brand-main-title">SpaceLink <span class="glow-cyan">MM</span></h1>
-            <span class="brand-tagline">Satellite Operations &amp; Automated Billing</span>
-          </div>
-        </div>
-
-        <!-- Frosted Glass Login Card -->
-        <div class="login-glass-card">
-          <div class="login-glass-glow-border"></div>
-          
-          <div class="login-card-head">
-            <div class="login-badge-row">
-              <span id="loginKicker" class="login-kicker">Customer Portal</span>
-              <span class="login-security-badge">🔒 SSL Secured</span>
+        <!-- Compact Frosted Glass Login Card -->
+        <div class="login-glass-card compact-login-card">
+          <form id="loginForm" class="login-form compact-form">
+            <!-- Username Input -->
+            <div class="login-input-wrapper">
+              <span class="input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <input id="loginUsername" class="login-input-field" type="text" placeholder="Username" autocomplete="username" required>
             </div>
-            <h2 id="loginTitle">Customer Sign In</h2>
-            <p id="loginSubtext">View live satellite usage, billing invoices, announcements &amp; 24/7 technical support.</p>
-          </div>
 
-          <form id="loginForm" class="login-form">
-            <label class="login-field-label">
-              <span>Username</span>
-              <div class="login-input-wrapper">
-                <span class="input-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                </span>
-                <input id="loginUsername" class="login-input-field" type="text" placeholder="Enter customer username" autocomplete="username" required>
-              </div>
-            </label>
+            <!-- Password Input with See Password Eye Button -->
+            <div class="login-input-wrapper">
+              <span class="input-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              <input id="loginPassword" class="login-input-field" type="password" placeholder="Password" autocomplete="current-password" required>
+              <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show or hide password" title="Show / Hide Password">
+                <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg class="eye-closed hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
 
-            <label class="login-field-label">
-              <span>Password</span>
-              <div class="login-input-wrapper">
-                <span class="input-icon">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
-                </span>
-                <input id="loginPassword" class="login-input-field" type="password" placeholder="Enter password" autocomplete="current-password" required>
-                <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show or hide password" title="Show / Hide Password">
-                  <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
-                  </svg>
-                  <svg class="eye-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                  </svg>
-                </button>
-              </div>
-            </label>
-
-            <div class="login-remember-row">
+            <!-- Keep Me Signed In & Staff Login Row -->
+            <div class="login-options-row">
               <label class="remember-label">
                 <input type="checkbox" id="rememberMeCheckbox" checked>
-                <span>Keep me signed in (30 days)</span>
+                <span>Keep me signed in</span>
               </label>
+              <button type="button" id="loginRoleToggleBtn" class="staff-toggle-link-btn" onclick="toggleLoginRole()">
+                <span id="loginRoleBtnText">Staff Sign in &rarr;</span>
+              </button>
             </div>
 
-            <button type="submit" id="loginSubmitBtn" class="primary login-btn glowing-action-btn">
-              <span>Sign In to Customer Portal</span>
+            <!-- Compact Sign In Button -->
+            <button type="submit" id="loginSubmitBtn" class="primary login-btn compact-action-btn">
+              <span>Sign in</span>
               <span class="btn-shine"></span>
             </button>
             <p id="loginMessage" class="login-message"></p>
           </form>
-
-          <!-- Staff Login Option: Prominent and clear Burmese switch button -->
-          <div class="login-role-footer">
-            <span id="loginRoleHintText" class="role-hint-label">Staff ဆိုရင်</span>
-            <button type="button" id="loginRoleToggleBtn" class="staff-toggle-link-btn" onclick="toggleLoginRole()">
-              <span class="staff-btn-icon">💼</span>
-              <span id="loginRoleBtnText">ဒီနေရာကနေဝင်ပါ &rarr;</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- SpaceLink App Downloads Bar -->
-        <div class="login-app-download-bar">
-          <span class="download-bar-title">SpaceLink Dedicated Apps:</span>
-          <div class="download-pills-row">
-            <a href="/SpaceLinkCustomer.apk" class="download-pill-btn" download="SpaceLinkCustomer.apk" title="Download SpaceLink Customer Android App">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
-                <line x1="12" y1="18" x2="12.01" y2="18"></line>
-              </svg>
-              <span>Android APK</span>
-            </a>
-            <a href="/SpaceLinkWindows.exe" class="download-pill-btn" download="SpaceLinkWindows.exe" title="Download SpaceLink Windows Desktop App">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="8" height="8" rx="1"></rect>
-                <rect x="13" y="3" width="8" height="8" rx="1"></rect>
-                <rect x="3" y="13" width="8" height="8" rx="1"></rect>
-                <rect x="13" y="13" width="8" height="8" rx="1"></rect>
-              </svg>
-              <span>Windows App</span>
-            </a>
-          </div>
         </div>
       </div>
     </section>

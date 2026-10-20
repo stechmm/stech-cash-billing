@@ -3379,31 +3379,19 @@ let currentLoginRole = "customer";
 function setLoginRole(role) {
   currentLoginRole = role === "staff" ? "staff" : "customer";
   
-  const kicker = document.getElementById("loginKicker");
-  const title = document.getElementById("loginTitle");
-  const subtext = document.getElementById("loginSubtext");
   const submitBtn = document.getElementById("loginSubmitBtn");
   const userPlaceholder = document.getElementById("loginUsername");
-  const roleHintText = document.getElementById("loginRoleHintText");
   const roleBtnText = document.getElementById("loginRoleBtnText");
   if (el.loginMessage) el.loginMessage.textContent = "";
 
   if (currentLoginRole === "customer") {
-    if (kicker) kicker.textContent = "Customer Portal";
-    if (title) title.textContent = "Customer Sign In";
-    if (subtext) subtext.textContent = "View live satellite usage, billing invoices, announcements & 24/7 technical support.";
-    if (submitBtn) submitBtn.innerHTML = '<span>Sign In to Customer Portal</span><span class="btn-shine"></span>';
-    if (userPlaceholder) userPlaceholder.placeholder = "Enter customer username";
-    if (roleHintText) roleHintText.textContent = "Staff ဆိုရင်";
-    if (roleBtnText) roleBtnText.innerHTML = "ဒီနေရာကနေဝင်ပါ &rarr;";
+    if (submitBtn) submitBtn.innerHTML = '<span>Sign in</span><span class="btn-shine"></span>';
+    if (userPlaceholder) userPlaceholder.placeholder = "Username";
+    if (roleBtnText) roleBtnText.innerHTML = "Staff Sign in &rarr;";
   } else {
-    if (kicker) kicker.textContent = "Operations Console";
-    if (title) title.textContent = "Staff & Admin Sign In";
-    if (subtext) subtext.textContent = "Satellite billing operations, cash ledger, usage monitoring, and system control.";
-    if (submitBtn) submitBtn.innerHTML = '<span>Sign In to Staff Console</span><span class="btn-shine"></span>';
-    if (userPlaceholder) userPlaceholder.placeholder = "Enter staff / admin username";
-    if (roleHintText) roleHintText.textContent = "Customer ဆိုရင်";
-    if (roleBtnText) roleBtnText.innerHTML = "&larr; ဒီနေရာကနေဝင်ပါ";
+    if (submitBtn) submitBtn.innerHTML = '<span>Sign in</span><span class="btn-shine"></span>';
+    if (userPlaceholder) userPlaceholder.placeholder = "Staff Username";
+    if (roleBtnText) roleBtnText.innerHTML = "&larr; Customer Sign in";
   }
 }
 window.setLoginRole = setLoginRole;

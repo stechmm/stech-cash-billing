@@ -5229,18 +5229,18 @@ body.resizing-columns {
 
 
 
+
 /* ==========================================================================
-   SPACELINK MM SPACE WALLPAPER & LOGIN EXPERIENCE
+   SPACELINK MM ULTRA-CLEAN ASTRONAUT WALLPAPER & LOGIN EXPERIENCE
    ========================================================================== */
 .spacelink-landing-view {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 24px 16px;
   background: 
-    radial-gradient(ellipse at 50% 15%, rgba(14, 165, 233, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse at center, rgba(3, 7, 18, 0.5) 0%, rgba(2, 4, 10, 0.88) 100%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.45) 50%, rgba(0, 0, 0, 0.78) 100%),
     url("/space-wallpaper.jpg") no-repeat center center / cover !important;
   background-attachment: fixed !important;
   position: relative;
@@ -5248,219 +5248,180 @@ body.resizing-columns {
   overflow-x: hidden;
 }
 
-.space-vignette-overlay {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, transparent 30%, rgba(2, 4, 10, 0.75) 100%);
-  pointer-events: none;
-  z-index: 1;
-}
-
 .spacelink-login-wrapper {
-  width: min(450px, 100%);
+  width: min(350px, 92vw);
   margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 22px;
   z-index: 2;
   position: relative;
-  animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: fadeInDown 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-16px); }
+  from { opacity: 0; transform: translateY(-14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Top Space Brand Lockup */
-.login-top-brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.brand-orbital-logo {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #0284c7, #2563eb);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 0 25px rgba(56, 189, 248, 0.6);
-  flex-shrink: 0;
-}
-
-.brand-orbital-logo .logo-core {
-  font-size: 24px;
-  font-weight: 900;
-  color: #ffffff;
-  line-height: 1;
-}
-
-.brand-orbital-logo .orbital-ring {
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 2px dashed rgba(56, 189, 248, 0.55);
-  animation: spinOrbital 18s linear infinite;
-}
-
-@keyframes spinOrbital {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.brand-text-block .brand-main-title {
-  font-size: 26px;
-  font-weight: 900;
-  color: #ffffff;
-  letter-spacing: -0.02em;
-  margin: 0;
-  line-height: 1.15;
-}
-
-.brand-text-block .glow-cyan {
-  color: #38bdf8;
-  text-shadow: 0 0 16px rgba(56, 189, 248, 0.7);
-}
-
-.brand-text-block .brand-tagline {
-  display: block;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #94a3b8;
-  letter-spacing: 0.02em;
-  margin-top: 2px;
-}
-
-/* Frosted Glass Login Card */
-.login-glass-card {
+/* Ultra-Clean Compact Frosted Glass Card */
+.compact-login-card {
   width: 100%;
-  background: rgba(8, 14, 28, 0.82) !important;
-  border: 1px solid rgba(56, 189, 248, 0.28) !important;
-  border-radius: 24px !important;
-  padding: 32px 28px !important;
+  background: rgba(10, 14, 26, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 18px !important;
+  padding: 22px 20px !important;
   box-shadow: 
-    0 30px 70px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 0 45px rgba(14, 165, 233, 0.15) !important;
-  backdrop-filter: blur(28px) !important;
-  -webkit-backdrop-filter: blur(28px) !important;
+    0 24px 60px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 0 35px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   display: flex;
   flex-direction: column;
-  gap: 18px;
   position: relative;
-  overflow: hidden;
 }
 
-.login-glass-glow-border {
-  position: absolute;
-  top: 0;
-  left: 15%;
-  right: 15%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
-  box-shadow: 0 0 12px #38bdf8;
-}
-
-/* Staff Login Switch Link - prominent and styled in Burmese */
-.login-role-footer {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  margin-top: 8px !important;
-  padding: 12px 16px !important;
-  border-radius: 14px !important;
-  background: rgba(14, 165, 233, 0.08) !important;
-  border: 1px solid rgba(56, 189, 248, 0.25) !important;
-  transition: all 0.2s ease !important;
-}
-
-.login-role-footer:hover {
-  background: rgba(14, 165, 233, 0.15) !important;
-  border-color: rgba(56, 189, 248, 0.5) !important;
-  box-shadow: 0 4px 18px rgba(14, 165, 233, 0.25) !important;
-}
-
-.role-hint-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #94a3b8;
-}
-
-.staff-toggle-link-btn {
-  background: none;
-  border: none;
-  color: #38bdf8;
-  font-weight: 800;
-  font-size: 13.5px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 4px;
-  transition: all 0.15s ease;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.staff-toggle-link-btn:hover {
-  color: #7dd3fc;
-  text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
-  transform: translateX(2px);
-}
-
-.staff-btn-icon {
-  font-size: 15px;
-}
-
-/* App Download Bar Underneath */
-.login-app-download-bar {
+.compact-form {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.download-bar-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #64748b;
-}
-
-.download-pills-row {
-  display: flex;
   gap: 12px;
 }
 
-.download-pill-btn {
-  display: inline-flex;
+.compact-form .login-input-wrapper {
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: all 0.2s ease;
+  width: 100%;
 }
 
-.download-pill-btn:hover {
+.compact-form .input-icon {
+  position: absolute;
+  left: 12px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.compact-form .login-input-field {
+  width: 100%;
+  height: 42px;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 10px !important;
+  padding: 0 38px 0 36px !important;
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.compact-form .login-input-field:focus {
+  border-color: #38bdf8 !important;
+  background: rgba(15, 23, 42, 0.95) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22) !important;
+}
+
+.compact-form .login-input-field:focus + .input-icon,
+.compact-form .login-input-wrapper:focus-within .input-icon {
   color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.5);
-  background: rgba(14, 165, 233, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.compact-form .pwd-toggle-btn {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.compact-form .pwd-toggle-btn:hover {
+  color: #38bdf8;
+}
+
+/* Options Row: Keep Me Signed In & Staff Sign In */
+.login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 4px;
+}
+
+.login-options-row .remember-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-options-row .remember-label input[type="checkbox"] {
+  accent-color: #0284c7;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+.login-options-row .staff-toggle-link-btn {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: all 0.15s ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.login-options-row .staff-toggle-link-btn:hover {
+  color: #7dd3fc;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+/* Compact Sign In Button */
+.compact-action-btn {
+  width: 100%;
+  height: 38px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  color: #ffffff !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease !important;
+  position: relative;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.compact-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.compact-action-btn:active {
+  transform: translateY(0);
 }
