@@ -14,7 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=11.0">
+    <link rel="preload" as="image" href="/cosmic-spacelink-wallpaper.jpg?v=20261020">
+    <link rel="stylesheet" href="styles.css?v=12.0">
     <script>
       (function(){
         try {
@@ -28,9 +29,15 @@
     <!-- Login Screen: Ultra-Clean Space Wallpaper Experience -->
     <section id="loginScreen" class="login-view spacelink-landing-view">
       <div class="spacelink-login-wrapper">
-        <!-- Compact Frosted Glass Login Card -->
-        <div class="login-glass-card compact-login-card">
+        <!-- Smart Frosted Glass Login Card -->
+        <div class="compact-login-card">
           <form id="loginForm" class="login-form compact-form">
+            <!-- Micro Brand Pill -->
+            <div class="login-brand-tag">
+              <span class="live-status-dot"></span>
+              <span>SpaceLink Access</span>
+            </div>
+
             <!-- Username Input -->
             <div class="login-input-wrapper">
               <span class="input-icon">
@@ -53,7 +60,7 @@
               <input id="loginPassword" class="login-input-field" type="password" placeholder="Password" autocomplete="current-password" required>
               <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" aria-label="Show or hide password" title="Show / Hide Password">
                 <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
                 <svg class="eye-closed hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -63,7 +70,7 @@
               </button>
             </div>
 
-            <!-- Keep Me Signed In (30 days) & Forgot Password Row -->
+            <!-- Keep Me Signed In (30 days) & Forgot Password Link -->
             <div class="login-options-row">
               <label class="remember-label">
                 <input type="checkbox" id="rememberMeCheckbox" checked>
@@ -1541,7 +1548,7 @@
       </tr>
     </template>
 
-    <script src="app.js?v=11.0"></script>
+    <script src="app.js?v=12.0"></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
