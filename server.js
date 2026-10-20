@@ -59,7 +59,10 @@ const STATIC_TYPES = {
   ".apk": "application/vnd.android.package-archive",
   ".exe": "application/vnd.microsoft.portable-executable",
   ".ico": "image/x-icon",
-  ".png": "image/png"
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp"
 };
 
 function makeId() {

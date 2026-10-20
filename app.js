@@ -3389,21 +3389,21 @@ function setLoginRole(role) {
   if (el.loginMessage) el.loginMessage.textContent = "";
 
   if (currentLoginRole === "customer") {
-    if (kicker) kicker.textContent = "SpaceLink Satellite Network";
+    if (kicker) kicker.textContent = "Customer Portal";
     if (title) title.textContent = "Customer Sign In";
     if (subtext) subtext.textContent = "View live satellite usage, billing invoices, announcements & 24/7 technical support.";
-    if (submitBtn) submitBtn.textContent = "Sign In to Customer Portal";
+    if (submitBtn) submitBtn.innerHTML = '<span>Sign In to Customer Portal</span><span class="btn-shine"></span>';
     if (userPlaceholder) userPlaceholder.placeholder = "Enter customer username";
-    if (roleHintText) roleHintText.textContent = "Are you an Admin or Staff member?";
-    if (roleBtnText) roleBtnText.textContent = "Sign in to Staff Console →";
+    if (roleHintText) roleHintText.textContent = "Staff ဆိုရင်";
+    if (roleBtnText) roleBtnText.innerHTML = "ဒီနေရာကနေဝင်ပါ &rarr;";
   } else {
-    if (kicker) kicker.textContent = "SpaceLink Operations Console";
+    if (kicker) kicker.textContent = "Operations Console";
     if (title) title.textContent = "Staff & Admin Sign In";
     if (subtext) subtext.textContent = "Satellite billing operations, cash ledger, usage monitoring, and system control.";
-    if (submitBtn) submitBtn.textContent = "Sign In to Staff Dashboard";
+    if (submitBtn) submitBtn.innerHTML = '<span>Sign In to Staff Console</span><span class="btn-shine"></span>';
     if (userPlaceholder) userPlaceholder.placeholder = "Enter staff / admin username";
-    if (roleHintText) roleHintText.textContent = "Are you a customer?";
-    if (roleBtnText) roleBtnText.textContent = "← Switch to Customer Portal";
+    if (roleHintText) roleHintText.textContent = "Customer ဆိုရင်";
+    if (roleBtnText) roleBtnText.innerHTML = "&larr; ဒီနေရာကနေဝင်ပါ";
   }
 }
 window.setLoginRole = setLoginRole;
@@ -3425,20 +3425,61 @@ async function doLogin(event) {
 
   try {
     if (currentLoginRole === "customer") {
-      const res = await api("/api/customer/login", {
-        method: "POST",
-        body: JSON.stringify({ username, password })
-      });
+      let res;
+      try {
+        res = await api("/api/customer/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password })
+        });
+      } catch (custErr) {
+        // Smart fallback: Check if user credentials belong to a staff member
+        try {
+          const staffRes = await api("/api/login", {
+            method: "POST",
+            body: JSON.stringify({ username, password })
+          });
+          if (staffRes && staffRes.user) {
+            localStorage.setItem("stech_session_token", staffRes.token || staffRes.sid);
+            state.user = staffRes.user;
+            localStorage.setItem("stech_user", JSON.stringify(staffRes.user));
+            el.loginForm.reset();
+            showApp();
+            await refreshState();
+            return;
+          }
+        } catch {
+          // If staff login also fails, throw original customer error
+        }
+        throw custErr;
+      }
       if (res && (res.token || res.sid)) {
         localStorage.setItem("stech_customer_session_token", res.token || res.sid);
       }
-      // Redirect to Customer Portal
       window.location.href = "/customer/";
     } else {
-      const res = await api("/api/login", {
-        method: "POST",
-        body: JSON.stringify({ username, password })
-      });
+      let res;
+      try {
+        res = await api("/api/login", {
+          method: "POST",
+          body: JSON.stringify({ username, password })
+        });
+      } catch (staffErr) {
+        // Smart fallback: Check if user credentials belong to a customer account
+        try {
+          const custRes = await api("/api/customer/login", {
+            method: "POST",
+            body: JSON.stringify({ username, password })
+          });
+          if (custRes && (custRes.token || custRes.sid)) {
+            localStorage.setItem("stech_customer_session_token", custRes.token || custRes.sid);
+            window.location.href = "/customer/";
+            return;
+          }
+        } catch {
+          // If customer login also fails, throw original staff error
+        }
+        throw staffErr;
+      }
       if (res && (res.token || res.sid)) {
         localStorage.setItem("stech_session_token", res.token || res.sid);
       }
