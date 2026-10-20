@@ -4023,6 +4023,7 @@ applyBillColors(loadBillColors());
 syncColorInputs();
 updateCalculator();
 boot();
+runTerminalTypewriter();
 
 setInterval(() => {
   if (state.user && state.activePage === "supportPage" && !document.hidden) refreshState().catch(() => {});
@@ -4133,3 +4134,24 @@ function copyTempPassword(text, btn) {
   }
 }
 window.copyTempPassword = copyTempPassword;
+
+
+// --- Terminal CLI Typewriter Effect ---
+let typewriterTimer = null;
+function runTerminalTypewriter() {
+  const el = document.getElementById("terminalTypedText");
+  if (!el) return;
+  clearTimeout(typewriterTimer);
+  const textToType = "spacelink access --auth";
+  el.textContent = "";
+  let idx = 0;
+  function typeNext() {
+    if (idx < textToType.length) {
+      el.textContent += textToType.charAt(idx);
+      idx++;
+      typewriterTimer = setTimeout(typeNext, 45 + Math.random() * 35);
+    }
+  }
+  typewriterTimer = setTimeout(typeNext, 250);
+}
+window.runTerminalTypewriter = runTerminalTypewriter;

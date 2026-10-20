@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;600;700;800;900&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="preload" as="image" href="/cosmic-spacelink-wallpaper.jpg?v=20261020">
-    <link rel="stylesheet" href="styles.css?v=13.0">
+    <link rel="stylesheet" href="styles.css?v=14.0">
     <script>
       (function(){
         try {
@@ -34,14 +34,9 @@
           <form id="loginForm" class="login-form compact-form">
             <!-- Terminal CLI Header Bar -->
             <div class="terminal-bar">
-              <div class="terminal-controls">
-                <span class="term-dot dot-red"></span>
-                <span class="term-dot dot-yellow"></span>
-                <span class="term-dot dot-green"></span>
-              </div>
               <div class="terminal-command">
                 <span class="term-prompt">root@spacelink:~#</span>
-                <span class="term-text">access --auth</span>
+                <span id="terminalTypedText" class="term-text"></span>
                 <span class="term-cursor"></span>
               </div>
             </div>
@@ -1553,7 +1548,7 @@
       </tr>
     </template>
 
-    <script src="app.js?v=13.0"></script>
+    <script src="app.js?v=14.0"></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/sw.js").catch(() => {});
