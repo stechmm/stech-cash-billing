@@ -2577,6 +2577,13 @@ const server = http.createServer(async (req, res) => {
     if (requestUrl.pathname.startsWith("/api/")) {
       return await handleApi(req, res, requestUrl.pathname);
     }
+    if (requestUrl.pathname === "/.well-known/assetlinks.json") {
+      const assetlinksFile = path.join(APP_DIR, "assetlinks.json");
+      if (fs.existsSync(assetlinksFile)) {
+        res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Cache-Control": "public, max-age=86400" });
+        return fs.createReadStream(assetlinksFile).pipe(res);
+      }
+    }
     return serveStatic(req, res, requestUrl.pathname);
   } catch (error) {
     json(res, 500, { error: error.message || "Server error" });

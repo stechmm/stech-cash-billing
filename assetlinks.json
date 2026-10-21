@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.stechmm.spacelink.customer",
+      "sha256_cert_fingerprints": [
+        "09:4B:09:93:67:9A:54:78:DD:2D:AD:EB:5A:BC:AD:5E:97:20:CD:1E:E0:48:9A:9D:2F:8D:D3:E2:58:96:A2:CE"
+      ]
+    }
+  }
+]
