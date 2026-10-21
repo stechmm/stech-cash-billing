@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -11,6 +11,26 @@ try {
 } catch {
   archiver = null;
 }
+
+
+// === Login Rate Limiter (brute-force protection) ===
+const loginAttempts = new Map();
+function checkRateLimit(ip) {
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute
+  const maxAttempts = 10;
+  const entry = loginAttempts.get(ip) || { count: 0, resetAt: now + windowMs };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs; }
+  entry.count++;
+  loginAttempts.set(ip, entry);
+  return entry.count > maxAttempts;
+}
+function resetRateLimit(ip) { loginAttempts.delete(ip); }
+// Clean up old rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  loginAttempts.forEach((entry, ip) => { if (now > entry.resetAt) loginAttempts.delete(ip); });
+}, 5 * 60 * 1000);
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 3030);
@@ -1356,11 +1376,14 @@ async function handleApi(req, res, pathname) {
   if (pathname === "/api/unified-login" && req.method === "POST") {
     const body = await readBody(req);
     const username = String(body.username || "").trim().toLowerCase();
+    const clientIp = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "").split(",")[0].trim();
+    if (checkRateLimit(clientIp)) return json(res, 429, { error: "Too many login attempts. Please wait a minute." });
     const rawPassword = String(body.password || "");
 
     // 1. Check if user is Staff/Admin in db.users
     const staffUser = (db.users || []).find((item) => String(item.username || "").trim().toLowerCase() === username);
     if (staffUser && verifyPassword(rawPassword, staffUser.passwordHash || staffUser.password)) {
+      resetRateLimit(clientIp);
       const sid = createSession(staffUser.id, db);
       await writeDb(db);
       return json(
@@ -1374,6 +1397,7 @@ async function handleApi(req, res, pathname) {
     // 2. Check if user is Customer in db.customerAccounts
     const customer = (db.customerAccounts || []).find((item) => String(item.username || "").trim().toLowerCase() === username);
     if (customer && customer.active !== false && verifyPassword(rawPassword, customer.passwordHash || customer.password)) {
+      resetRateLimit(clientIp);
       const sid = createCustomerSession(customer.id, db);
       await writeDb(db);
       return json(
@@ -1641,7 +1665,8 @@ async function handleApi(req, res, pathname) {
     const messageId = String(body.messageId || "").trim();
     const emoji = String(body.emoji || "").trim();
     if (!messageId || !emoji) return json(res, 400, { error: "Message ID and emoji are required" });
-
+    const ALLOWED_EMOJIS = ["\uD83D\uDC4D","\u2764\uFE0F","\uD83D\uDE02","\uD83D\uDE2E","\uD83D\uDE22","\uD83D\uDE4F","\uD83D\uDD25","\uD83C\uDF89"];
+    if (!ALLOWED_EMOJIS.includes(emoji)) return json(res, 400, { error: "Invalid emoji" });
     const msg = db.supportMessages.find((m) => m.id === messageId && m.customerId === customer.id);
     if (!msg) return json(res, 404, { error: "Message not found" });
     if (!msg.reactions || typeof msg.reactions !== "object") msg.reactions = {};

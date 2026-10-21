@@ -1,3 +1,13 @@
+﻿// === HTML Escape Utility (XSS Prevention) ===
+function escHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const customerState = {
   customer: null,
   devices: [],
@@ -117,7 +127,7 @@ function connectCustomerRealtime() {
   const protocol = location.protocol === "https:" ? "wss:" : "ws:";
   customerRealtimeSocket = new WebSocket(`${protocol}//${location.host}/ws`);
   customerRealtimeSocket.onmessage = (event) => {
-    const message = JSON.parse(event.data || "{}");
+    let message; try { message = JSON.parse(event.data || "{}"); } catch { return; }
     if (!["support_message", "support_message_edit", "support_message_delete", "support_message_react", "announcement_updated", "usage_updated"].includes(message.type)) return;
     if (message.customerId && message.customerId !== customerState.customer.id) return;
     clearTimeout(customerRealtimeRefresh);
@@ -666,7 +676,7 @@ function makeCustomerMessageRow(item) {
 
   const body = document.createElement("p");
   if (item.topic === "announcement" || item.announcementId || item.broadcastId || (item.message && item.message.includes("<b>"))) {
-    body.innerHTML = String(item.message || "").replace(/\n/g, "<br>");
+    body.innerHTML = escHtml(item.message || "").replace(/\n/g, "<br>");
     bubble.classList.add("broadcast-announcement-bubble");
   } else {
     body.textContent = item.message || "";
@@ -873,48 +883,28 @@ function makeVoucherElement(v) {
   const card = document.createElement("div");
   card.className = "customer-voucher-card";
   const numAmount = Number(v.amount || 0);
-  card.innerHTML = `
-    <div class="voucher-top-brand">
-      <div class="voucher-brand-title">
-        <strong>${v.companyName || "SpaceLink"}</strong>
-        <small>Payment Receipt</small>
-      </div>
-      <span class="voucher-stamp-paid">PAID</span>
-    </div>
-    <div class="voucher-amount-box">
-      <span>Amount Paid</span>
-      <strong>${numAmount.toLocaleString()} MMK</strong>
-    </div>
-    <div class="voucher-details-list">
-      <div class="voucher-detail-row">
-        <span>Voucher No</span>
-        <strong>${v.voucherNumber || "-"}</strong>
-      </div>
-      <div class="voucher-detail-row">
-        <span>Customer</span>
-        <strong>${v.customerName || "-"}</strong>
-      </div>
-      <div class="voucher-detail-row">
-        <span>Terminal ID</span>
-        <strong>${v.machineId || "-"}</strong>
-      </div>
-      <div class="voucher-detail-row">
-        <span>Billing Month</span>
-        <strong>${v.monthKey || "-"}</strong>
-      </div>
-      <div class="voucher-detail-row">
-        <span>Date</span>
-        <strong>${v.date || "-"}</strong>
-      </div>
-      <div class="voucher-detail-row">
-        <span>Method</span>
-        <strong>${v.paymentMethod || "Bank Transfer"}</strong>
-      </div>
-    </div>
-    <button type="button" class="voucher-action-btn">
-      📄 View & Print Invoice
-    </button>
-  `;
+  // Build voucher safely (XSS-safe DOM construction)
+  const vTopBrand = document.createElement("div"); vTopBrand.className = "voucher-top-brand";
+  const vBrandTitle = document.createElement("div"); vBrandTitle.className = "voucher-brand-title";
+  const vBrandName = document.createElement("strong"); vBrandName.textContent = v.companyName || "SpaceLink";
+  const vBrandSub = document.createElement("small"); vBrandSub.textContent = "Payment Receipt";
+  const vStamp = document.createElement("span"); vStamp.className = "voucher-stamp-paid"; vStamp.textContent = "PAID";
+  vBrandTitle.append(vBrandName, vBrandSub); vTopBrand.append(vBrandTitle, vStamp);
+  const vAmtBox = document.createElement("div"); vAmtBox.className = "voucher-amount-box";
+  const vAmtLbl = document.createElement("span"); vAmtLbl.textContent = "Amount Paid";
+  const vAmtVal = document.createElement("strong"); vAmtVal.textContent = numAmount.toLocaleString() + " MMK";
+  vAmtBox.append(vAmtLbl, vAmtVal);
+  const vDetails = document.createElement("div"); vDetails.className = "voucher-details-list";
+  [["Voucher No", v.voucherNumber || "-"], ["Customer", v.customerName || "-"], ["Terminal ID", v.machineId || "-"],
+   ["Billing Month", v.monthKey || "-"], ["Date", v.date || "-"], ["Method", v.paymentMethod || "Bank Transfer"]
+  ].forEach(function(pair) {
+    const row = document.createElement("div"); row.className = "voucher-detail-row";
+    const l = document.createElement("span"); l.textContent = pair[0];
+    const r = document.createElement("strong"); r.textContent = pair[1];
+    row.append(l, r); vDetails.append(row);
+  });
+  const vBtn = document.createElement("button"); vBtn.type = "button"; vBtn.className = "voucher-action-btn"; vBtn.textContent = "📄 View & Print Invoice";
+  card.append(vTopBrand, vAmtBox, vDetails, vBtn);
   const printBtn = card.querySelector(".voucher-action-btn");
   if (printBtn) {
     printBtn.onclick = () => printOrSaveVoucher(v.voucherNumber, v.customerName, v.machineId, v.amount, v.date, v.monthKey);
@@ -929,11 +919,11 @@ function printOrSaveVoucher(no, name, machine, amount, date, month) {
     return;
   }
   const formattedAmount = Number(amount || 470000).toLocaleString();
-  const invoiceNo = no || "INV-DF-PHL-2829003-54680-6";
-  const customerName = name || "CHO (THING KONG)";
-  const issueDate = date || "April 18, 2026";
-  const periodStr = month ? `Billing Month: ${month}` : "April 26, 2026 – May 26, 2026";
-
+  const formattedAmount = Number(amount || 470000).toLocaleString();
+  const invoiceNo = escHtml(no || "INV-DF-PHL-2829003-54680-6");
+  const customerName = escHtml(name || "CHO (THING KONG)");
+  const issueDate = escHtml(date || "April 18, 2026");
+  const periodStr = month ? `Billing Month: ${escHtml(month)}` : "April 26, 2026 – May 26, 2026";
   printWindow.document.write(`
     <!DOCTYPE html>
     <html lang="en">
@@ -1429,7 +1419,7 @@ async function refreshCustomer() {
     }
   } catch (error) {
     console.error("refreshCustomer error:", error);
-    if (error.status === 401 && !localStorage.getItem("stech_customer_session_token")) {
+    if (error.status === 401) {
       showCustomerLogin();
     }
   }
@@ -1447,6 +1437,8 @@ function showCustomerLogin() {
 async function submitCustomerLogin(event) {
   event.preventDefault();
   customerEl.loginError.textContent = "";
+  const submitBtn = customerEl.loginForm.querySelector('button[type="submit"]');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Signing in..."; }
   try {
     const res = await customerApi("/api/customer/login", {
       method: "POST",
@@ -1461,6 +1453,7 @@ async function submitCustomerLogin(event) {
     await refreshCustomer();
   } catch (error) {
     customerEl.loginError.textContent = error.message;
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign In"; }
   }
 }
 
