@@ -919,7 +919,6 @@ function printOrSaveVoucher(no, name, machine, amount, date, month) {
     return;
   }
   const formattedAmount = Number(amount || 470000).toLocaleString();
-  const formattedAmount = Number(amount || 470000).toLocaleString();
   const invoiceNo = escHtml(no || "INV-DF-PHL-2829003-54680-6");
   const customerName = escHtml(name || "CHO (THING KONG)");
   const issueDate = escHtml(date || "April 18, 2026");

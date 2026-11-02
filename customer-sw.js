@@ -1,5 +1,5 @@
-const CACHE_NAME = "stech-customer-v10.5";
-const APP_SHELL = ["/customer/", "/customer.html", "/customer.css?v=10.5", "/customer.js?v=10.5", "/customer-manifest.json", "/customer-icon.svg"];
+﻿const CACHE_NAME = "stech-customer-v12.0";
+const APP_SHELL = ["/customer/", "/customer.html", "/customer.css?v=12.0", "/customer.js?v=12.0", "/customer-manifest.json", "/customer-icon.svg"];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
