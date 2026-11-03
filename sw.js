@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = "spacelink-ops-v11.0";
+const CACHE_NAME = "spacelink-ops-v16.0";
 const ASSETS = [
   "/",
   "/index.html",

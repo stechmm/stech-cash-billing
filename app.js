@@ -2530,10 +2530,19 @@ function resetDeviceForm() {
 
 function openUsageDialog(recordId = null, machineId = "") {
   resetUsageForm();
+  const curMonth = vizState.activeMonth || state.activeMonth || currentMonthKey();
+  const today = localDateKey();
+  if (today.startsWith(curMonth + "-")) {
+    if (el.usageDateInput) el.usageDateInput.value = today;
+  } else {
+    const [y, m] = curMonth.split("-").map(Number);
+    const lastDay = new Date(y, m, 0).getDate();
+    if (el.usageDateInput) el.usageDateInput.value = `${curMonth}-${String(lastDay).padStart(2, "0")}`;
+  }
   if (machineId && el.usageMachineInput) {
     el.usageMachineInput.value = machineId;
-    syncUsageMachineContext();
   }
+  syncUsageMachineContext();
   if (el.usageDialog) {
     setDialogOpen(el.usageDialog, true);
   }
@@ -2881,12 +2890,18 @@ async function saveUsageRecord(event) {
     dailyUsageTB,
     notes: el.usageNotesInput.value.trim()
   };
-  await api("/api/usage/record", { method: "POST", body: JSON.stringify({ record: payload }) });
+  const res = await api("/api/usage/record", { method: "POST", body: JSON.stringify({ record: payload }) });
+  vizState.activeMonth = monthKey;
+  if (res?.activeMonth) {
+    state.activeMonth = res.activeMonth;
+  } else if (monthKey > (state.activeMonth || "")) {
+    state.activeMonth = monthKey;
+  }
   await refreshState();
+  populateUsageMonthSelect();
+  if (el.usageMonthSelect) el.usageMonthSelect.value = monthKey;
   
-  // Re-sync and refresh history list
-  const currentMonth = state.activeMonth || currentMonthKey();
-  const updatedRec = state.usageRecords.find((r) => String(r.machine || "").toUpperCase() === machine.toUpperCase() && r.monthKey === currentMonth);
+  // Re-sync and refresh history list for the target month
   syncUsageMachineContext();
   if (el.saveUsageBtn) el.saveUsageBtn.textContent = "Save Daily Usage";
   if (el.usageDailyInput) el.usageDailyInput.value = "";
@@ -2999,8 +3014,9 @@ function syncUsageMachineContext() {
   }
   const linkedDevice = state.deviceRecords.find((d) => String(d.deviceId || "").trim().toUpperCase() === machine);
   const linkedBill = state.billRecords.find((b) => String(b.machine || "").trim().toUpperCase() === machine);
-  const currentMonth = state.activeMonth || currentMonthKey();
-  const record = state.usageRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine && item.monthKey === currentMonth);
+  const inputDate = el.usageDateInput?.value || "";
+  const targetMonth = inputDate.length >= 7 ? inputDate.slice(0, 7) : (vizState.activeMonth || state.activeMonth || currentMonthKey());
+  const record = state.usageRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine && item.monthKey === targetMonth);
 
   if (record) {
     el.usageId.value = record.id;
@@ -3022,7 +3038,7 @@ function syncUsageMachineContext() {
     const custName = el.usageCustomerInput.value || linkedDevice?.name || linkedBill?.customer || "";
     const plan = el.usageBillTypeInput.value || linkedDevice?.planStatus || "normal";
     const curTotal = record ? formatGbOrTb(usageTotal(record)).text : "0 GB";
-    el.usageMachineHint.textContent = `Customer: ${custName || "-"} • Plan: ${plan.toUpperCase()} • This Month: ${curTotal}`;
+    el.usageMachineHint.textContent = `Customer: ${custName || "-"} • Plan: ${plan.toUpperCase()} • ${monthLabel(targetMonth)}: ${curTotal}`;
     el.usageMachineHint.classList.remove("hidden");
   }
 }
@@ -3617,8 +3633,11 @@ el.resetUsageBtn.addEventListener("click", resetUsageForm);
 el.usageMachineInput.addEventListener("input", syncUsageMachineContext);
 el.usageMachineInput.addEventListener("change", syncUsageMachineContext);
 el.usageDateInput.addEventListener("change", () => {
+  syncUsageMachineContext();
   const machine = el.usageMachineInput.value.trim().toUpperCase();
-  const record = state.usageRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine);
+  const inputDate = el.usageDateInput.value || "";
+  const targetMonth = inputDate.length >= 7 ? inputDate.slice(0, 7) : (vizState.activeMonth || state.activeMonth || currentMonthKey());
+  const record = state.usageRecords.find((item) => String(item.machine || "").trim().toUpperCase() === machine && item.monthKey === targetMonth);
   const valTB = record?.dailyUsage?.[el.usageDateInput.value];
   if (valTB !== undefined && valTB !== null) {
     const u = vizState.inputUnit || "GB";

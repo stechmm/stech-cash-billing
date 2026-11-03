@@ -212,6 +212,62 @@ function ensureActiveMonth(db) {
     db.activeMonth = curKey;
   }
   reconcileBillStatusFromLedger(db);
+  reconcileUsageRecords(db);
+}
+
+function reconcileUsageRecords(db) {
+  if (!Array.isArray(db.usageRecords)) return;
+  let changed = false;
+  const map = new Map();
+  
+  db.usageRecords.forEach((r) => {
+    const machine = String(r.machine || "").trim().toUpperCase();
+    if (!machine) return;
+    const dates = Object.keys(r.dailyUsage || {});
+    const hasMismatched = dates.some((d) => !d.startsWith(r.monthKey + "-"));
+    if (hasMismatched) {
+      changed = true;
+      const allMonths = new Set([r.monthKey, ...dates.map((d) => d.slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m))]);
+      allMonths.forEach((mKey) => {
+        const key = machine + "__" + mKey;
+        if (!map.has(key)) {
+          map.set(key, {
+            id: mKey === r.monthKey ? r.id : makeId(),
+            monthKey: mKey,
+            machine,
+            customer: r.customer || "",
+            billType: r.billType || "",
+            usageLimitTB: r.usageLimitTB || 5,
+            legacyUsageTB: mKey === r.monthKey ? (r.legacyUsageTB || 0) : 0,
+            notes: r.notes || "",
+            dailyUsage: {},
+            updatedAt: r.updatedAt || new Date().toISOString()
+          });
+        }
+        const target = map.get(key);
+        dates.filter((d) => d.startsWith(mKey + "-")).forEach((d) => {
+          target.dailyUsage[d] = r.dailyUsage[d];
+        });
+      });
+    } else {
+      const key = machine + "__" + r.monthKey;
+      if (!map.has(key)) {
+        map.set(key, { ...r, machine, dailyUsage: { ...(r.dailyUsage || {}) } });
+      } else {
+        changed = true;
+        const target = map.get(key);
+        Object.assign(target.dailyUsage, r.dailyUsage || {});
+      }
+    }
+  });
+
+  if (changed) {
+    db.usageRecords = Array.from(map.values()).sort((a, b) => {
+      const monthSort = String(b.monthKey || "").localeCompare(String(a.monthKey || ""));
+      if (monthSort !== 0) return monthSort;
+      return String(a.machine || "").localeCompare(String(b.machine || ""), undefined, { numeric: true });
+    });
+  }
 }
 
 function defaultSnapshot() {
@@ -2214,11 +2270,14 @@ async function handleApi(req, res, pathname) {
       return json(res, 400, { error: "Valid date YYYY-MM-DD is required" });
     }
     const existingIndex = db.usageRecords.findIndex((item) => {
-      if (record.id && item.id === record.id) return true;
       return String(item.machine || "").trim().toUpperCase() === machine.toUpperCase() && String(item.monthKey || "") === monthKey;
     });
     const existing = existingIndex >= 0 ? db.usageRecords[existingIndex] : null;
     const dailyUsage = { ...(existing?.dailyUsage || {}) };
+    // Clean safety: guarantee only dates of this monthKey exist in this record
+    for (const d of Object.keys(dailyUsage)) {
+      if (!d.startsWith(monthKey + "-")) delete dailyUsage[d];
+    }
     
     if (record.removeDate) {
       delete dailyUsage[usageDate];
@@ -2235,7 +2294,7 @@ async function handleApi(req, res, pathname) {
     const autoBillType = linkedDevice?.planStatus || linkedBill?.billType || "";
     const canEditDetails = !existing || user.role === "admin" || true;
     const payload = {
-      id: existing?.id || record.id || makeId(),
+      id: existing?.id || makeId(),
       monthKey,
       machine,
       customer: String(record.customer || existing?.customer || autoCustomer).trim(),
@@ -2253,6 +2312,9 @@ async function handleApi(req, res, pathname) {
       if (monthSort !== 0) return monthSort;
       return String(a.machine || "").localeCompare(String(b.machine || ""), undefined, { numeric: true });
     });
+    if (monthKey > (db.activeMonth || "")) {
+      db.activeMonth = monthKey;
+    }
 
     // Check for High Usage Alert (>= 4.8 TB on 5TB plan)
     const totalDailyTB = Object.values(dailyUsage).reduce((sum, v) => sum + Number(v || 0), 0);
